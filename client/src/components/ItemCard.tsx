@@ -69,7 +69,7 @@ export default function ItemCard({ item }: ItemCardProps) {
         originalPrice: originalPrice,
         imageUrl: item.imageUrl,
         category: item.category,
-        globalDiscountApplied: globalDiscountAmount > 0,
+        globalDiscountApplied: globalDiscountActive,
       });
     }
   };
