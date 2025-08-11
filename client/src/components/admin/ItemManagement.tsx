@@ -411,8 +411,6 @@ export default function ItemManagement() {
                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)' 
              }}></div>
       </div>
-          
-      </div>
 
       <Card className="card-premium shadow-elegant">
         <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
