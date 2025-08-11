@@ -342,12 +342,25 @@ export default function LeadsManagement() {
               <TableBody>
                 {filteredLeads.map((lead) => {
                   let leadDate;
+                  let isValidDate = false;
+                  
                   try {
-                    leadDate = lead.createdAt instanceof Date ? lead.createdAt : 
-                               lead.createdAt?.seconds ? new Date(lead.createdAt.seconds * 1000) :
-                               new Date(lead.createdAt);
+                    if (lead.createdAt instanceof Date) {
+                      leadDate = lead.createdAt;
+                      isValidDate = !isNaN(leadDate.getTime());
+                    } else if (lead.createdAt?.seconds) {
+                      leadDate = new Date(lead.createdAt.seconds * 1000);
+                      isValidDate = !isNaN(leadDate.getTime());
+                    } else if (lead.createdAt) {
+                      leadDate = new Date(lead.createdAt);
+                      isValidDate = !isNaN(leadDate.getTime());
+                    } else {
+                      leadDate = new Date();
+                      isValidDate = true;
+                    }
                   } catch (e) {
                     leadDate = new Date();
+                    isValidDate = true;
                   }
                   
                   return (
@@ -414,10 +427,10 @@ export default function LeadsManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {leadDate && !isNaN(leadDate.getTime()) ? format(leadDate, "dd/MM/yyyy", { locale: it }) : 'Data non valida'}
+                          {isValidDate ? format(leadDate, "dd/MM/yyyy", { locale: it }) : 'N/A'}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {leadDate && !isNaN(leadDate.getTime()) ? format(leadDate, "HH:mm", { locale: it }) : ''}
+                          {isValidDate ? format(leadDate, "HH:mm", { locale: it }) : ''}
                         </div>
                       </TableCell>
                       <TableCell>
