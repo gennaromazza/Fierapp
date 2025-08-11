@@ -168,12 +168,45 @@ export default function DiscountManagement() {
         ) as Record<string, Discount>,
       };
 
+      // Apply discounts to items
+      const updatePromises = items.map(async (item) => {
+        const discount = itemDiscounts[item.id];
+        if (discount && discount.value && discount.value > 0) {
+          // Set originalPrice if not already set
+          const originalPrice = item.originalPrice || item.price;
+          
+          // Calculate new price with discount
+          let newPrice = originalPrice;
+          if (discount.type === "percent") {
+            newPrice = originalPrice - (originalPrice * discount.value) / 100;
+          } else {
+            newPrice = Math.max(0, originalPrice - discount.value);
+          }
+          
+          // Update item in Firestore
+          await updateDoc(doc(db, "items", item.id), {
+            price: newPrice,
+            originalPrice: originalPrice,
+            updatedAt: new Date(),
+          });
+        } else {
+          // If no discount, restore original price if it exists
+          if (item.originalPrice && item.originalPrice !== item.price) {
+            await updateDoc(doc(db, "items", item.id), {
+              price: item.originalPrice,
+              updatedAt: new Date(),
+            });
+          }
+        }
+      });
+      
+      await Promise.all(updatePromises);
       await setDoc(doc(db, "settings", "discounts"), discountsData);
       setDiscounts(discountsData);
       
       toast({
         title: "Sconti salvati",
-        description: "Le configurazioni degli sconti sono state salvate con successo",
+        description: "Le configurazioni degli sconti sono state salvate con successo e applicate agli item",
       });
     } catch (error) {
       console.error("Error saving discounts:", error);
