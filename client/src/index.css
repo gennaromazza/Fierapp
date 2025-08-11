@@ -166,6 +166,106 @@
   .card-brand:hover {
     box-shadow: 0 4px 12px color-mix(in srgb, var(--brand-accent) 20%, transparent);
   }
+
+  /* Admin Panel Theming */
+  [data-state="active"] {
+    background-color: var(--brand-accent) !important;
+    color: white !important;
+  }
+
+  .tabs-trigger-active {
+    background-color: var(--brand-accent) !important;
+    color: white !important;
+  }
+
+  /* Dynamic Button Variants */
+  .btn-primary {
+    background-color: var(--brand-accent) !important;
+    border-color: var(--brand-accent) !important;
+    color: white !important;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .btn-secondary {
+    background-color: var(--brand-secondary) !important;
+    border-color: var(--brand-secondary) !important;
+    color: var(--brand-text) !important;
+  }
+
+  .btn-secondary:hover {
+    filter: brightness(0.95);
+  }
+
+  /* Dynamic Input Focus */
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--brand-accent) !important;
+    outline-color: var(--brand-accent) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent) 20%, transparent);
+  }
+
+  /* Dynamic Card Headers */
+  .card-header-brand {
+    background-color: var(--brand-secondary);
+    color: var(--brand-text);
+  }
+
+  /* Table Theming */
+  table thead {
+    background-color: var(--brand-primary) !important;
+    border-bottom: 2px solid var(--brand-accent);
+  }
+
+  table thead th {
+    color: var(--brand-text) !important;
+    font-weight: 600;
+  }
+
+  table tbody tr:hover {
+    background-color: color-mix(in srgb, var(--brand-secondary) 20%, transparent) !important;
+  }
+
+  /* Select and Dropdown Theming */
+  [role="combobox"]:focus {
+    border-color: var(--brand-accent) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent) 20%, transparent);
+  }
+
+  [role="option"]:hover {
+    background-color: var(--brand-secondary) !important;
+  }
+
+  [role="option"][data-highlighted] {
+    background-color: var(--brand-secondary) !important;
+  }
+
+  /* Badge Theming */
+  .badge-brand {
+    background-color: var(--brand-accent) !important;
+    color: white !important;
+  }
+
+  /* Dialog and Modal Theming */
+  [role="dialog"] {
+    border: 1px solid var(--brand-secondary);
+  }
+
+  /* Switch and Checkbox Theming */
+  [role="switch"][data-state="checked"] {
+    background-color: var(--brand-accent) !important;
+  }
+
+  input[type="checkbox"]:checked {
+    background-color: var(--brand-accent) !important;
+    border-color: var(--brand-accent) !important;
+  }
+
+  /* Toast Theming */
+  .toast-brand {
+    border-left: 4px solid var(--brand-accent);
+  }
 }
 
 @layer utilities {

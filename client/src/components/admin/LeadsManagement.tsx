@@ -191,31 +191,31 @@ export default function LeadsManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="card-brand">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-brand-accent">{stats.total}</div>
+            <div className="text-2xl font-bold" style={{ color: 'var(--brand-accent)' }}>{stats.total}</div>
             <p className="text-xs text-muted-foreground">Lead Totali</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-brand">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold" style={{ color: 'var(--brand-accent)' }}>
               €{stats.totalValue.toLocaleString('it-IT')}
             </div>
             <p className="text-xs text-muted-foreground">Valore Totale</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-brand">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold" style={{ color: 'var(--brand-secondary)' }}>
               €{stats.totalDiscount.toLocaleString('it-IT')}
             </div>
             <p className="text-xs text-muted-foreground">Sconti Totali</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-brand">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold" style={{ color: 'var(--brand-accent)' }}>
               €{stats.avgValue.toLocaleString('it-IT')}
             </div>
             <p className="text-xs text-muted-foreground">Valore Medio</p>

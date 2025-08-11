@@ -343,7 +343,7 @@ export default function ItemManagement() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-brand-accent hover:bg-brand-hover"
+                  className="btn-primary"
                 >
                   {isSubmitting ? "Salvando..." : "Salva"}
                 </Button>
@@ -351,6 +351,7 @@ export default function ItemManagement() {
                   type="button"
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
+                  className="hover:bg-brand-secondary hover:text-brand-text"
                 >
                   Annulla
                 </Button>
@@ -360,8 +361,8 @@ export default function ItemManagement() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="card-brand">
+        <CardHeader className="card-header-brand">
           <CardTitle>Items ({items.length})</CardTitle>
         </CardHeader>
         <CardContent>

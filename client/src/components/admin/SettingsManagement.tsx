@@ -185,7 +185,7 @@ export default function SettingsManagement() {
         <Button
           onClick={saveSettings}
           disabled={saving || logoUploading}
-          className="bg-brand-accent hover:bg-brand-hover"
+          className="btn-primary"
         >
           <Save className="w-4 h-4 mr-2" />
           {saving ? "Salvando..." : "Salva Impostazioni"}
@@ -202,8 +202,8 @@ export default function SettingsManagement() {
         </TabsList>
 
         <TabsContent value="studio">
-          <Card>
-            <CardHeader>
+          <Card className="card-brand">
+            <CardHeader className="card-header-brand">
               <CardTitle className="flex items-center space-x-2">
                 <SettingsIcon className="w-5 h-5" />
                 <span>Informazioni Studio</span>
@@ -248,8 +248,8 @@ export default function SettingsManagement() {
             />
 
             {/* Brand Colors */}
-            <Card>
-              <CardHeader>
+            <Card className="card-brand">
+              <CardHeader className="card-header-brand">
                 <CardTitle>Colori Brand</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -332,8 +332,8 @@ export default function SettingsManagement() {
         </TabsContent>
 
         <TabsContent value="contacts">
-          <Card>
-            <CardHeader>
+          <Card className="card-brand">
+            <CardHeader className="card-header-brand">
               <CardTitle className="flex items-center space-x-2">
                 <Phone className="w-5 h-5" />
                 <span>Informazioni di Contatto</span>
@@ -378,8 +378,8 @@ export default function SettingsManagement() {
         </TabsContent>
 
         <TabsContent value="forms">
-          <Card>
-            <CardHeader>
+          <Card className="card-brand">
+            <CardHeader className="card-header-brand">
               <CardTitle>Configurazione Form Lead</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -483,8 +483,8 @@ export default function SettingsManagement() {
         </TabsContent>
 
         <TabsContent value="integrations">
-          <Card>
-            <CardHeader>
+          <Card className="card-brand">
+            <CardHeader className="card-header-brand">
               <CardTitle>Integrazioni Esterne</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

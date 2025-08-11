@@ -229,7 +229,7 @@ export default function DiscountManagement() {
         <Button
           onClick={saveDiscounts}
           disabled={saving}
-          className="bg-brand-accent hover:bg-brand-hover"
+          className="btn-primary"
         >
           <Save className="w-4 h-4 mr-2" />
           {saving ? "Salvando..." : "Salva Configurazione"}
@@ -244,8 +244,8 @@ export default function DiscountManagement() {
         </TabsList>
 
         <TabsContent value="global">
-          <Card>
-            <CardHeader>
+          <Card className="card-brand">
+            <CardHeader className="card-header-brand">
               <CardTitle className="flex items-center space-x-2">
                 <Percent className="w-5 h-5" />
                 <span>Sconto Globale</span>
