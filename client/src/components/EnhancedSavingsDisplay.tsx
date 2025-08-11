@@ -68,14 +68,14 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
         key={animationKey}
         className={`
           inline-flex items-center bg-gradient-to-r ${config.bgGradient} 
-          text-white px-6 py-3 rounded-full font-bold text-lg shadow-lg
-          transform transition-all duration-300 hover:scale-105
-          animate-bounce-gentle
+          text-white px-8 py-4 rounded-2xl font-bold text-xl shadow-elegant
+          transform transition-all duration-300 hover:scale-110
+          glass border-2 border-white/40
         `}
       >
-        <IconComponent className="w-6 h-6 mr-2 animate-pulse" />
-        <span className="mr-2">Risparmi:</span>
-        <span className="font-mono text-xl tracking-wider">
+        <IconComponent className="w-7 h-7 mr-3 animate-float" />
+        <span className="mr-3">Risparmi:</span>
+        <span className="font-mono text-2xl tracking-wider text-yellow-300">
           €{discount.toLocaleString('it-IT')}
         </span>
       </div>

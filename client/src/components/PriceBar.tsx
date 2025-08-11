@@ -11,16 +11,16 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
   if (cart.itemCount === 0) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-brand-secondary shadow-2xl z-40">
+    <div className="fixed bottom-0 left-0 right-0 glass shadow-elegant border-t-2 z-40" style={{ borderColor: 'var(--brand-accent)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           {/* Price Breakdown */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-4">
               {/* Cart Icon with Count */}
-              <div className="relative">
-                <ShoppingCart className="w-6 h-6 text-brand-accent" />
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <div className="relative animate-float">
+                <ShoppingCart className="w-7 h-7" style={{ color: 'var(--brand-accent)' }} />
+                <span className="absolute -top-2 -right-2 gradient-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-glow">
                   {cart.itemCount}
                 </span>
               </div>
@@ -41,8 +41,8 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
               
               {/* Total Price */}
               <div className="text-right">
-                <div className="text-xs text-gray-500 sm:hidden">Totale</div>
-                <div className="text-xl font-bold text-brand-accent">
+                <div className="text-xs opacity-70 sm:hidden" style={{ color: 'var(--brand-accent)' }}>Totale</div>
+                <div className="text-2xl font-bold text-gradient">
                   €{cart.total.toLocaleString('it-IT')}
                 </div>
               </div>
@@ -52,7 +52,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
           {/* CTA Button */}
           <button
             onClick={onOpenCheckout}
-            className="ml-4 bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2 min-w-fit"
+            className="ml-4 btn-premium px-6 py-3 rounded-lg font-bold flex items-center space-x-2 min-w-fit animate-pulse-shadow"
           >
             <MessageCircle className="w-5 h-5" />
             <span className="hidden sm:inline">RICHIEDI INFO</span>

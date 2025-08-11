@@ -74,39 +74,38 @@ export default function ItemCard({ item }: ItemCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group"
-         style={{ borderColor: 'var(--brand-secondary)', borderWidth: '1px', borderStyle: 'solid' }}>
+    <div className="card-premium rounded-xl overflow-hidden hover-lift group">
       {/* Image with discount badge */}
       <div className="relative">
         {item.imageUrl ? (
           <img 
             src={item.imageUrl}
             alt={item.title}
-            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-400">Nessuna immagine</span>
+          <div className="w-full h-48 gradient-radial flex items-center justify-center">
+            <span className="text-gray-400 opacity-50">Nessuna immagine</span>
           </div>
         )}
         
         {/* Discount Badge */}
         {isDiscountActive && discountPercent > 0 && (
-          <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse-price">
+          <div className="absolute top-3 left-3 gradient-accent text-white px-4 py-2 rounded-full text-sm font-bold shadow-glow animate-pulse-shadow">
             -{discountPercent}%
           </div>
         )}
         
         {/* Free Badge */}
         {discountedPrice === 0 && (
-          <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+          <div className="absolute top-3 left-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-elegant">
             GRATIS
           </div>
         )}
         
         {/* Expiry Notice */}
         {discountExpiry && isDiscountActive && (
-          <div className="absolute top-3 right-3 bg-amber-500 text-white px-2 py-1 rounded text-xs font-medium">
+          <div className="absolute top-3 right-3 glass text-gray-800 px-3 py-1 rounded-lg text-xs font-medium">
             <Clock className="w-3 h-3 inline mr-1" />
             <span>
               {format(discountExpiry, "d MMM", { locale: it })}

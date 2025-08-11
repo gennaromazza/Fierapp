@@ -58,30 +58,28 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-sm shadow-sm"
+    <header className="sticky top-0 z-50 glass shadow-elegant"
             style={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              borderBottom: `1px solid var(--brand-secondary)`
+              borderBottom: `2px solid var(--brand-secondary)`
             }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo Section */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4 group cursor-pointer">
             {/* Studio logo */}
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden"
+            <div className="w-14 h-14 rounded-xl gradient-accent flex items-center justify-center overflow-hidden shadow-glow animate-float"
                  style={{ backgroundColor: 'var(--brand-accent)' }}>
               {logoUrl ? (
-                <img src={logoUrl} alt="Studio Logo" className="w-full h-full object-cover" />
+                <img src={logoUrl} alt="Studio Logo" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
               ) : (
-                <Camera className="w-6 h-6 text-white" />
+                <Camera className="w-8 h-8 text-white" />
               )}
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight"
-                  style={{ color: 'var(--brand-accent)' }}>
+              <h1 className="text-2xl font-bold tracking-tight text-gradient">
                 {settings?.studioName || "STUDIO DEMO"}
               </h1>
-              <p className="text-xs text-gray-600 hidden sm:block">
+              <p className="text-sm opacity-80" style={{ color: 'var(--brand-accent)' }}>
                 Servizi professionali per eventi
               </p>
             </div>

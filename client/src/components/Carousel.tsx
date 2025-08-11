@@ -142,23 +142,25 @@ export default function Carousel() {
     <div>
       {/* Mobile Tab Navigation */}
       <div className="md:hidden pb-3">
-        <div className="flex space-x-1 bg-brand-secondary/30 rounded-lg p-1">
+        <div className="flex space-x-2 glass rounded-xl p-2">
           <button
-            className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition-colors ${
+            className={`flex-1 py-3 px-5 rounded-lg font-semibold text-sm transition-all duration-300 ${
               activeTab === "servizi"
-                ? "bg-white text-brand-accent shadow-sm"
-                : "text-gray-600"
+                ? "gradient-accent text-white shadow-glow"
+                : "hover:scale-105"
             }`}
+            style={activeTab !== "servizi" ? { color: 'var(--brand-accent)' } : {}}
             onClick={() => setActiveTab("servizi")}
           >
             SERVIZI
           </button>
           <button
-            className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition-colors ${
+            className={`flex-1 py-3 px-5 rounded-lg font-semibold text-sm transition-all duration-300 ${
               activeTab === "prodotti"
-                ? "bg-white text-brand-accent shadow-sm"
-                : "text-gray-600"
+                ? "gradient-accent text-white shadow-glow"
+                : "hover:scale-105"
             }`}
+            style={activeTab !== "prodotti" ? { color: 'var(--brand-accent)' } : {}}
             onClick={() => setActiveTab("prodotti")}
           >
             PRODOTTI
@@ -167,22 +169,23 @@ export default function Carousel() {
       </div>
 
       {/* Desktop Tab Navigation */}
-      <div className="hidden md:flex items-center justify-center space-x-6 mb-8">
+      <div className="hidden md:flex items-center justify-center space-x-8 mb-10">
         <button
-          className={`font-medium pb-1 transition-colors ${
+          className={`font-semibold text-lg pb-2 transition-all duration-300 ${
             activeTab === "servizi"
-              ? "text-brand-accent border-b-2 border-brand-accent"
-              : "text-gray-600 hover:text-brand-accent"
+              ? "text-gradient border-b-3 shadow-glow scale-110"
+              : "opacity-70 hover:opacity-100 hover:scale-105"
           }`}
+          style={activeTab === "servizi" ? { borderBottom: '3px solid var(--brand-accent)' } : { color: 'var(--brand-accent)' }}
           onClick={() => setActiveTab("servizi")}
         >
           SERVIZI
         </button>
         <button
-          className={`font-medium pb-1 transition-colors ${
+          className={`font-semibold text-lg pb-2 transition-all duration-300 ${
             activeTab === "prodotti"
-              ? "text-brand-accent border-b-2 border-brand-accent"
-              : "text-gray-600 hover:text-brand-accent"
+              ? "text-gradient border-b-3 shadow-glow scale-110"
+              : "opacity-70 hover:opacity-100 hover:scale-105"
           }`}
           onClick={() => setActiveTab("prodotti")}
         >
