@@ -52,7 +52,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
           {/* CTA Button */}
           <button
             onClick={onOpenCheckout}
-            className="ml-4 btn-premium px-6 py-3 rounded-lg font-bold flex items-center space-x-2 min-w-fit animate-pulse-shadow"
+            className="ml-4 btn-premium px-6 py-3 rounded-lg font-bold flex items-center space-x-2 min-w-fit"
           >
             <MessageCircle className="w-5 h-5" />
             <span className="hidden sm:inline">RICHIEDI INFO</span>

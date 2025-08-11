@@ -209,7 +209,7 @@ export default function ItemManagement() {
         <h2 className="text-3xl font-bold text-gradient">Gestione Items</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="btn-premium animate-pulse-shadow">
+            <Button onClick={openCreateDialog} className="btn-premium">
               <Plus className="w-4 h-4 mr-2" />
               Nuovo Item
             </Button>

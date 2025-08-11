@@ -415,15 +415,7 @@
   }
 
   /* Pulse animation for CTAs */
-  @keyframes pulse-shadow {
-    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-accent) 70%, transparent); }
-    70% { box-shadow: 0 0 0 20px rgba(0, 0, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
-  }
 
-  .animate-pulse-shadow {
-    animation: pulse-shadow 2s infinite;
-  }
 
   /* Modern scrollbar */
   ::-webkit-scrollbar {

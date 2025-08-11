@@ -39,7 +39,7 @@ export default function Home() {
               {/* Enhanced Savings Display */}
               <EnhancedSavingsDisplay 
                 discount={cart.discount}
-                className="animate-pulse-shadow"
+                className=""
               />
             </div>
           </div>

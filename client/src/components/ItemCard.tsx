@@ -91,7 +91,7 @@ export default function ItemCard({ item }: ItemCardProps) {
         
         {/* Discount Badge */}
         {isDiscountActive && discountPercent > 0 && (
-          <div className="absolute top-3 left-3 bg-brand-accent text-white px-4 py-2 rounded-full text-sm font-bold shadow-glow animate-pulse-shadow">
+          <div className="absolute top-3 left-3 bg-brand-accent text-white px-4 py-2 rounded-full text-sm font-bold shadow-glow">
             -{discountPercent}%
           </div>
         )}

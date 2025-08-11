@@ -9,6 +9,7 @@ The system enables businesses to display special promotional offers at trade sho
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+User preference: Dislikes flashing/pulsing animation effects - prefers clean, static design without distracting animations.
 
 ## Recent Changes (January 11, 2025)
 
