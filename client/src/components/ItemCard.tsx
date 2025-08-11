@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { Item, Discounts } from "@shared/schema";
 import { useCart } from "../hooks/useCart";
@@ -34,34 +34,84 @@ export default function ItemCard({ item }: ItemCardProps) {
     : item.description;
 
   useEffect(() => {
-    async function loadDiscounts() {
-      try {
-        const discountsDoc = await getDoc(doc(db, "settings", "discounts"));
-        if (discountsDoc.exists()) {
-          const discountsData = discountsDoc.data() as Discounts;
-          setDiscounts(discountsData);
-          
-          // Check for discount expiry
-          const itemDiscount = discountsData.perItemOverrides?.[item.id] || discountsData.global;
-          if (itemDiscount?.endDate) {
-            setDiscountExpiry(itemDiscount.endDate);
+    // Use real-time listener for discounts
+    const unsubscribe = onSnapshot(doc(db, "settings", "discounts"), (discountsDoc) => {
+      if (discountsDoc.exists()) {
+        const discountsData = discountsDoc.data() as Discounts;
+        
+        // Convert Firebase Timestamps to Date objects safely
+        const processedDiscounts = { ...discountsData };
+        
+        // Process global discount dates
+        if (processedDiscounts.global?.startDate) {
+          if (processedDiscounts.global.startDate.toDate && typeof processedDiscounts.global.startDate.toDate === 'function') {
+            processedDiscounts.global.startDate = processedDiscounts.global.startDate.toDate();
+          } else if (typeof processedDiscounts.global.startDate === 'string' || typeof processedDiscounts.global.startDate === 'number') {
+            const date = new Date(processedDiscounts.global.startDate);
+            processedDiscounts.global.startDate = isNaN(date.getTime()) ? undefined : date;
           }
-        } else {
-          // Set default discount structure if document doesn't exist
-          setDiscounts({
-            global: { type: "percent", value: 0, isActive: false }
+        }
+        
+        if (processedDiscounts.global?.endDate) {
+          if (processedDiscounts.global.endDate.toDate && typeof processedDiscounts.global.endDate.toDate === 'function') {
+            processedDiscounts.global.endDate = processedDiscounts.global.endDate.toDate();
+          } else if (typeof processedDiscounts.global.endDate === 'string' || typeof processedDiscounts.global.endDate === 'number') {
+            const date = new Date(processedDiscounts.global.endDate);
+            processedDiscounts.global.endDate = isNaN(date.getTime()) ? undefined : date;
+          }
+        }
+        
+        // Process item-specific discount dates
+        if (processedDiscounts.perItemOverrides) {
+          Object.keys(processedDiscounts.perItemOverrides).forEach(key => {
+            const itemDiscount = processedDiscounts.perItemOverrides![key];
+            
+            if (itemDiscount.startDate) {
+              if (itemDiscount.startDate.toDate && typeof itemDiscount.startDate.toDate === 'function') {
+                itemDiscount.startDate = itemDiscount.startDate.toDate();
+              } else if (typeof itemDiscount.startDate === 'string' || typeof itemDiscount.startDate === 'number') {
+                const date = new Date(itemDiscount.startDate);
+                itemDiscount.startDate = isNaN(date.getTime()) ? undefined : date;
+              }
+            }
+            
+            if (itemDiscount.endDate) {
+              if (itemDiscount.endDate.toDate && typeof itemDiscount.endDate.toDate === 'function') {
+                itemDiscount.endDate = itemDiscount.endDate.toDate();
+              } else if (typeof itemDiscount.endDate === 'string' || typeof itemDiscount.endDate === 'number') {
+                const date = new Date(itemDiscount.endDate);
+                itemDiscount.endDate = isNaN(date.getTime()) ? undefined : date;
+              }
+            }
           });
         }
-      } catch (error) {
-        console.error("Error loading discounts:", error);
-        // Set fallback discounts in case of error  
+        
+        setDiscounts(processedDiscounts);
+        
+        // Check for discount expiry
+        const itemDiscount = processedDiscounts.perItemOverrides?.[item.id] || processedDiscounts.global;
+        if (itemDiscount?.endDate) {
+          setDiscountExpiry(itemDiscount.endDate);
+        } else {
+          setDiscountExpiry(null);
+        }
+      } else {
+        // Set default discount structure if document doesn't exist
         setDiscounts({
           global: { type: "percent", value: 0, isActive: false }
         });
+        setDiscountExpiry(null);
       }
-    }
+    }, (error) => {
+      console.error("Error loading discounts:", error);
+      // Set fallback discounts in case of error  
+      setDiscounts({
+        global: { type: "percent", value: 0, isActive: false }
+      });
+      setDiscountExpiry(null);
+    });
 
-    loadDiscounts();
+    return () => unsubscribe();
   }, [item.id]);
 
   const discountedPrice = discounts ? calculateDiscountedPrice(item.price, item.id, discounts) : item.price;
