@@ -89,9 +89,9 @@ export default function ItemCard({ item }: ItemCardProps) {
   };
 
   return (
-    <div className="card-premium rounded-xl overflow-hidden hover-lift group">
+    <div className="card-premium rounded-xl overflow-hidden hover-lift group h-[600px] flex flex-col">
       {/* Image with discount badge */}
-      <div className="relative">
+      <div className="relative flex-shrink-0">
         {item.imageUrl ? (
           <img 
             src={item.imageUrl}
@@ -129,43 +129,45 @@ export default function ItemCard({ item }: ItemCardProps) {
         )}
       </div>
       
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-brand-accent mb-2">{item.title}</h3>
-        {item.subtitle && (
-          <p className="text-sm text-gray-500 mb-2">{item.subtitle}</p>
-        )}
-        {item.description && (
-          <div className="text-gray-600 mb-4">
-            <p>{displayDescription}</p>
-            {shouldTruncate && (
-              <button
-                onClick={() => setShowFullDescription(!showFullDescription)}
-                className="text-brand-accent hover:underline text-sm font-medium mt-1"
-              >
-                {showFullDescription ? "Mostra meno" : "Continua a leggere"}
-              </button>
-            )}
-          </div>
-        )}
-        
-        {/* Price Display with Savings */}
-        <div className="space-y-2 mb-4">
-          {savings > 0 && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 line-through">
-                €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-              </span>
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-bold">
-                Risparmi €{savings.toLocaleString('it-IT')}
-              </span>
+      <div className="p-6 flex flex-col flex-grow">
+        <div className="flex-grow">
+          <h3 className="text-xl font-bold text-brand-accent mb-2">{item.title}</h3>
+          {item.subtitle && (
+            <p className="text-sm text-gray-500 mb-2">{item.subtitle}</p>
+          )}
+          {item.description && (
+            <div className="text-gray-600 mb-4">
+              <p>{displayDescription}</p>
+              {shouldTruncate && (
+                <button
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                  className="text-brand-accent hover:underline text-sm font-medium mt-1"
+                >
+                  {showFullDescription ? "Mostra meno" : "Continua a leggere"}
+                </button>
+              )}
             </div>
           )}
-          <div className={`text-2xl font-bold price-drop ${discountedPrice === 0 ? 'text-green-600' : 'text-brand-accent'}`}>
-            {discountedPrice === 0 ? 'GRATIS' : `€${discountedPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`}
+          
+          {/* Price Display with Savings */}
+          <div className="space-y-2 mb-4">
+            {savings > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500 line-through">
+                  €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                </span>
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-bold">
+                  Risparmi €{savings.toLocaleString('it-IT')}
+                </span>
+              </div>
+            )}
+            <div className={`text-2xl font-bold price-drop ${discountedPrice === 0 ? 'text-green-600' : 'text-brand-accent'}`}>
+              {discountedPrice === 0 ? 'GRATIS' : `€${discountedPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`}
+            </div>
           </div>
         </div>
         
-        {/* Add/Remove Button */}
+        {/* Add/Remove Button - Fixed at bottom */}
         <button
           onClick={handleToggle}
           className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center space-x-2 ${
