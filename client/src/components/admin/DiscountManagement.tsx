@@ -31,7 +31,7 @@ export default function DiscountManagement() {
   const [globalDiscount, setGlobalDiscount] = useState<Partial<Discount>>({
     type: "percent",
     value: 0,
-    isActive: true,
+    isActive: false,
   });
 
   // Item-specific discounts
@@ -162,7 +162,7 @@ export default function DiscountManagement() {
       setSaving(true);
       
       const discountsData: Discounts = {
-        global: globalDiscount.value && globalDiscount.value > 0 ? globalDiscount as Discount : undefined,
+        global: globalDiscount.isActive && globalDiscount.value && globalDiscount.value > 0 ? globalDiscount as Discount : undefined,
       };
 
       await setDoc(doc(db, "settings", "discounts"), discountsData);
@@ -170,7 +170,7 @@ export default function DiscountManagement() {
       
       toast({
         title: "Sconti salvati",
-        description: "Le configurazioni degli sconti sono state salvate con successo e applicate agli item",
+        description: "Le configurazioni degli sconti sono state salvate con successo",
       });
     } catch (error) {
       console.error("Error saving discounts:", error);
@@ -234,7 +234,7 @@ export default function DiscountManagement() {
   };
 
   const getDiscountStatus = (discount: Partial<Discount>) => {
-    if (!discount.value || discount.value <= 0) return "inactive";
+    if (!discount.isActive || !discount.value || discount.value <= 0) return "inactive";
     if (isDiscountExpired(discount)) return "expired";
     if (!isDiscountActive(discount)) return "scheduled";
     return "active";
@@ -335,12 +335,30 @@ export default function DiscountManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Enable/Disable Toggle */}
+            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border">
+              <input
+                type="checkbox"
+                id="global-discount-enabled"
+                checked={globalDiscount.isActive || false}
+                onChange={(e) => updateGlobalDiscount("isActive", e.target.checked)}
+                className="w-4 h-4 text-brand-accent bg-gray-100 border-gray-300 rounded focus:ring-brand-accent focus:ring-2"
+              />
+              <Label htmlFor="global-discount-enabled" className="text-sm font-medium">
+                Abilita sconto globale
+              </Label>
+              <div className="ml-auto">
+                {getStatusBadge(getDiscountStatus(globalDiscount))}
+              </div>
+            </div>
+
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-200 ${!globalDiscount.isActive ? 'opacity-50 pointer-events-none' : ''}`}>
               <div>
                 <Label htmlFor="global-type">Tipo Sconto</Label>
                 <Select
                   value={globalDiscount.type}
                   onValueChange={(value: "percent" | "fixed") => updateGlobalDiscount("type", value)}
+                  disabled={!globalDiscount.isActive}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -359,20 +377,19 @@ export default function DiscountManagement() {
                 <Input
                   id="global-value"
                   type="number"
-                  min="0"
+                  min="0.01"
                   max={globalDiscount.type === "percent" ? "100" : undefined}
                   step={globalDiscount.type === "percent" ? "1" : "0.01"}
                   value={globalDiscount.value || ""}
                   onChange={(e) => updateGlobalDiscount("value", parseFloat(e.target.value) || 0)}
-                  placeholder="0"
+                  placeholder="Inserisci valore"
+                  disabled={!globalDiscount.isActive}
                 />
-              </div>
-
-              <div>
-                <Label>Stato</Label>
-                <div className="mt-2">
-                  {getStatusBadge(getDiscountStatus(globalDiscount))}
-                </div>
+                {globalDiscount.isActive && (!globalDiscount.value || globalDiscount.value <= 0) && (
+                  <p className="text-sm text-red-600 mt-1">
+                    Inserisci un valore maggiore di 0
+                  </p>
+                )}
               </div>
             </div>
 
