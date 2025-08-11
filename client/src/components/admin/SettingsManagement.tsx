@@ -46,6 +46,113 @@ export default function SettingsManagement() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
 
+  // Palette management functions
+  const handlePaletteUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      let palette: any;
+
+      if (file.name.endsWith('.json')) {
+        palette = JSON.parse(text);
+      } else if (file.name.endsWith('.txt')) {
+        // Simple text format: one hex color per line
+        const colors = text.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.startsWith('#'))
+          .slice(0, 9); // Take first 9 colors
+        
+        if (colors.length >= 3) {
+          palette = {
+            brandPrimary: colors[0] || "#F1EFEC",
+            brandSecondary: colors[1] || "#D4C9BE", 
+            brandAccent: colors[2] || "#123458",
+            brandTextPrimary: colors[3] || "#1a1a1a",
+            brandTextSecondary: colors[4] || "#6b7280",
+            brandTextAccent: colors[5] || "#123458",
+            brandBackground: colors[6] || "#ffffff",
+            brandSurface: colors[7] || "#f8fafc",
+            brandBorder: colors[8] || "#e2e8f0"
+          };
+        }
+      }
+
+      if (palette && typeof palette === 'object') {
+        setSettings(prev => ({ ...prev, ...palette }));
+        toast({
+          title: "Palette Caricata",
+          description: "I colori dalla palette sono stati applicati con successo"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Impossibile leggere il file palette",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const applyPresetPalette = (preset: string) => {
+    const palettes = {
+      elegant: {
+        brandPrimary: "#f8fafc",
+        brandSecondary: "#e2e8f0", 
+        brandAccent: "#475569",
+        brandTextPrimary: "#1e293b",
+        brandTextSecondary: "#64748b",
+        brandTextAccent: "#334155",
+        brandBackground: "#ffffff",
+        brandSurface: "#f1f5f9",
+        brandBorder: "#cbd5e1"
+      },
+      vibrant: {
+        brandPrimary: "#eff6ff",
+        brandSecondary: "#bfdbfe",
+        brandAccent: "#2563eb",
+        brandTextPrimary: "#1e40af",
+        brandTextSecondary: "#6b7280",
+        brandTextAccent: "#1d4ed8",
+        brandBackground: "#ffffff", 
+        brandSurface: "#f0f9ff",
+        brandBorder: "#93c5fd"
+      },
+      earth: {
+        brandPrimary: "#fefce8",
+        brandSecondary: "#fde68a",
+        brandAccent: "#b45309",
+        brandTextPrimary: "#92400e",
+        brandTextSecondary: "#6b7280",
+        brandTextAccent: "#a16207",
+        brandBackground: "#fffbeb",
+        brandSurface: "#fef3c7",
+        brandBorder: "#f3e8ff"
+      },
+      ocean: {
+        brandPrimary: "#ecfdf5",
+        brandSecondary: "#a7f3d0",
+        brandAccent: "#047857",
+        brandTextPrimary: "#064e3b",
+        brandTextSecondary: "#6b7280",
+        brandTextAccent: "#059669",
+        brandBackground: "#f0fdfa",
+        brandSurface: "#ccfbf1",
+        brandBorder: "#6ee7b7"
+      }
+    };
+
+    const selectedPalette = palettes[preset as keyof typeof palettes];
+    if (selectedPalette) {
+      setSettings(prev => ({ ...prev, ...selectedPalette }));
+      toast({
+        title: "Palette Applicata",
+        description: `Palette "${preset}" applicata con successo`
+      });
+    }
+  };
+
   useEffect(() => {
     loadSettings();
   }, []);
@@ -247,87 +354,318 @@ export default function SettingsManagement() {
               disabled={saving}
             />
 
-            {/* Brand Colors */}
-            <Card className="card-premium shadow-elegant">
-              <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
-                <CardTitle className="text-xl font-bold text-gradient">Colori Brand</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="brandPrimary">Colore Primario</Label>
-                  <div className="flex items-center space-x-2 mt-1">
+            {/* Advanced Color Palette */}
+            <div className="space-y-6">
+              {/* Color Palette Loader */}
+              <Card className="card-premium shadow-elegant">
+                <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
+                  <CardTitle className="text-xl font-bold text-brand-accent">🎨 Carica Palette</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="paletteFile">Carica file palette (.json, .ase, .txt)</Label>
                     <Input
-                      id="brandPrimary"
-                      type="color"
-                      value={settings.brandPrimary || "#F1EFEC"}
-                      onChange={(e) => setSettings({ ...settings, brandPrimary: e.target.value })}
-                      className="w-20 h-10"
+                      id="paletteFile"
+                      type="file"
+                      accept=".json,.ase,.txt"
+                      onChange={handlePaletteUpload}
+                      className="mt-1"
                     />
-                    <Input
-                      value={settings.brandPrimary || "#F1EFEC"}
-                      onChange={(e) => setSettings({ ...settings, brandPrimary: e.target.value })}
-                      placeholder="#F1EFEC"
-                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Supporta file JSON con colori hex o file Adobe Swatch Exchange (.ase)
+                    </p>
                   </div>
-                  <div className="mt-2 p-3 rounded-lg border" style={{ backgroundColor: settings.brandPrimary || "#F1EFEC" }}>
-                    <span className="text-sm font-medium">Anteprima Primario</span>
+                  
+                  {/* Preset Palettes */}
+                  <div>
+                    <Label>Palette Predefinite</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => applyPresetPalette('elegant')}
+                        className="justify-start space-x-2"
+                      >
+                        <div className="flex space-x-1">
+                          <div className="w-3 h-3 rounded-full bg-slate-100"></div>
+                          <div className="w-3 h-3 rounded-full bg-slate-300"></div>
+                          <div className="w-3 h-3 rounded-full bg-slate-600"></div>
+                        </div>
+                        <span>Elegante</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => applyPresetPalette('vibrant')}
+                        className="justify-start space-x-2"
+                      >
+                        <div className="flex space-x-1">
+                          <div className="w-3 h-3 rounded-full bg-blue-50"></div>
+                          <div className="w-3 h-3 rounded-full bg-blue-200"></div>
+                          <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                        </div>
+                        <span>Vibrante</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => applyPresetPalette('earth')}
+                        className="justify-start space-x-2"
+                      >
+                        <div className="flex space-x-1">
+                          <div className="w-3 h-3 rounded-full bg-amber-50"></div>
+                          <div className="w-3 h-3 rounded-full bg-amber-200"></div>
+                          <div className="w-3 h-3 rounded-full bg-amber-700"></div>
+                        </div>
+                        <span>Terra</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => applyPresetPalette('ocean')}
+                        className="justify-start space-x-2"
+                      >
+                        <div className="flex space-x-1">
+                          <div className="w-3 h-3 rounded-full bg-cyan-50"></div>
+                          <div className="w-3 h-3 rounded-full bg-cyan-200"></div>
+                          <div className="w-3 h-3 rounded-full bg-cyan-700"></div>
+                        </div>
+                        <span>Oceano</span>
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                <div>
-                  <Label htmlFor="brandSecondary">Colore Secondario</Label>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Input
-                      id="brandSecondary"
-                      type="color"
-                      value={settings.brandSecondary || "#D4C9BE"}
-                      onChange={(e) => setSettings({ ...settings, brandSecondary: e.target.value })}
-                      className="w-20 h-10"
-                    />
-                    <Input
-                      value={settings.brandSecondary || "#D4C9BE"}
-                      onChange={(e) => setSettings({ ...settings, brandSecondary: e.target.value })}
-                      placeholder="#D4C9BE"
-                    />
+              {/* Brand Colors */}
+              <Card className="card-premium shadow-elegant">
+                <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
+                  <CardTitle className="text-xl font-bold text-brand-accent">🎨 Colori Brand</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Main Colors */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-brand-text-accent">Colori Principali</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="brandPrimary">Primario</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="brandPrimary"
+                            type="color"
+                            value={settings.brandPrimary || "#F1EFEC"}
+                            onChange={(e) => setSettings({ ...settings, brandPrimary: e.target.value })}
+                            className="w-12 h-12"
+                          />
+                          <Input
+                            value={settings.brandPrimary || "#F1EFEC"}
+                            onChange={(e) => setSettings({ ...settings, brandPrimary: e.target.value })}
+                            placeholder="#F1EFEC"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="brandSecondary">Secondario</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="brandSecondary"
+                            type="color"
+                            value={settings.brandSecondary || "#D4C9BE"}
+                            onChange={(e) => setSettings({ ...settings, brandSecondary: e.target.value })}
+                            className="w-12 h-12"
+                          />
+                          <Input
+                            value={settings.brandSecondary || "#D4C9BE"}
+                            onChange={(e) => setSettings({ ...settings, brandSecondary: e.target.value })}
+                            placeholder="#D4C9BE"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="brandAccent">Accento</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="brandAccent"
+                            type="color"
+                            value={settings.brandAccent || "#123458"}
+                            onChange={(e) => setSettings({ ...settings, brandAccent: e.target.value })}
+                            className="w-12 h-12"
+                          />
+                          <Input
+                            value={settings.brandAccent || "#123458"}
+                            onChange={(e) => setSettings({ ...settings, brandAccent: e.target.value })}
+                            placeholder="#123458"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-2 p-3 rounded-lg border" style={{ backgroundColor: settings.brandSecondary || "#D4C9BE" }}>
-                    <span className="text-sm font-medium">Anteprima Secondario</span>
-                  </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="brandAccent">Colore Accento</Label>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Input
-                      id="brandAccent"
-                      type="color"
-                      value={settings.brandAccent || "#123458"}
-                      onChange={(e) => setSettings({ ...settings, brandAccent: e.target.value })}
-                      className="w-20 h-10"
-                    />
-                    <Input
-                      value={settings.brandAccent || "#123458"}
-                      onChange={(e) => setSettings({ ...settings, brandAccent: e.target.value })}
-                      placeholder="#123458"
-                    />
+                  {/* Text Colors */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-brand-text-accent">Colori Testo</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="brandTextPrimary">Testo Primario</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="brandTextPrimary"
+                            type="color"
+                            value={settings.brandTextPrimary || "#1a1a1a"}
+                            onChange={(e) => setSettings({ ...settings, brandTextPrimary: e.target.value })}
+                            className="w-12 h-12"
+                          />
+                          <Input
+                            value={settings.brandTextPrimary || "#1a1a1a"}
+                            onChange={(e) => setSettings({ ...settings, brandTextPrimary: e.target.value })}
+                            placeholder="#1a1a1a"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="brandTextSecondary">Testo Secondario</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="brandTextSecondary"
+                            type="color"
+                            value={settings.brandTextSecondary || "#6b7280"}
+                            onChange={(e) => setSettings({ ...settings, brandTextSecondary: e.target.value })}
+                            className="w-12 h-12"
+                          />
+                          <Input
+                            value={settings.brandTextSecondary || "#6b7280"}
+                            onChange={(e) => setSettings({ ...settings, brandTextSecondary: e.target.value })}
+                            placeholder="#6b7280"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="brandTextAccent">Testo Accento</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="brandTextAccent"
+                            type="color"
+                            value={settings.brandTextAccent || "#123458"}
+                            onChange={(e) => setSettings({ ...settings, brandTextAccent: e.target.value })}
+                            className="w-12 h-12"
+                          />
+                          <Input
+                            value={settings.brandTextAccent || "#123458"}
+                            onChange={(e) => setSettings({ ...settings, brandTextAccent: e.target.value })}
+                            placeholder="#123458"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-2 p-3 rounded-lg border text-white" style={{ backgroundColor: settings.brandAccent || "#123458" }}>
-                    <span className="text-sm font-medium">Anteprima Accento</span>
+
+                  {/* Surface Colors */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-brand-text-accent">Colori Superfici</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="brandBackground">Sfondo</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="brandBackground"
+                            type="color"
+                            value={settings.brandBackground || "#ffffff"}
+                            onChange={(e) => setSettings({ ...settings, brandBackground: e.target.value })}
+                            className="w-12 h-12"
+                          />
+                          <Input
+                            value={settings.brandBackground || "#ffffff"}
+                            onChange={(e) => setSettings({ ...settings, brandBackground: e.target.value })}
+                            placeholder="#ffffff"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="brandSurface">Superficie</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="brandSurface"
+                            type="color"
+                            value={settings.brandSurface || "#f8fafc"}
+                            onChange={(e) => setSettings({ ...settings, brandSurface: e.target.value })}
+                            className="w-12 h-12"
+                          />
+                          <Input
+                            value={settings.brandSurface || "#f8fafc"}
+                            onChange={(e) => setSettings({ ...settings, brandSurface: e.target.value })}
+                            placeholder="#f8fafc"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="brandBorder">Bordi</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input
+                            id="brandBorder"
+                            type="color"
+                            value={settings.brandBorder || "#e2e8f0"}
+                            onChange={(e) => setSettings({ ...settings, brandBorder: e.target.value })}
+                            className="w-12 h-12"
+                          />
+                          <Input
+                            value={settings.brandBorder || "#e2e8f0"}
+                            onChange={(e) => setSettings({ ...settings, brandBorder: e.target.value })}
+                            placeholder="#e2e8f0"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-2">
-                    <strong>Nota:</strong> I colori vengono applicati automaticamente a tutta l'applicazione in tempo reale.
-                  </p>
-                  <ul className="text-xs text-gray-500 space-y-1">
-                    <li>• <strong>Primario:</strong> Sfondi principali e aree contenuto</li>
-                    <li>• <strong>Secondario:</strong> Bordi, divisori e elementi di supporto</li>
-                    <li>• <strong>Accento:</strong> Pulsanti, titoli e elementi interattivi</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+
+                  {/* Color Preview */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-brand-text-accent">Anteprima</h4>
+                    <div className="p-6 rounded-lg border" style={{ 
+                      backgroundColor: settings.brandBackground || "#ffffff",
+                      borderColor: settings.brandBorder || "#e2e8f0"
+                    }}>
+                      <div className="space-y-3">
+                        <h5 style={{ color: settings.brandTextPrimary || "#1a1a1a" }} className="text-lg font-bold">
+                          Testo Primario
+                        </h5>
+                        <p style={{ color: settings.brandTextSecondary || "#6b7280" }}>
+                          Questo è un esempio di testo secondario per vedere come appare con i tuoi colori.
+                        </p>
+                        <p style={{ color: settings.brandTextAccent || "#123458" }} className="font-semibold">
+                          Testo con colore accento
+                        </p>
+                        <div className="flex space-x-3 mt-4">
+                          <div 
+                            className="px-4 py-2 rounded text-white font-medium" 
+                            style={{ backgroundColor: settings.brandAccent || "#123458" }}
+                          >
+                            Pulsante Principale
+                          </div>
+                          <div 
+                            className="px-4 py-2 rounded" 
+                            style={{ 
+                              backgroundColor: settings.brandSecondary || "#D4C9BE",
+                              color: settings.brandTextPrimary || "#1a1a1a"
+                            }}
+                          >
+                            Pulsante Secondario
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </TabsContent>
 

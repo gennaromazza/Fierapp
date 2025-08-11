@@ -84,21 +84,21 @@ export default function ItemCard({ item }: ItemCardProps) {
             className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-48 gradient-radial flex items-center justify-center">
-            <span className="text-gray-400 opacity-50">Nessuna immagine</span>
+          <div className="w-full h-48 bg-brand-surface flex items-center justify-center">
+            <span className="text-brand-text-secondary opacity-50">Nessuna immagine</span>
           </div>
         )}
         
         {/* Discount Badge */}
         {isDiscountActive && discountPercent > 0 && (
-          <div className="absolute top-3 left-3 gradient-accent text-white px-4 py-2 rounded-full text-sm font-bold shadow-glow animate-pulse-shadow">
+          <div className="absolute top-3 left-3 bg-brand-accent text-white px-4 py-2 rounded-full text-sm font-bold shadow-glow animate-pulse-shadow">
             -{discountPercent}%
           </div>
         )}
         
         {/* Free Badge */}
         {discountedPrice === 0 && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-elegant">
+          <div className="absolute top-3 left-3 bg-green-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-elegant">
             GRATIS
           </div>
         )}

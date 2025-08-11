@@ -20,7 +20,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
               {/* Cart Icon with Count */}
               <div className="relative animate-float">
                 <ShoppingCart className="w-7 h-7" style={{ color: 'var(--brand-accent)' }} />
-                <span className="absolute -top-2 -right-2 gradient-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-glow">
+                <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-glow">
                   {cart.itemCount}
                 </span>
               </div>
@@ -42,7 +42,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
               {/* Total Price */}
               <div className="text-right">
                 <div className="text-xs opacity-70 sm:hidden" style={{ color: 'var(--brand-accent)' }}>Totale</div>
-                <div className="text-2xl font-bold text-gradient">
+                <div className="text-2xl font-bold text-brand-accent">
                   €{cart.total.toLocaleString('it-IT')}
                 </div>
               </div>

@@ -21,12 +21,12 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen gradient-radial">
+    <div className="min-h-screen bg-brand-background">
       <Header />
       
       <main className="pb-32">
         {/* Hero Section */}
-        <section className="gradient-accent text-white py-12 relative overflow-hidden">
+        <section className="bg-brand-accent text-white py-12 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
             <div className="animate-fade-in">
               <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight uppercase font-serif animate-float">

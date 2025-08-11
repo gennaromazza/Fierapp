@@ -14,10 +14,9 @@ export function useBrandColors() {
         const settings = docSnapshot.data() as Settings;
         const root = document.documentElement;
         
-        // Apply brand colors to CSS variables
+        // Apply main brand colors
         if (settings.brandPrimary) {
           root.style.setProperty('--brand-primary', settings.brandPrimary);
-          // Also update Tailwind CSS variables
           root.style.setProperty('--primary', convertToHSL(settings.brandPrimary));
         }
         if (settings.brandSecondary) {
@@ -27,34 +26,46 @@ export function useBrandColors() {
         if (settings.brandAccent) {
           root.style.setProperty('--brand-accent', settings.brandAccent);
           root.style.setProperty('--accent', convertToHSL(settings.brandAccent));
-          
-          // Update primary colors for buttons
-          root.style.setProperty('--primary', convertToHSL(settings.brandAccent));
-          root.style.setProperty('--primary-foreground', '0 0% 100%');
-        }
-        
-        // Calculate complementary colors
-        if (settings.brandAccent) {
           // Create hover state color (slightly darker)
           const hoverColor = adjustBrightness(settings.brandAccent, -20);
           root.style.setProperty('--brand-hover', hoverColor);
-          
-          // Set text color based on background
-          const textColor = getContrastColor(settings.brandPrimary || '#F1EFEC');
-          root.style.setProperty('--brand-text', textColor);
-          
-          // Update border colors
-          root.style.setProperty('--border', convertToHSL(settings.brandSecondary || '#D4C9BE'));
-          
-          // Update ring color for focus states
+        }
+        
+        // Apply advanced text colors
+        if (settings.brandTextPrimary) {
+          root.style.setProperty('--brand-text-primary', settings.brandTextPrimary);
+          root.style.setProperty('--foreground', convertToHSL(settings.brandTextPrimary));
+        }
+        if (settings.brandTextSecondary) {
+          root.style.setProperty('--brand-text-secondary', settings.brandTextSecondary);
+          root.style.setProperty('--muted-foreground', convertToHSL(settings.brandTextSecondary));
+        }
+        if (settings.brandTextAccent) {
+          root.style.setProperty('--brand-text-accent', settings.brandTextAccent);
+        }
+        
+        // Apply background and surface colors
+        if (settings.brandBackground) {
+          root.style.setProperty('--brand-background', settings.brandBackground);
+          root.style.setProperty('--background', convertToHSL(settings.brandBackground));
+        }
+        if (settings.brandSurface) {
+          root.style.setProperty('--brand-surface', settings.brandSurface);
+          root.style.setProperty('--card', convertToHSL(settings.brandSurface));
+        }
+        if (settings.brandBorder) {
+          root.style.setProperty('--brand-border', settings.brandBorder);
+          root.style.setProperty('--border', convertToHSL(settings.brandBorder));
+        }
+        
+        // Update ring color for focus states
+        if (settings.brandAccent) {
           root.style.setProperty('--ring', convertToHSL(settings.brandAccent));
         }
         
-        // Update muted colors
-        if (settings.brandSecondary) {
-          root.style.setProperty('--muted', convertToHSL(lightenColor(settings.brandSecondary, 30)));
-          root.style.setProperty('--muted-foreground', convertToHSL(darkenColor(settings.brandSecondary, 40)));
-        }
+        // Legacy brand-text for backward compatibility
+        const legacyTextColor = getContrastColor(settings.brandPrimary || '#F1EFEC');
+        root.style.setProperty('--brand-text', legacyTextColor);
       }
     });
 

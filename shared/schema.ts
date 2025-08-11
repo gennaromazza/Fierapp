@@ -56,6 +56,13 @@ export const settingsSchema = z.object({
   brandPrimary: z.string().default("#F1EFEC"),
   brandSecondary: z.string().default("#D4C9BE"),
   brandAccent: z.string().default("#123458"),
+  // Advanced color controls
+  brandTextPrimary: z.string().default("#1a1a1a"), // Main text color
+  brandTextSecondary: z.string().default("#6b7280"), // Secondary text color
+  brandTextAccent: z.string().default("#123458"), // Accent text color
+  brandBackground: z.string().default("#ffffff"), // Main background
+  brandSurface: z.string().default("#f8fafc"), // Card/surface color
+  brandBorder: z.string().default("#e2e8f0"), // Border color
   whatsappNumber: z.string().optional(),
   phoneNumber: z.string().optional(),
   email: z.string().email().optional(),
