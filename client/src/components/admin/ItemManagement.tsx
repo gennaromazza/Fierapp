@@ -214,7 +214,7 @@ export default function ItemManagement() {
               Nuovo Item
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass" style={{ backgroundColor: 'var(--brand-primary)' }}>
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-gradient">
                 {editingItem ? "Modifica Item" : "Nuovo Item"}
