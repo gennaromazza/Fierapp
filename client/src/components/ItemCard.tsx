@@ -39,7 +39,7 @@ export default function ItemCard({ item }: ItemCardProps) {
         }
       } catch (error) {
         console.error("Error loading discounts:", error);
-        // Set fallback discounts in case of error
+        // Set fallback discounts in case of error  
         setDiscounts({
           global: { type: "percent", value: 0, isActive: false }
         });

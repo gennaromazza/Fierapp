@@ -13,48 +13,9 @@ export default function Footer() {
         const settingsDoc = await getDoc(doc(db, "settings", "app"));
         if (settingsDoc.exists()) {
           setSettings(settingsDoc.data() as Settings);
-        } else {
-          // Set default settings if document doesn't exist
-          setSettings({
-            studioName: "STUDIO DEMO",
-            email: "info@studiodemo.it",
-            phoneNumber: "+39 123 456 7890",
-            studioAddress: "Via Demo 123, Milano, Italia",
-            brandPrimary: "#1a365d",
-            brandSecondary: "#2d5a87", 
-            brandAccent: "#f56500",
-            formFields: [
-              { type: "text", label: "Nome", required: true },
-              { type: "text", label: "Cognome", required: true },
-              { type: "email", label: "Email", required: true },
-              { type: "tel", label: "Telefono", required: true },
-              { type: "date", label: "Data evento", required: true },
-              { type: "textarea", label: "Note aggiuntive", required: false },
-            ],
-            gdprText: "Acconsento al trattamento dei miei dati personali secondo la Privacy Policy."
-          });
         }
       } catch (error) {
         console.error("Error loading settings:", error);
-        // Set fallback settings in case of error
-        setSettings({
-          studioName: "STUDIO DEMO",
-          email: "info@studiodemo.it", 
-          phoneNumber: "+39 123 456 7890",
-          studioAddress: "Via Demo 123, Milano, Italia",
-          brandPrimary: "#1a365d",
-          brandSecondary: "#2d5a87",
-          brandAccent: "#f56500",
-          formFields: [
-            { type: "text", label: "Nome", required: true },
-            { type: "text", label: "Cognome", required: true },
-            { type: "email", label: "Email", required: true },
-            { type: "tel", label: "Telefono", required: true },
-            { type: "date", label: "Data evento", required: true },
-            { type: "textarea", label: "Note aggiuntive", required: false },
-          ],
-          gdprText: "Acconsento al trattamento dei miei dati personali secondo la Privacy Policy."
-        });
       }
     }
     

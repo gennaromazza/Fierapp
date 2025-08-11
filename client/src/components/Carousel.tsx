@@ -16,58 +16,77 @@ export default function Carousel() {
     async function loadItems() {
       try {
         setLoading(true);
-        const itemsQuery = query(
+        
+        // First try simple query without orderBy to avoid index requirement
+        let itemsQuery = query(
           collection(db, "items"),
           where("active", "==", true),
-          where("category", "==", activeTab === "servizi" ? "servizio" : "prodotto"),
-          orderBy("sortOrder", "asc")
+          where("category", "==", activeTab === "servizi" ? "servizio" : "prodotto")
         );
         
         const snapshot = await getDocs(itemsQuery);
-        const itemsData = snapshot.docs.map(doc => ({
+        let itemsData = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
           createdAt: doc.data().createdAt?.toDate(),
           updatedAt: doc.data().updatedAt?.toDate(),
         })) as Item[];
         
+        // Sort manually by sortOrder 
+        itemsData.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        
         setItems(itemsData);
         setCurrentSlide(0);
-      } catch (error) {
+        
+        // If we got data successfully, log that we need indices for optimization
+        if (itemsData.length > 0) {
+          console.info(
+            "🔥 FIREBASE INDEX NEEDED: Per ottimizzare le query, crea un indice composito in Firestore per:\n" +
+            "Collezione: items\n" +
+            "Campi: active (ASC), category (ASC), sortOrder (ASC)\n" +
+            "Vai su: Firebase Console > Firestore Database > Indexes"
+          );
+        }
+        
+      } catch (error: any) {
         console.error("Error loading items:", error);
-        // Set demo items as fallback when Firebase fails
-        const demoItems: Item[] = [
-          {
-            id: "demo-1",
-            title: activeTab === "servizi" ? "Servizio Fotografico Base" : "Album Fotografico Premium",
-            category: activeTab === "servizi" ? "servizio" : "prodotto",
-            description: activeTab === "servizi" 
-              ? "Servizio fotografico professionale con 2 ore di shooting e 20 foto modificate" 
-              : "Album fotografico di alta qualità con copertina rigida e 50 pagine",
-            price: activeTab === "servizi" ? 250 : 89,
-            originalPrice: activeTab === "servizi" ? 350 : 120,
-            active: true,
-            sortOrder: 1,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          },
-          {
-            id: "demo-2", 
-            title: activeTab === "servizi" ? "Servizio Video Completo" : "Stampe Professionali",
-            category: activeTab === "servizi" ? "servizio" : "prodotto",
-            description: activeTab === "servizi"
-              ? "Servizio video completo con riprese, montaggio e consegna finale"
-              : "Set di 30 stampe professionali su carta fotografica premium",
-            price: activeTab === "servizi" ? 450 : 45,
-            originalPrice: activeTab === "servizi" ? 600 : 60,
-            active: true,
-            sortOrder: 2,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        ];
-        setItems(demoItems);
-        setCurrentSlide(0);
+        
+        // Check if it's specifically an index error
+        if (error.code === 'failed-precondition' && error.message?.includes('index')) {
+          console.warn(
+            "🚨 FIREBASE INDEX REQUIRED: Devi creare un indice composito in Firestore.\n" +
+            "Collezione: items\n" +
+            "Campi: active (ASC), category (ASC), sortOrder (ASC)\n" +
+            "Link: " + (error.message.match(/https:\/\/[^\s]+/) || ['Console Firebase > Firestore Database > Indexes'])[0]
+          );
+        }
+        
+        // Try simpler query without category filter
+        try {
+          const simpleQuery = query(collection(db, "items"), where("active", "==", true));
+          const simpleSnapshot = await getDocs(simpleQuery);
+          let allItems = simpleSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate(),
+            updatedAt: doc.data().updatedAt?.toDate(),
+          })) as Item[];
+          
+          // Filter by category manually
+          const filteredItems = allItems.filter(item => 
+            item.category === (activeTab === "servizi" ? "servizio" : "prodotto")
+          );
+          
+          // Sort manually
+          filteredItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+          
+          setItems(filteredItems);
+          console.info("✅ Caricati " + filteredItems.length + " items dal database");
+          
+        } catch (fallbackError) {
+          console.error("Fallback query failed:", fallbackError);
+          setItems([]); // Empty instead of demo data - show real database state
+        }
       } finally {
         setLoading(false);
       }

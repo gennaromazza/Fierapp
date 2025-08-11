@@ -50,11 +50,29 @@ export default function DiscountManagement() {
         setDiscounts(discountsData);
         
         if (discountsData.global) {
-          setGlobalDiscount(discountsData.global);
+          // Convert Firebase Timestamps to Date objects safely
+          const globalDiscount = { ...discountsData.global };
+          if (globalDiscount.startDate && typeof globalDiscount.startDate !== 'object') {
+            globalDiscount.startDate = new Date(globalDiscount.startDate);
+          }
+          if (globalDiscount.endDate && typeof globalDiscount.endDate !== 'object') {
+            globalDiscount.endDate = new Date(globalDiscount.endDate);
+          }
+          setGlobalDiscount(globalDiscount);
         }
         
         if (discountsData.perItemOverrides) {
-          setItemDiscounts(discountsData.perItemOverrides);
+          const itemDiscounts = { ...discountsData.perItemOverrides };
+          // Convert all timestamps to Date objects
+          Object.keys(itemDiscounts).forEach(key => {
+            if (itemDiscounts[key].startDate && typeof itemDiscounts[key].startDate !== 'object') {
+              itemDiscounts[key].startDate = new Date(itemDiscounts[key].startDate);
+            }
+            if (itemDiscounts[key].endDate && typeof itemDiscounts[key].endDate !== 'object') {
+              itemDiscounts[key].endDate = new Date(itemDiscounts[key].endDate);
+            }
+          });
+          setItemDiscounts(itemDiscounts);
         }
       }
     } catch (error) {
