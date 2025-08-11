@@ -72,11 +72,10 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
       >
         <IconComponent className="w-7 h-7 mr-3 animate-bounce-gentle" />
         <span className="mr-3">Risparmi:</span>
-        <span className="font-mono text-2xl tracking-wider" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>
+        <span className="font-mono text-2xl tracking-wider text-[#05213b]" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>
           €{discount.toLocaleString('it-IT')}
         </span>
       </div>
-
       {/* Sparkle effects */}
       {showBurst && Array.from({ length: config.sparkles }).map((_, i) => (
         <div
@@ -92,7 +91,6 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
           }}
         />
       ))}
-
       {/* Floating message */}
       {showBurst && (
         <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 animate-float-up">
@@ -108,7 +106,6 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
           </div>
         </div>
       )}
-
       {/* Subtle glow effect for exceptional savings */}
       {level === "exceptional" && (
         <div 
