@@ -438,7 +438,7 @@ export default function DiscountManagement() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Item</TableHead>
-                        <TableHead>Prezzo Unitario</TableHead>
+                        <TableHead>Prezzo Originale</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Valore</TableHead>
                         <TableHead>Importo Sconto</TableHead>
@@ -455,14 +455,16 @@ export default function DiscountManagement() {
                           // Use local state discount if exists, otherwise use saved discount
                           const discount = itemDiscounts[item.id] || discounts.perItemOverrides?.[item.id] || { type: "percent", value: 0 };
                           
-                          // Calculate discount amount
-                          const unitPrice = item.price;
+                          // Calculate discount amount using originalPrice as base
+                          const originalPrice = item.originalPrice || item.price;
+                          const currentPrice = item.price;
                           let discountAmount = 0;
+                          
                           if (discount.value && discount.value > 0) {
                             if (discount.type === "percent") {
-                              discountAmount = (unitPrice * discount.value) / 100;
+                              discountAmount = (originalPrice * discount.value) / 100;
                             } else {
-                              discountAmount = Math.min(discount.value, unitPrice);
+                              discountAmount = Math.min(discount.value, originalPrice);
                             }
                           }
                           
@@ -473,8 +475,15 @@ export default function DiscountManagement() {
                                 <div className="text-sm text-gray-500">{item.category}</div>
                               </TableCell>
                               <TableCell>
-                                <div className="font-semibold text-brand-accent">
-                                  €{unitPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                                <div>
+                                  <div className="font-semibold text-brand-accent">
+                                    €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                                  </div>
+                                  {originalPrice !== currentPrice && (
+                                    <div className="text-sm text-gray-500">
+                                      Attuale: €{currentPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                                    </div>
+                                  )}
                                 </div>
                               </TableCell>
                               <TableCell>
@@ -512,7 +521,7 @@ export default function DiscountManagement() {
                                     <>
                                       -€{discountAmount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                                       <div className="text-xs text-gray-500">
-                                        Prezzo finale: €{(unitPrice - discountAmount).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                                        Prezzo finale: €{(originalPrice - discountAmount).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                                       </div>
                                     </>
                                   ) : (
