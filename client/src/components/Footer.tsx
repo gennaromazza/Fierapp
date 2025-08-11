@@ -98,14 +98,29 @@ export default function Footer() {
               )}
               
               {/* Business Hours */}
-              <div className="flex items-start space-x-3 text-gray-300">
-                <Clock className="w-5 h-5 mt-0.5" />
-                <div>
-                  <div className="font-medium">Orari di apertura:</div>
-                  <div className="text-sm">Lun-Ven: 9:00-18:00</div>
-                  <div className="text-sm">Sab: 9:00-13:00</div>
+              {settings?.businessHours?.enabled && (
+                <div className="flex items-start space-x-3 text-gray-300">
+                  <Clock className="w-5 h-5 mt-0.5" />
+                  <div>
+                    <div className="font-medium">Orari di apertura:</div>
+                    {settings.businessHours.weekdays?.enabled && (
+                      <div className="text-sm">
+                        {settings.businessHours.weekdays.label}: {settings.businessHours.weekdays.open}-{settings.businessHours.weekdays.close}
+                      </div>
+                    )}
+                    {settings.businessHours.saturday?.enabled && (
+                      <div className="text-sm">
+                        {settings.businessHours.saturday.label}: {settings.businessHours.saturday.open}-{settings.businessHours.saturday.close}
+                      </div>
+                    )}
+                    {settings.businessHours.sunday?.enabled && (
+                      <div className="text-sm">
+                        {settings.businessHours.sunday.label}: {settings.businessHours.sunday.open}-{settings.businessHours.sunday.close}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

@@ -79,6 +79,27 @@ export const settingsSchema = z.object({
     linkedin: z.string().url().optional(),
     tiktok: z.string().url().optional(),
   }).optional(),
+  businessHours: z.object({
+    enabled: z.boolean().default(true),
+    weekdays: z.object({
+      enabled: z.boolean().default(true),
+      open: z.string().default("9:00"),
+      close: z.string().default("18:00"),
+      label: z.string().default("Lun-Ven")
+    }),
+    saturday: z.object({
+      enabled: z.boolean().default(true),
+      open: z.string().default("9:00"),
+      close: z.string().default("13:00"),
+      label: z.string().default("Sab")
+    }),
+    sunday: z.object({
+      enabled: z.boolean().default(false),
+      open: z.string().default("10:00"),
+      close: z.string().default("12:00"),
+      label: z.string().default("Dom")
+    })
+  }).optional(),
   formFields: z.array(formFieldSchema).default([
     { type: "text", label: "Nome", required: true },
     { type: "text", label: "Cognome", required: true },

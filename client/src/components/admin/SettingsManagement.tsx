@@ -722,6 +722,299 @@ export default function SettingsManagement() {
             </CardContent>
           </Card>
 
+          {/* Business Hours Section */}
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Orari di Apertura</h3>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="businessHoursEnabled"
+                  checked={settings.businessHours?.enabled ?? true}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      businessHours: {
+                        ...settings.businessHours,
+                        enabled: e.target.checked,
+                        weekdays: settings.businessHours?.weekdays || {
+                          enabled: true,
+                          open: "9:00",
+                          close: "18:00", 
+                          label: "Lun-Ven"
+                        },
+                        saturday: settings.businessHours?.saturday || {
+                          enabled: true,
+                          open: "9:00",
+                          close: "13:00",
+                          label: "Sab"
+                        },
+                        sunday: settings.businessHours?.sunday || {
+                          enabled: false,
+                          open: "10:00",
+                          close: "12:00",
+                          label: "Dom"
+                        }
+                      }
+                    })
+                  }
+                  className="w-4 h-4"
+                />
+                <Label htmlFor="businessHoursEnabled">Mostra orari di apertura</Label>
+              </div>
+
+              {settings.businessHours?.enabled && (
+                <div className="space-y-4 pl-6 border-l-2 border-gray-200">
+                  {/* Weekdays */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="weekdaysEnabled"
+                        checked={settings.businessHours?.weekdays?.enabled ?? true}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              weekdays: {
+                                ...settings.businessHours?.weekdays!,
+                                enabled: e.target.checked
+                              }
+                            }
+                          })
+                        }
+                        className="w-4 h-4"
+                      />
+                      <Label htmlFor="weekdaysEnabled">Giorni feriali</Label>
+                    </div>
+                    <div>
+                      <Label>Etichetta</Label>
+                      <Input
+                        value={settings.businessHours?.weekdays?.label || "Lun-Ven"}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              weekdays: {
+                                ...settings.businessHours?.weekdays!,
+                                label: e.target.value
+                              }
+                            }
+                          })
+                        }
+                        placeholder="Lun-Ven"
+                      />
+                    </div>
+                    <div>
+                      <Label>Apertura</Label>
+                      <Input
+                        type="time"
+                        value={settings.businessHours?.weekdays?.open || "9:00"}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              weekdays: {
+                                ...settings.businessHours?.weekdays!,
+                                open: e.target.value
+                              }
+                            }
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Chiusura</Label>
+                      <Input
+                        type="time"
+                        value={settings.businessHours?.weekdays?.close || "18:00"}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              weekdays: {
+                                ...settings.businessHours?.weekdays!,
+                                close: e.target.value
+                              }
+                            }
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Saturday */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="saturdayEnabled"
+                        checked={settings.businessHours?.saturday?.enabled ?? true}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              saturday: {
+                                ...settings.businessHours?.saturday!,
+                                enabled: e.target.checked
+                              }
+                            }
+                          })
+                        }
+                        className="w-4 h-4"
+                      />
+                      <Label htmlFor="saturdayEnabled">Sabato</Label>
+                    </div>
+                    <div>
+                      <Label>Etichetta</Label>
+                      <Input
+                        value={settings.businessHours?.saturday?.label || "Sab"}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              saturday: {
+                                ...settings.businessHours?.saturday!,
+                                label: e.target.value
+                              }
+                            }
+                          })
+                        }
+                        placeholder="Sab"
+                      />
+                    </div>
+                    <div>
+                      <Label>Apertura</Label>
+                      <Input
+                        type="time"
+                        value={settings.businessHours?.saturday?.open || "9:00"}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              saturday: {
+                                ...settings.businessHours?.saturday!,
+                                open: e.target.value
+                              }
+                            }
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Chiusura</Label>
+                      <Input
+                        type="time"
+                        value={settings.businessHours?.saturday?.close || "13:00"}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              saturday: {
+                                ...settings.businessHours?.saturday!,
+                                close: e.target.value
+                              }
+                            }
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sunday */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="sundayEnabled"
+                        checked={settings.businessHours?.sunday?.enabled ?? false}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              sunday: {
+                                ...settings.businessHours?.sunday!,
+                                enabled: e.target.checked
+                              }
+                            }
+                          })
+                        }
+                        className="w-4 h-4"
+                      />
+                      <Label htmlFor="sundayEnabled">Domenica</Label>
+                    </div>
+                    <div>
+                      <Label>Etichetta</Label>
+                      <Input
+                        value={settings.businessHours?.sunday?.label || "Dom"}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              sunday: {
+                                ...settings.businessHours?.sunday!,
+                                label: e.target.value
+                              }
+                            }
+                          })
+                        }
+                        placeholder="Dom"
+                      />
+                    </div>
+                    <div>
+                      <Label>Apertura</Label>
+                      <Input
+                        type="time"
+                        value={settings.businessHours?.sunday?.open || "10:00"}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              sunday: {
+                                ...settings.businessHours?.sunday!,
+                                open: e.target.value
+                              }
+                            }
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Chiusura</Label>
+                      <Input
+                        type="time"
+                        value={settings.businessHours?.sunday?.close || "12:00"}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            businessHours: {
+                              ...settings.businessHours!,
+                              sunday: {
+                                ...settings.businessHours?.sunday!,
+                                close: e.target.value
+                              }
+                            }
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Social Media Section */}
           <div className="mt-8">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Social Media</h3>

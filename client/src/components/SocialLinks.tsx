@@ -1,6 +1,5 @@
-
 import React from "react";
-import { Facebook, Instagram, Youtube, Twitter, Linkedin } from "lucide-react";
+import { Facebook, Instagram, Youtube, Twitter, Linkedin, Music } from "lucide-react";
 import { Settings } from "@shared/schema";
 
 // Icona personalizzata per TikTok (non disponibile in Lucide)
@@ -62,9 +61,9 @@ const socialPlatforms = [
   }
 ];
 
-export default function SocialLinks({ 
-  socialMedia, 
-  className = "", 
+export default function SocialLinks({
+  socialMedia,
+  className = "",
   iconSize = "w-5 h-5",
   showLabels = false,
   variant = 'default'
