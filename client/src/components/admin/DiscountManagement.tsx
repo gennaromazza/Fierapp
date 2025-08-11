@@ -377,12 +377,12 @@ export default function DiscountManagement() {
                 <Input
                   id="global-value"
                   type="number"
-                  min="0.01"
+                  min={globalDiscount.isActive ? "0.01" : "0"}
                   max={globalDiscount.type === "percent" ? "100" : undefined}
                   step={globalDiscount.type === "percent" ? "1" : "0.01"}
                   value={globalDiscount.value || ""}
                   onChange={(e) => updateGlobalDiscount("value", parseFloat(e.target.value) || 0)}
-                  placeholder="Inserisci valore"
+                  placeholder={globalDiscount.isActive ? "Inserisci valore" : "Sconto disabilitato"}
                   disabled={!globalDiscount.isActive}
                 />
                 {globalDiscount.isActive && (!globalDiscount.value || globalDiscount.value <= 0) && (
