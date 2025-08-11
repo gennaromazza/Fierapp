@@ -121,7 +121,7 @@ export default function ItemCard({ item }: ItemCardProps) {
   
   // Check if discount is expired
   const isDiscountExpired = discountExpiry ? isAfter(new Date(), discountExpiry) : false;
-  const isDiscountActive = discountExpiry ? isBefore(new Date(), discountExpiry) : savings > 0;
+  const isDiscountActive = !isDiscountExpired && savings > 0;
 
   const handleToggle = () => {
     if (isAdded) {
@@ -217,15 +217,31 @@ export default function ItemCard({ item }: ItemCardProps) {
                         scade: {(() => {
                           try {
                             let endDate: Date;
-                            if (discounts.global.endDate.toDate && typeof discounts.global.endDate.toDate === 'function') {
-                              endDate = discounts.global.endDate.toDate();
-                            } else if (discounts.global.endDate instanceof Date) {
-                              endDate = discounts.global.endDate;
+                            const rawDate = discounts.global.endDate;
+                            
+                            // Handle Firebase Timestamp
+                            if (rawDate && typeof rawDate === 'object' && 'toDate' in rawDate && typeof rawDate.toDate === 'function') {
+                              endDate = rawDate.toDate();
+                            } 
+                            // Handle Date object
+                            else if (rawDate instanceof Date) {
+                              endDate = rawDate;
+                            } 
+                            // Handle string or number
+                            else if (rawDate) {
+                              endDate = new Date(rawDate);
                             } else {
-                              endDate = new Date(discounts.global.endDate);
+                              return 'data non valida';
                             }
+                            
+                            // Check if date is valid
+                            if (isNaN(endDate.getTime())) {
+                              return 'data non valida';
+                            }
+                            
                             return format(endDate, "d MMM", { locale: it });
-                          } catch {
+                          } catch (error) {
+                            console.error('Error formatting discount end date:', error);
                             return 'data non valida';
                           }
                         })()}
