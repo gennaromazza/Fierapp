@@ -54,6 +54,11 @@ export default function ItemCard({ item }: ItemCardProps) {
   const savings = originalPrice - discountedPrice;
   const discountPercent = savings > 0 ? Math.round((savings / originalPrice) * 100) : 0;
   
+  // Determine if global discount is applied
+  const hasGlobalDiscount = discounts?.global?.isActive && discounts.global.value > 0;
+  const hasItemSpecificDiscount = discounts?.perItemOverrides?.[item.id]?.isActive && 
+                                  (discounts.perItemOverrides[item.id]?.value || 0) > 0;
+  
   // Check if discount is expired
   const isDiscountExpired = discountExpiry ? isAfter(new Date(), discountExpiry) : false;
   const isDiscountActive = discountExpiry ? isBefore(new Date(), discountExpiry) : savings > 0;
@@ -69,7 +74,7 @@ export default function ItemCard({ item }: ItemCardProps) {
         originalPrice: originalPrice,
         imageUrl: item.imageUrl,
         category: item.category,
-        globalDiscountApplied: globalDiscountActive,
+        globalDiscountApplied: hasGlobalDiscount,
       });
     }
   };
