@@ -16,7 +16,22 @@ export default function ItemCard({ item }: ItemCardProps) {
   const { addItem, removeItem, isInCart } = useCart();
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
   const [discountExpiry, setDiscountExpiry] = useState<Date | null>(null);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const isAdded = isInCart(item.id);
+
+  // Function to truncate text to a specific word count
+  const truncateText = (text: string, wordLimit: number = 15) => {
+    const words = text.split(' ');
+    if (words.length <= wordLimit) {
+      return text;
+    }
+    return words.slice(0, wordLimit).join(' ');
+  };
+
+  const shouldTruncate = item.description && item.description.split(' ').length > 15;
+  const displayDescription = shouldTruncate && !showFullDescription 
+    ? truncateText(item.description, 15)
+    : item.description;
 
   useEffect(() => {
     async function loadDiscounts() {
@@ -120,7 +135,17 @@ export default function ItemCard({ item }: ItemCardProps) {
           <p className="text-sm text-gray-500 mb-2">{item.subtitle}</p>
         )}
         {item.description && (
-          <p className="text-gray-600 mb-4">{item.description}</p>
+          <div className="text-gray-600 mb-4">
+            <p>{displayDescription}</p>
+            {shouldTruncate && (
+              <button
+                onClick={() => setShowFullDescription(!showFullDescription)}
+                className="text-brand-accent hover:underline text-sm font-medium mt-1"
+              >
+                {showFullDescription ? "Mostra meno" : "Continua a leggere"}
+              </button>
+            )}
+          </div>
         )}
         
         {/* Price Display with Savings */}
