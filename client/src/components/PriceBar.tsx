@@ -27,13 +27,18 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
               
               {/* Price Details */}
               <div className="hidden sm:block">
-                <div className="flex items-center space-x-4 text-sm">
+                <div className="flex items-center space-x-3 text-sm">
                   <div className="text-gray-600">
                     Subtotale: <span className="font-semibold">€{cart.subtotal.toLocaleString('it-IT')}</span>
                   </div>
-                  {cart.discount > 0 && (
+                  {cart.globalDiscount > 0 && (
                     <div className="text-green-600">
-                      Sconto: <span className="font-bold animate-counter">-€{cart.discount.toLocaleString('it-IT')}</span>
+                      Sconto globale: <span className="font-bold">-€{cart.globalDiscount.toLocaleString('it-IT')}</span>
+                    </div>
+                  )}
+                  {cart.itemDiscount > 0 && (
+                    <div className="text-green-600">
+                      Sconto prodotto: <span className="font-bold">-€{cart.itemDiscount.toLocaleString('it-IT')}</span>
                     </div>
                   )}
                 </div>

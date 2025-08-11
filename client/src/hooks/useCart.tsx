@@ -17,6 +17,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     items: [],
     subtotal: 0,
     discount: 0,
+    globalDiscount: 0,
+    itemDiscount: 0,
     total: 0,
     itemCount: 0,
   });
@@ -45,7 +47,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const discount = subtotal - total;
     const itemCount = items.length;
 
-    return { subtotal, discount, total, itemCount };
+    // Calculate separate discounts
+    let itemDiscount = 0;
+    let globalDiscount = 0;
+    
+    items.forEach(item => {
+      if (item.originalPrice && item.originalPrice > item.price) {
+        const totalItemDiscount = item.originalPrice - item.price;
+        
+        // If global discount was applied, separate the amounts
+        if (item.globalDiscountApplied) {
+          // This item had both item-specific and global discount
+          // We need to calculate how much was global vs item-specific
+          // For now, we'll attribute the entire discount to the category applied
+          globalDiscount += totalItemDiscount;
+        } else {
+          // This item only had item-specific discount
+          itemDiscount += totalItemDiscount;
+        }
+      }
+    });
+
+    return { subtotal, discount, globalDiscount, itemDiscount, total, itemCount };
   };
 
   const addItem = (item: CartItem) => {
@@ -92,6 +115,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       items: [],
       subtotal: 0,
       discount: 0,
+      globalDiscount: 0,
+      itemDiscount: 0,
       total: 0,
       itemCount: 0,
     });
