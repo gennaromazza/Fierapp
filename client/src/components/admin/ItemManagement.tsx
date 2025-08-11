@@ -216,7 +216,7 @@ export default function ItemManagement() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-gradient">
+              <DialogTitle className="text-2xl font-bold text-brand-accent">
                 {editingItem ? "Modifica Item" : "Nuovo Item"}
               </DialogTitle>
             </DialogHeader>
@@ -363,7 +363,7 @@ export default function ItemManagement() {
 
       <Card className="card-premium shadow-elegant">
         <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
-          <CardTitle className="text-xl font-bold text-gradient">Items ({items.length})</CardTitle>
+          <CardTitle className="text-xl font-bold text-brand-accent">Items ({items.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
