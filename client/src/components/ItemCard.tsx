@@ -212,25 +212,42 @@ export default function ItemCard({ item }: ItemCardProps) {
                   </span>
                   <div className="text-xs text-gray-500 mt-1 text-right">
                     <div>include sconto globale</div>
-                    {discounts?.global?.endDate && isDiscountActive && (
-                      <div className="text-orange-600 font-medium">
-                        scade: {(() => {
-                          try {
-                            let endDate: Date;
-                            if (discounts.global.endDate.toDate && typeof discounts.global.endDate.toDate === 'function') {
-                              endDate = discounts.global.endDate.toDate();
-                            } else if (discounts.global.endDate instanceof Date) {
-                              endDate = discounts.global.endDate;
-                            } else {
-                              endDate = new Date(discounts.global.endDate);
-                            }
-                            return format(endDate, "d MMM", { locale: it });
-                          } catch {
-                            return 'data non valida';
+                    {(() => {
+                      console.log("Debug discount info:", {
+                        hasGlobal: !!discounts?.global,
+                        hasEndDate: !!discounts?.global?.endDate,
+                        isDiscountActive,
+                        endDate: discounts?.global?.endDate,
+                        globalDiscount: discounts?.global
+                      });
+                      
+                      if (discounts?.global?.endDate) {
+                        try {
+                          let endDate: Date;
+                          if (discounts.global.endDate.toDate && typeof discounts.global.endDate.toDate === 'function') {
+                            endDate = discounts.global.endDate.toDate();
+                          } else if (discounts.global.endDate instanceof Date) {
+                            endDate = discounts.global.endDate;
+                          } else {
+                            endDate = new Date(discounts.global.endDate);
                           }
-                        })()}
-                      </div>
-                    )}
+                          
+                          return (
+                            <div className="text-orange-600 font-medium">
+                              scade: {format(endDate, "d MMM", { locale: it })}
+                            </div>
+                          );
+                        } catch (error) {
+                          console.error("Error formatting date:", error);
+                          return (
+                            <div className="text-orange-600 font-medium">
+                              scade: data non valida
+                            </div>
+                          );
+                        }
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
               </div>
