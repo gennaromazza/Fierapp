@@ -1,0 +1,334 @@
+Sei uno sviluppatore senior. Crea un progetto completo Vite + React + TypeScript + Tailwind per una mini-app “Promo Fiera”. L’app è **100% frontend** e usa come **unico backend Firebase** (Auth, Firestore, Storage, Analytics, Cloud Functions per funzioni opzionali). Il sito verrà pubblicato in **/fiera** su hosting Netsons (solo statico, nessun backend lato server), quindi configura **base path** e fallback SPA per sottocartella.
+
+## Stack & dipendenze
+- Vite + React + TypeScript (config `base: "/fiera/"`)
+- TailwindCSS (mobile-first)
+- Firebase v9 modular: app, analytics, auth, firestore, storage (+ callable Functions solo per anti-spam e Sheets sync)
+- SwiperJS per carosello/slide con swipe
+- xlsx (SheetJS) per export/import Excel e CSV
+- date-fns per formattazioni date
+- zod + react-hook-form per validazione form
+- lucide-react per icone
+- jsPDF per preventivo/quotazione PDF (opzionale)
+- Sentry o LogRocket per error tracking
+- Workbox per PWA/offline cache (kiosk-ready)
+
+## Firebase (USA ESATTAMENTE QUESTI PARAMETRI)
+Crea `src/firebase.ts`:
+```ts
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkU3y73Zg3i4FuQIb80EXCeKfNJGIIrPA",
+  authDomain: "fiera-d7e22.firebaseapp.com",
+  projectId: "fiera-d7e22",
+  storageBucket: "fiera-d7e22.firebasestorage.app",
+  messagingSenderId: "603304361114",
+  appId: "1:603304361114:web:7a32882c537a86954d7323",
+  measurementId: "G-09HDSE3D7H"
+};
+
+export const app = initializeApp(firebaseConfig);
+export const analytics = getAnalytics(app);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+Nota: verifica che storageBucket corrisponda al bucket del progetto (alcune configurazioni usano PROJECT_ID.appspot.com).
+
+Routing & Hosting statico in sottocartella
+Vite base: "/fiera/".
+
+React Router: BrowserRouter con basename="/fiera".
+
+Fornisci .htaccess per Netsons (Apache) dentro /fiera con rewrite SPA a index.html e noindex su /fiera/admin.
+
+Genera robots.txt con Disallow: /fiera/admin.
+
+Stile Visivo e UX (obbligatorio)
+Palette brand
+Primario BG: #F1EFEC (rgb(241,239,236))
+
+Secondario BG: #D4C9BE (rgb(212,201,190))
+
+Evidenza/Brand: #123458 (rgb(18,52,88)) → bottoni primari, titoli, bullets swiper
+
+Testo scuro: #030303 (rgb(3,3,3))
+
+Hover/focus: variazione leggera di #123458
+
+Tipografia
+Font “Inter” o “Poppins” (400/500/700), min body 16px
+
+Titoli uppercase/semibold con leggero letter-spacing
+
+Layout Mobile-first
+Margini min 16px, area tappabile ≥ 44px
+
+CTA in PriceBar fissa in basso (subtotale/sconto/totale + bottone)
+
+Animazioni leggere (fade/slide) su step e swipe
+
+Carosello/Slide (Swiper)
+1 card per slide su mobile, 2 tablet, 3 desktop
+
+Snap al centro, bullets ben visibili (#123458)
+
+Foto Prodotti/Servizi
+Cover 1200×800 px, rapporto fisso 3:2
+
+≤ 400 KB (compressione lato client via <canvas> + WebP se supportato)
+
+Storage path: uploads/items/<id>.jpg
+
+Alt text obbligatorio, titolo max 40 caratteri, descrizione 1–2 frasi
+
+(Opzionale) CDN (ImageKit/Cloudinary) per resize responsive
+
+Accessibilità
+Contrasto minimo WCAG AA 4.5:1
+
+Focus ring visibile, aria-labels per controlli
+
+Flusso Cliente (/)
+Apre landing pubblica.
+
+Tab Servizi | Prodotti → carosello con swipe e selezione (toggle “Aggiungi”).
+
+Calcolo in tempo reale: subtotale, sconto, totale (logica sconti sotto).
+
+CTA “Richiedi informazioni” → Checkout con form dinamico da settings:
+
+Campi minimi: Nome, Cognome, Email, Telefono, Data evento, Note.
+
+Checkbox GDPR consenso (obbligatoria) — salva testo consenso dentro il lead.
+
+reCAPTCHA v3: esegui token; verifica via Cloud Function callable (Firebase).
+
+Conferma: salva Lead su Firestore; genera testo con selezioni+totale; apri WhatsApp con messaggio precompilato:
+
+URL: https://wa.me/<settings.whatsappNumber>?text=<ENCODED>
+
+Se whatsappNumber vuoto → disabilita CTA e mostra avviso di configurazione mancante.
+
+Flusso Admin (/admin)
+Login (Auth email/password). Route guardata.
+
+Items (Prodotti/Servizi): CRUD con upload immagine (anteprima, compressione client). Campi:
+
+title, subtitle?, description?, price:number, imageUrl, active:boolean, category:"prodotto"|"servizio", sortOrder:number, createdAt.
+
+Sconti:
+
+discountGlobal: { type:"percent"|"fixed", value:number } opzionale.
+
+perItemOverrides: mappa itemId → { type,value }.
+
+Settings (doc settings/app):
+
+studioName, logoUrl, brandPrimary, brandSecondary
+
+whatsappNumber (solo qui, niente hardcoded)
+
+formFields (array campi dinamici: type, label, required, options?)
+
+gdprText (testo consenso salvato nei lead)
+
+reCAPTCHA siteKey
+
+Leads:
+
+Tabella con filtri (data creazione/eventDate, testo).
+
+Export Excel (.xlsx) + PDF preventivo (jsPDF) a richiesta.
+
+Sync Google Sheets (opzionale) tramite Cloud Function (trigger onWrite su leads).
+
+Import/Export Items: CSV/XLSX (mappa colonne → campi schema).
+
+Backup & Restore:
+
+Script CLI per export/import Firestore (collezioni items, settings, leads) e lista file Storage (uploads/**).
+
+Audit log: scrivi in logs le modifiche (who/what/when).
+
+Ruoli: admin/editor (via custom claims o lista UID in settings/roles).
+
+Firestore: collezioni & schema
+items (pubblico in lettura)
+
+settings (singleton doc app, pubblico in lettura)
+
+leads (create pubblica, read/update/delete solo admin)
+
+logs (solo admin)
+
+Regole di Sicurezza (bozza)
+arduino
+Copia
+Modifica
+// Firestore Rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() { return request.auth != null; } // sostituibile con claims/UID allowlist
+    match /items/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /settings/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /leads/{doc} {
+      allow create: if true; // il pubblico può creare lead
+      allow read, update, delete: if isAdmin();
+    }
+    match /logs/{doc} { allow read, write: if isAdmin(); }
+  }
+}
+
+// Storage Rules
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() { return request.auth != null; }
+    match /public/{allPaths=**} { allow read: if true; }
+    match /uploads/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
+Logica Sconti
+discounts.ts calcola subtotale → applica discountGlobal (percent/fixed) → applica perItemOverrides (se presenti) → totale.
+
+Mostra sempre breakdown (subtotale, sconto, totale).
+
+Telemetria & Analytics
+Sentry/LogRocket: errori runtime, session replay (se abilitato).
+
+Analytics: eventi view_item, add_selection, open_whatsapp, submit_lead.
+
+PWA + Kiosk mode
+Manifest + Service Worker (Workbox).
+
+Installabile, avvio fullscreen/kiosk.
+
+Cache offline: shell + assets; strategia stale-while-revalidate per immagini.
+
+Genera QR per link /fiera.
+
+Performance & Qualità
+Lighthouse mobile ≥ 90: lazy loading immagini, prefetch slide successive, minify, treeshake.
+
+Cache headers ottimizzati (assets fingerprintati).
+
+Immagini ottimizzate lato client (limitare ≤400KB).
+
+Sicurezza/Legale
+Consent Mode v2 per Analytics + banner cookie (se Analytics attivo).
+
+Pagine statiche Privacy e Termini nel footer.
+
+reCAPTCHA v3 sul form lead (con verifica su Cloud Function).
+
+Indici Firestore (preconfig)
+leads: per createdAt desc
+
+leads: per customer.eventDate asc
+
+leads: per createdAt + filtro customer.eventDate (compositi per tabella/filtri)
+
+File/Struttura
+/src/main.tsx, /src/App.tsx
+
+/src/firebase.ts
+
+/src/routes/Public.tsx, /src/routes/Checkout.tsx
+
+/src/routes/Admin/Login.tsx, /src/routes/Admin/Dashboard.tsx
+
+/src/components/Carousel.tsx, /src/components/ItemCard.tsx, /src/components/PriceBar.tsx
+
+/src/components/Admin/* (CRUD Items, Sconti, Settings, Leads, Import/Export)
+
+/src/lib/discounts.ts, /src/lib/whatsapp.ts, /src/lib/exportExcel.ts, /src/lib/pdf.ts, /src/lib/image.ts
+
+/public/manifest.webmanifest, service worker Workbox
+
+vite.config.ts (base /fiera/)
+
+tailwind.config.js, postcss.config.js, index.css
+
+.htaccess per SPA in sottocartella + robots.txt per noindex admin
+
+Hosting Netsons (sottocartella /fiera)
+Crea questi file:
+
+vite.config.ts:
+
+ts
+Copia
+Modifica
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+export default defineConfig({
+  plugins: [react()],
+  base: "/fiera/",
+});
+React Router:
+
+tsx
+Copia
+Modifica
+<BrowserRouter basename="/fiera"> ... </BrowserRouter>
+.htaccess in /fiera:
+
+pgsql
+Copia
+Modifica
+Options -MultiViews
+RewriteEngine On
+RewriteBase /fiera/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
+
+# Hard block admin indexing
+<IfModule mod_headers.c>
+  <Files "index.html">
+    Header set X-Robots-Tag "noindex: /fiera/admin"
+  </Files>
+</IfModule>
+public/robots.txt:
+
+makefile
+Copia
+Modifica
+User-agent: *
+Disallow: /fiera/admin
+Criteri di Accettazione
+Solo Firebase come backend (Auth/Firestore/Storage/Functions).
+
+Flusso cliente con swipe, calcolo sconti live, form dinamico, GDPR obbligatorio, reCAPTCHA v3, apertura WhatsApp con messaggio precompilato.
+
+whatsappNumber letto da settings/app; se assente → CTA disabilitata.
+
+Admin completo: CRUD Items/Settings/Sconti, upload immagini (compress), Import/Export CSV/XLSX, Leads con export PDF/XLSX, Sheets sync opzionale via Cloud Function, audit log, ruoli.
+
+PWA + kiosk funzionanti; QR generato.
+
+Performance: Lighthouse mobile ≥ 90; immagini lazy + cache.
+
+Telemetria attiva; eventi Analytics tracciati.
+
+Regole Firestore/Storage rispettate.
+
+Build senza errori TypeScript; deploy in /fiera/ funziona su Netsons.
+
+Seed & Script
+Inserisci 2 servizi + 2 prodotti demo, una configurazione settings/app di esempio (brand colors, formFields, gdprText, whatsappNumber vuoto).
+
+NPM scripts: dev, build, preview.
+
+Script CLI backup/restore Firestore/Storage (usa firebase-tools).
+
+Cloud Functions (opzionali): verifyRecaptcha, syncLeadToSheets.
