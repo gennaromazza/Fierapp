@@ -168,15 +168,7 @@ export default function ItemCard({ item }: ItemCardProps) {
           </div>
         )}
         
-        {/* Expiry Notice - positioned above image */}
-        {discountExpiry && isDiscountActive && (
-          <div className="absolute top-3 right-3 bg-black/70 text-white px-3 py-2 rounded-lg text-xs font-medium shadow-2xl z-20" style={{ backdropFilter: 'blur(4px)' }}>
-            <Clock className="w-3 h-3 inline mr-1" />
-            <span>
-              {format(discountExpiry, "d MMM", { locale: it })}
-            </span>
-          </div>
-        )}
+        
       </div>
       
       <div className="p-6 flex flex-col flex-grow">
