@@ -15,13 +15,19 @@ export default function Admin() {
 
   useEffect(() => {
     if (!loading && !user) {
-      setLocation("/fiera/admin/login");
+      // Maintain the current path structure (with or without /fiera)
+      const currentPath = window.location.pathname;
+      const isUsingFieraPrefix = currentPath.includes('/fiera');
+      setLocation(isUsingFieraPrefix ? "/fiera/admin/login" : "/admin/login");
     }
   }, [user, loading, setLocation]);
 
   const handleSignOut = async () => {
     await signOut();
-    setLocation("/fiera/admin/login");
+    // Maintain the current path structure (with or without /fiera)
+    const currentPath = window.location.pathname;
+    const isUsingFieraPrefix = currentPath.includes('/fiera');
+    setLocation(isUsingFieraPrefix ? "/fiera/admin/login" : "/admin/login");
   };
 
   if (loading) {

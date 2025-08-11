@@ -13,9 +13,16 @@ import NotFound from "@/pages/not-found";
 function Router() {
   return (
     <Switch>
+      {/* Root routes */}
+      <Route path="/" component={Home} />
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin" component={Admin} />
+      
+      {/* Fiera prefixed routes */}
       <Route path="/fiera/" component={Home} />
       <Route path="/fiera/admin/login" component={AdminLogin} />
       <Route path="/fiera/admin" component={Admin} />
+      
       <Route component={NotFound} />
     </Switch>
   );

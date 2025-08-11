@@ -34,7 +34,10 @@ export default function AdminLogin() {
 
   useEffect(() => {
     if (!loading && user) {
-      setLocation("/fiera/admin");
+      // Maintain the current path structure (with or without /fiera)
+      const currentPath = window.location.pathname;
+      const isUsingFieraPrefix = currentPath.includes('/fiera');
+      setLocation(isUsingFieraPrefix ? "/fiera/admin" : "/admin");
     }
   }, [user, loading, setLocation]);
 
@@ -46,7 +49,10 @@ export default function AdminLogin() {
         title: "Accesso effettuato",
         description: "Benvenuto nel pannello amministrazione",
       });
-      setLocation("/fiera/admin");
+      // Maintain the current path structure (with or without /fiera)
+      const currentPath = window.location.pathname;
+      const isUsingFieraPrefix = currentPath.includes('/fiera');
+      setLocation(isUsingFieraPrefix ? "/fiera/admin" : "/admin");
     } catch (error: any) {
       console.error("Login error:", error);
       toast({

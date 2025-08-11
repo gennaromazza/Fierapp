@@ -122,13 +122,13 @@ export default function Footer() {
               © 2024 {settings?.studioName || "Studio Demo"}. Tutti i diritti riservati.
             </div>
             <div className="flex space-x-6">
-              <a href="/fiera/privacy" className="hover:text-white transition-colors">
+              <a href="#" className="hover:text-white transition-colors">
                 Privacy Policy
               </a>
-              <a href="/fiera/terms" className="hover:text-white transition-colors">
+              <a href="#" className="hover:text-white transition-colors">
                 Termini di Servizio
               </a>
-              <a href="/fiera/cookies" className="hover:text-white transition-colors">
+              <a href="#" className="hover:text-white transition-colors">
                 Cookie Policy
               </a>
             </div>

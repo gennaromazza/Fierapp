@@ -95,7 +95,7 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
           
           {/* Admin Link */}
           <a
-            href="/fiera/admin"
+            href={window.location.pathname.includes('/fiera') ? "/fiera/admin" : "/admin"}
             className="text-sm text-gray-500 hover:text-brand-accent transition-colors"
           >
             <SettingsIcon className="w-4 h-4" />
