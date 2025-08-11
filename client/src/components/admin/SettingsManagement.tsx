@@ -413,33 +413,50 @@ export default function SettingsManagement() {
             <div className="space-y-6">
               {/* Color Palette Loader */}
               <Card className="card-premium shadow-elegant">
-                <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
-                  <CardTitle className="text-xl font-bold text-brand-accent">🎨 Carica Palette</CardTitle>
+                <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                         style={{ backgroundColor: 'var(--brand-accent)' }}>
+                      <ImageIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-brand-accent">
+                        Carica Palette
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Importa colori da file esterni
+                      </p>
+                    </div>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="paletteFile">Carica file palette (.json, .ase, .txt)</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="paletteFile" className="text-sm font-semibold text-brand-accent">
+                      Carica file palette (.json, .ase, .txt)
+                    </Label>
                     <Input
                       id="paletteFile"
                       type="file"
                       accept=".json,.ase,.txt"
                       onChange={handlePaletteUpload}
-                      className="mt-1"
+                      className="h-11"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500">
                       Supporta file JSON con colori hex o file Adobe Swatch Exchange (.ase)
                     </p>
                   </div>
 
                   {/* Preset Palettes */}
-                  <div>
-                    <Label>Palette Predefinite</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-brand-accent">
+                      Palette Predefinite
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => applyPresetPalette('elegant')}
-                        className="justify-start space-x-2"
+                        className="justify-start space-x-2 btn-secondary"
                       >
                         <div className="flex space-x-1">
                           <div className="w-3 h-3 rounded-full bg-slate-100"></div>
@@ -452,7 +469,7 @@ export default function SettingsManagement() {
                         variant="outline" 
                         size="sm" 
                         onClick={() => applyPresetPalette('vibrant')}
-                        className="justify-start space-x-2"
+                        className="justify-start space-x-2 btn-secondary"
                       >
                         <div className="flex space-x-1">
                           <div className="w-3 h-3 rounded-full bg-blue-50"></div>
@@ -465,7 +482,7 @@ export default function SettingsManagement() {
                         variant="outline" 
                         size="sm" 
                         onClick={() => applyPresetPalette('earth')}
-                        className="justify-start space-x-2"
+                        className="justify-start space-x-2 btn-secondary"
                       >
                         <div className="flex space-x-1">
                           <div className="w-3 h-3 rounded-full bg-amber-50"></div>
@@ -478,7 +495,7 @@ export default function SettingsManagement() {
                         variant="outline" 
                         size="sm" 
                         onClick={() => applyPresetPalette('ocean')}
-                        className="justify-start space-x-2"
+                        className="justify-start space-x-2 btn-secondary"
                       >
                         <div className="flex space-x-1">
                           <div className="w-3 h-3 rounded-full bg-cyan-50"></div>
@@ -494,16 +511,29 @@ export default function SettingsManagement() {
 
               {/* Brand Colors */}
               <Card className="card-premium shadow-elegant">
-                <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
-                  <CardTitle className="text-xl font-bold text-brand-accent">🎨 Colori Brand</CardTitle>
+                <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                         style={{ backgroundColor: 'var(--brand-accent)' }}>
+                      <SettingsIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-brand-accent">
+                        Colori Brand
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Personalizza la palette di colori
+                      </p>
+                    </div>
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 p-6">
                   {/* Main Colors */}
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-brand-text-accent">Colori Principali</h4>
+                    <h4 className="text-lg font-semibold text-brand-accent">Colori Principali</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="brandPrimary">Primario</Label>
+                        <Label htmlFor="brandPrimary" className="text-sm font-semibold text-brand-accent">Primario</Label>
                         <div className="flex items-center space-x-2 mt-1">
                           <Input
                             id="brandPrimary"
@@ -521,7 +551,7 @@ export default function SettingsManagement() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="brandSecondary">Secondario</Label>
+                        <Label htmlFor="brandSecondary" className="text-sm font-semibold text-brand-accent">Secondario</Label>
                         <div className="flex items-center space-x-2 mt-1">
                           <Input
                             id="brandSecondary"
@@ -539,7 +569,7 @@ export default function SettingsManagement() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="brandAccent">Accento</Label>
+                        <Label htmlFor="brandAccent" className="text-sm font-semibold text-brand-accent">Accento</Label>
                         <div className="flex items-center space-x-2 mt-1">
                           <Input
                             id="brandAccent"
@@ -561,10 +591,10 @@ export default function SettingsManagement() {
 
                   {/* Text Colors */}
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-brand-text-accent">Colori Testo</h4>
+                    <h4 className="text-lg font-semibold text-brand-accent">Colori Testo</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="brandTextPrimary">Testo Primario</Label>
+                        <Label htmlFor="brandTextPrimary" className="text-sm font-semibold text-brand-accent">Testo Primario</Label>
                         <div className="flex items-center space-x-2 mt-1">
                           <Input
                             id="brandTextPrimary"
@@ -582,7 +612,7 @@ export default function SettingsManagement() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="brandTextSecondary">Testo Secondario</Label>
+                        <Label htmlFor="brandTextSecondary" className="text-sm font-semibold text-brand-accent">Testo Secondario</Label>
                         <div className="flex items-center space-x-2 mt-1">
                           <Input
                             id="brandTextSecondary"
@@ -600,7 +630,7 @@ export default function SettingsManagement() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="brandTextAccent">Testo Accento</Label>
+                        <Label htmlFor="brandTextAccent" className="text-sm font-semibold text-brand-accent">Testo Accento</Label>
                         <div className="flex items-center space-x-2 mt-1">
                           <Input
                             id="brandTextAccent"
@@ -622,10 +652,10 @@ export default function SettingsManagement() {
 
                   {/* Surface Colors */}
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-brand-text-accent">Colori Superfici</h4>
+                    <h4 className="text-lg font-semibold text-brand-accent">Colori Superfici</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="brandBackground">Sfondo</Label>
+                        <Label htmlFor="brandBackground" className="text-sm font-semibold text-brand-accent">Sfondo</Label>
                         <div className="flex items-center space-x-2 mt-1">
                           <Input
                             id="brandBackground"
@@ -643,7 +673,7 @@ export default function SettingsManagement() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="brandSurface">Superficie</Label>
+                        <Label htmlFor="brandSurface" className="text-sm font-semibold text-brand-accent">Superficie</Label>
                         <div className="flex items-center space-x-2 mt-1">
                           <Input
                             id="brandSurface"
@@ -661,7 +691,7 @@ export default function SettingsManagement() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="brandBorder">Bordi</Label>
+                        <Label htmlFor="brandBorder" className="text-sm font-semibold text-brand-accent">Bordi</Label>
                         <div className="flex items-center space-x-2 mt-1">
                           <Input
                             id="brandBorder"
@@ -683,30 +713,30 @@ export default function SettingsManagement() {
 
                   {/* Color Preview */}
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-brand-text-accent">Anteprima</h4>
-                    <div className="p-6 rounded-lg border" style={{ 
+                    <h4 className="text-lg font-semibold text-brand-accent">Anteprima</h4>
+                    <div className="p-6 rounded-lg border-2 shadow-sm" style={{ 
                       backgroundColor: settings.brandBackground || "#ffffff",
                       borderColor: settings.brandBorder || "#e2e8f0"
                     }}>
-                      <div className="space-y-3">
-                        <h5 style={{ color: settings.brandTextPrimary || "#1a1a1a" }} className="text-lg font-bold">
+                      <div className="space-y-4">
+                        <h5 style={{ color: settings.brandTextPrimary || "#1a1a1a" }} className="text-xl font-bold">
                           Testo Primario
                         </h5>
-                        <p style={{ color: settings.brandTextSecondary || "#6b7280" }}>
+                        <p style={{ color: settings.brandTextSecondary || "#6b7280" }} className="text-sm">
                           Questo è un esempio di testo secondario per vedere come appare con i tuoi colori.
                         </p>
                         <p style={{ color: settings.brandTextAccent || "#123458" }} className="font-semibold">
                           Testo con colore accento
                         </p>
-                        <div className="flex space-x-3 mt-4">
+                        <div className="flex space-x-3 mt-6">
                           <div 
-                            className="px-4 py-2 rounded text-white font-medium" 
+                            className="px-6 py-3 rounded-lg text-white font-semibold shadow-md transition-all hover:shadow-lg" 
                             style={{ backgroundColor: settings.brandAccent || "#123458" }}
                           >
                             Pulsante Principale
                           </div>
                           <div 
-                            className="px-4 py-2 rounded" 
+                            className="px-6 py-3 rounded-lg font-semibold shadow-sm transition-all hover:shadow-md" 
                             style={{ 
                               backgroundColor: settings.brandSecondary || "#D4C9BE",
                               color: settings.brandTextPrimary || "#1a1a1a"
