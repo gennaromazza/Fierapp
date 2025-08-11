@@ -263,16 +263,65 @@ export default function DiscountManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between glass rounded-xl p-6 shadow-elegant">
-        <h2 className="text-3xl font-bold text-gradient">Gestione Sconti</h2>
-        <Button
-          onClick={saveDiscounts}
-          disabled={saving}
-          className="btn-premium animate-pulse-shadow"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {saving ? "Salvando..." : "Salva Configurazione"}
-        </Button>
+      <div className="relative overflow-hidden rounded-2xl p-8 shadow-2xl border border-white/20 backdrop-blur-lg" 
+           style={{
+             background: `linear-gradient(135deg, 
+               var(--brand-accent) 0%, 
+               rgba(var(--brand-accent-rgb, 18, 52, 88), 0.9) 50%, 
+               rgba(var(--brand-secondary-rgb, 212, 201, 190), 0.3) 100%)`,
+           }}>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-32 translate-x-32 animate-pulse"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-24 -translate-x-24 animate-pulse" style={{ animationDelay: '1s' }}></div>
+        </div>
+        
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl"
+                 style={{ 
+                   background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1))',
+                   backdropFilter: 'blur(10px)',
+                   border: '1px solid rgba(255,255,255,0.3)'
+                 }}>
+              <Percent className="w-8 h-8 text-white drop-shadow-lg" />
+            </div>
+            <div>
+              <h2 className="text-4xl font-black text-white tracking-tight drop-shadow-2xl">
+                Gestione Sconti
+              </h2>
+              <p className="text-white/80 text-lg font-medium mt-1 drop-shadow-lg">
+                Configura sconti globali e personalizzati
+              </p>
+            </div>
+          </div>
+          
+          <Button
+            onClick={saveDiscounts}
+            disabled={saving}
+            className="relative px-8 py-4 text-lg font-bold text-white rounded-xl shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl disabled:opacity-50 disabled:transform-none overflow-hidden group"
+            style={{
+              background: saving 
+                ? 'linear-gradient(135deg, #6b7280, #9ca3af)' 
+                : 'linear-gradient(135deg, #10b981, #059669, #047857)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2)'
+            }}
+          >
+            {/* Animated background for button */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
+            
+            <div className="relative z-10 flex items-center">
+              <Save className="w-5 h-5 mr-3" />
+              {saving ? "Salvando..." : "Salva Configurazione"}
+            </div>
+          </Button>
+        </div>
+        
+        {/* Decorative glow effect */}
+        <div className="absolute inset-0 rounded-2xl shadow-inner" 
+             style={{ 
+               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)' 
+             }}></div>
       </div>
 
       <div className="space-y-6">

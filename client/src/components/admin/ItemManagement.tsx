@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Upload, Image as ImageIcon } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, Image as ImageIcon, ShoppingBag } from "lucide-react";
 
 export default function ItemManagement() {
   const { data: items, loading } = useCollection<Item>("items", [orderBy("sortOrder", "asc")]);
@@ -205,15 +205,69 @@ export default function ItemManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between glass rounded-xl p-6 shadow-elegant">
-        <h2 className="text-3xl font-bold text-brand-accent">Gestione Items</h2>
+      <div className="relative overflow-hidden rounded-2xl p-8 shadow-2xl border border-white/20 backdrop-blur-lg" 
+           style={{
+             background: `linear-gradient(135deg, 
+               var(--brand-accent) 0%, 
+               rgba(var(--brand-accent-rgb, 18, 52, 88), 0.9) 50%, 
+               rgba(var(--brand-secondary-rgb, 212, 201, 190), 0.3) 100%)`,
+           }}>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-32 translate-x-32 animate-pulse"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-24 -translate-x-24 animate-pulse" style={{ animationDelay: '1s' }}></div>
+        </div>
+        
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl"
+                 style={{ 
+                   background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1))',
+                   backdropFilter: 'blur(10px)',
+                   border: '1px solid rgba(255,255,255,0.3)'
+                 }}>
+              <ShoppingBag className="w-8 h-8 text-white drop-shadow-lg" />
+            </div>
+            <div>
+              <h2 className="text-4xl font-black text-white tracking-tight drop-shadow-2xl">
+                Gestione Items
+              </h2>
+              <p className="text-white/80 text-lg font-medium mt-1 drop-shadow-lg">
+                Configura servizi e prodotti
+              </p>
+            </div>
+          </div>
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                onClick={openCreateDialog}
+                className="relative px-8 py-4 text-lg font-bold text-white rounded-xl shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl overflow-hidden group"
+                style={{
+                  background: 'linear-gradient(135deg, #10b981, #059669, #047857)',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2)'
+                }}
+              >
+                {/* Animated background for button */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
+                
+                <div className="relative z-10 flex items-center">
+                  <Plus className="w-5 h-5 mr-3" />
+                  Nuovo Item
+                </div>
+              </Button>
+            </DialogTrigger>
+          
+        </div>
+        
+        {/* Decorative glow effect */}
+        <div className="absolute inset-0 rounded-2xl shadow-inner" 
+             style={{ 
+               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)' 
+             }}></div>
+      </div>
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="btn-premium">
-              <Plus className="w-4 h-4 mr-2" />
-              Nuovo Item
-            </Button>
-          </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass bg-brand-primary">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-brand-accent">
