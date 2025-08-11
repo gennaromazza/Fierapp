@@ -51,19 +51,7 @@ export default function ItemCard({ item }: ItemCardProps) {
 
   const discountedPrice = discounts ? calculateDiscountedPrice(item.price, item.id, discounts) : item.price;
   const originalPrice = item.originalPrice || item.price;
-  
-  // Calculate only item-specific savings, not global discount
-  const itemSpecificDiscount = discounts?.perItemOverrides?.[item.id];
-  let savings = 0;
-  
-  if (itemSpecificDiscount) {
-    // Only show savings if there's an item-specific discount
-    if (itemSpecificDiscount.type === "percent") {
-      savings = (originalPrice * itemSpecificDiscount.value) / 100;
-    } else if (itemSpecificDiscount.type === "fixed") {
-      savings = Math.min(itemSpecificDiscount.value, originalPrice);
-    }
-  }
+  const savings = originalPrice - discountedPrice;
   const discountPercent = savings > 0 ? Math.round((savings / originalPrice) * 100) : 0;
   
   // Check if discount is expired
