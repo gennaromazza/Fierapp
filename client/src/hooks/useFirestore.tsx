@@ -65,12 +65,20 @@ export function useCollection<T>(
     const unsubscribe = onSnapshot(
       q,
       (snapshot: QuerySnapshot) => {
-        const documents = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-          updatedAt: doc.data().updatedAt?.toDate(),
-        })) as T[];
+        const documents = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate?.() || data.createdAt,
+            updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+            // Handle nested date objects for leads
+            gdprConsent: data.gdprConsent ? {
+              ...data.gdprConsent,
+              timestamp: data.gdprConsent.timestamp?.toDate?.() || data.gdprConsent.timestamp
+            } : undefined,
+          };
+        }) as T[];
         
         setData(documents);
         setLoading(false);

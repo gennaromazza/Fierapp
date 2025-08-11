@@ -36,7 +36,7 @@ import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 export default function LeadsManagement() {
-  const { data: allLeads, loading } = useCollection<Lead>("leads", [orderBy("createdAt", "desc")]);
+  const { data: allLeads, loading } = useCollection<Lead>("leads");
   const { toast } = useToast();
   
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
@@ -69,7 +69,7 @@ export default function LeadsManagement() {
     // Date filter
     if (dateFilter) {
       filtered = filtered.filter(lead => {
-        const leadDate = lead.createdAt instanceof Date ? lead.createdAt : lead.createdAt.toDate();
+        const leadDate = lead.createdAt instanceof Date ? lead.createdAt : new Date(lead.createdAt);
         return format(leadDate, "yyyy-MM-dd") === format(dateFilter, "yyyy-MM-dd");
       });
     }
@@ -143,6 +143,14 @@ export default function LeadsManagement() {
     setIsDetailModalOpen(true);
   };
 
+  // Calculate stats from filtered leads
+  const stats = {
+    total: filteredLeads.length,
+    totalValue: filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.total || 0), 0),
+    totalDiscount: filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.discount || 0), 0),
+    avgValue: filteredLeads.length > 0 ? filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.total || 0), 0) / filteredLeads.length : 0
+  };
+
   const getStatusBadge = (status: Lead["status"]) => {
     switch (status) {
       case "new":
@@ -157,17 +165,6 @@ export default function LeadsManagement() {
         return <Badge variant="secondary">Sconosciuto</Badge>;
     }
   };
-
-  const getTotalStats = () => {
-    const total = filteredLeads.length;
-    const totalValue = filteredLeads.reduce((sum, lead) => sum + lead.pricing.total, 0);
-    const totalDiscount = filteredLeads.reduce((sum, lead) => sum + lead.pricing.discount, 0);
-    const avgValue = total > 0 ? totalValue / total : 0;
-
-    return { total, totalValue, totalDiscount, avgValue };
-  };
-
-  const stats = getTotalStats();
 
   if (loading) {
     return (
@@ -331,7 +328,7 @@ export default function LeadsManagement() {
               </TableHeader>
               <TableBody>
                 {filteredLeads.map((lead) => {
-                  const leadDate = lead.createdAt instanceof Date ? lead.createdAt : lead.createdAt.toDate();
+                  const leadDate = lead.createdAt instanceof Date ? lead.createdAt : new Date(lead.createdAt);
                   
                   return (
                     <TableRow key={lead.id} className="hover:bg-gray-50/50 transition-colors">
