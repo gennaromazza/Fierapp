@@ -206,12 +206,14 @@ export default function ItemCard({ item }: ItemCardProps) {
                 <span className="text-sm text-gray-500 line-through">
                   €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                 </span>
-                <span 
-                  className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold cursor-help" 
-                  title="Risparmio totale (include sconto globale se attivo)"
-                >
-                  -€{savings.toLocaleString('it-IT')}
-                </span>
+                <div className="flex flex-col items-end">
+                  <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                    -€{savings.toLocaleString('it-IT')}
+                  </span>
+                  <span className="text-xs text-gray-500 mt-1">
+                    include sconto globale
+                  </span>
+                </div>
               </div>
             )}
             <div className={`text-2xl font-bold price-drop ${discountedPrice === 0 ? 'text-green-600' : 'text-brand-accent'}`}>
