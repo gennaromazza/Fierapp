@@ -349,34 +349,50 @@ export default function SettingsManagement() {
 
         <TabsContent value="studio">
           <Card className="card-premium shadow-elegant">
-            <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
-              <CardTitle className="flex items-center space-x-2">
-                <SettingsIcon className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} />
-                <span className="text-xl font-bold text-gradient">Informazioni Studio</span>
+            <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
+              <CardTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                     style={{ backgroundColor: 'var(--brand-accent)' }}>
+                  <SettingsIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-brand-accent">
+                    Informazioni Studio
+                  </h3>
+                  <p className="text-sm text-brand-secondary mt-1">
+                    Configura i dati base del tuo studio
+                  </p>
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="studioName">Nome Studio *</Label>
+            <CardContent className="p-6 space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="studioName" className="text-sm font-semibold text-brand-accent">
+                  Nome Studio *
+                </Label>
                 <Input
                   id="studioName"
                   value={settings.studioName || ""}
                   onChange={(e) => setSettings({ ...settings, studioName: e.target.value })}
                   placeholder="Es. Studio Fotografico Demo"
+                  className="h-11"
                   required
                 />
               </div>
 
-              <div>
-                <Label htmlFor="studioAddress">Indirizzo Studio</Label>
+              <div className="space-y-2">
+                <Label htmlFor="studioAddress" className="text-sm font-semibold text-brand-accent">
+                  Indirizzo Studio
+                </Label>
                 <Textarea
                   id="studioAddress"
                   value={settings.studioAddress || ""}
                   onChange={(e) => setSettings({ ...settings, studioAddress: e.target.value })}
                   placeholder="Via Roma 123, 20121 Milano (MI)"
-                  rows={2}
+                  rows={3}
+                  className="resize-none"
                 />
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-xs text-gray-500">
                   L'indirizzo verrà mostrato nel footer con link a Google Maps
                 </p>
               </div>
@@ -708,56 +724,93 @@ export default function SettingsManagement() {
           </div>
         </TabsContent>
 
-        <TabsContent value="contacts">
-          <Card className="card-brand">
-            <CardHeader className="card-header-brand">
-              <CardTitle className="flex items-center space-x-2">
-                <Phone className="w-5 h-5" />
-                <span>Informazioni di Contatto</span>
+        <TabsContent value="contacts" className="space-y-6">
+          {/* Contact Information */}
+          <Card className="card-premium shadow-elegant">
+            <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
+              <CardTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                     style={{ backgroundColor: 'var(--brand-accent)' }}>
+                  <Phone className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-brand-accent">
+                    Informazioni di Contatto
+                  </h3>
+                  <p className="text-sm text-brand-secondary mt-1">
+                    Configura i canali di contatto dello studio
+                  </p>
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="whatsappNumber">Numero WhatsApp *</Label>
-                <Input
-                  id="whatsappNumber"
-                  value={settings.whatsappNumber || ""}
-                  onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
-                  placeholder="+39 333 123 4567"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Numero utilizzato per le richieste dal sito (richiesto per il funzionamento)
-                </p>
+            <CardContent className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="whatsappNumber" className="text-sm font-semibold text-brand-accent">
+                    Numero WhatsApp *
+                  </Label>
+                  <Input
+                    id="whatsappNumber"
+                    value={settings.whatsappNumber || ""}
+                    onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
+                    placeholder="+39 333 123 4567"
+                    className="h-11"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Numero utilizzato per le richieste dal sito (richiesto)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber" className="text-sm font-semibold text-brand-accent">
+                    Telefono Studio
+                  </Label>
+                  <Input
+                    id="phoneNumber"
+                    value={settings.phoneNumber || ""}
+                    onChange={(e) => setSettings({ ...settings, phoneNumber: e.target.value })}
+                    placeholder="+39 333 123 4567"
+                    className="h-11"
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="phoneNumber">Telefono Studio</Label>
-                <Input
-                  id="phoneNumber"
-                  value={settings.phoneNumber || ""}
-                  onChange={(e) => setSettings({ ...settings, phoneNumber: e.target.value })}
-                  placeholder="+39 333 123 4567"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="email">Email Studio</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold text-brand-accent">
+                  Email Studio
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   value={settings.email || ""}
                   onChange={(e) => setSettings({ ...settings, email: e.target.value })}
                   placeholder="info@studio.com"
+                  className="h-11"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* Business Hours Section */}
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Orari di Apertura</h3>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
+          <Card className="card-premium shadow-elegant">
+            <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
+              <CardTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                     style={{ backgroundColor: 'var(--brand-accent)' }}>
+                  <SettingsIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-brand-accent">
+                    Orari di Apertura
+                  </h3>
+                  <p className="text-sm text-brand-secondary mt-1">
+                    Configura gli orari di apertura dello studio
+                  </p>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   id="businessHoursEnabled"
@@ -789,9 +842,11 @@ export default function SettingsManagement() {
                       }
                     })
                   }
-                  className="w-4 h-4"
+                  className="w-4 h-4 rounded border-2 border-brand-accent accent-brand-accent"
                 />
-                <Label htmlFor="businessHoursEnabled">Mostra orari di apertura</Label>
+                <Label htmlFor="businessHoursEnabled" className="text-sm font-semibold text-brand-accent">
+                  Mostra orari di apertura nel footer
+                </Label>
               </div>
 
               {settings.businessHours?.enabled && (
