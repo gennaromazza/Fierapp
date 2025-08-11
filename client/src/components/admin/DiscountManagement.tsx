@@ -41,6 +41,36 @@ export default function DiscountManagement() {
     loadDiscounts();
   }, []);
 
+  useEffect(() => {
+    // Detect existing discounts from items when items are loaded
+    if (items.length > 0 && !loading) {
+      detectExistingItemDiscounts();
+    }
+  }, [items, loading]);
+
+  const detectExistingItemDiscounts = () => {
+    const detectedDiscounts: Record<string, Partial<Discount>> = { ...itemDiscounts };
+    
+    items.forEach(item => {
+      // Only add if not already configured and has a discount
+      if (!itemDiscounts[item.id] && !discounts.perItemOverrides?.[item.id] && 
+          item.originalPrice && item.originalPrice > item.price) {
+        
+        const discountAmount = item.originalPrice - item.price;
+        const discountPercent = Math.round((discountAmount / item.originalPrice) * 100);
+        
+        // Add detected discount
+        detectedDiscounts[item.id] = {
+          type: "percent",
+          value: discountPercent,
+          isActive: true
+        };
+      }
+    });
+    
+    setItemDiscounts(detectedDiscounts);
+  };
+
   const loadDiscounts = async () => {
     try {
       setLoading(true);
