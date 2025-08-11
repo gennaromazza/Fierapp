@@ -188,13 +188,25 @@ export default function DiscountManagement() {
   };
 
   const updateGlobalDiscount = (field: keyof Discount, value: any) => {
-    setGlobalDiscount(prev => ({ ...prev, [field]: value }));
+    setGlobalDiscount(prev => {
+      const updated = { ...prev, [field]: value };
+      // Reset value when switching discount type
+      if (field === 'type') {
+        updated.value = 0;
+      }
+      return updated;
+    });
   };
 
   const updateItemDiscount = (itemId: string, field: keyof Discount, value: any) => {
     setItemDiscounts(prev => ({
       ...prev,
-      [itemId]: { ...prev[itemId], [field]: value }
+      [itemId]: { 
+        ...prev[itemId], 
+        [field]: value,
+        // Reset value when switching discount type
+        ...(field === 'type' ? { value: 0 } : {})
+      }
     }));
   };
 
