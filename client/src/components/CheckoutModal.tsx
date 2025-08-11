@@ -123,14 +123,26 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         }
       }
 
-      // Prepare lead data
+      // Prepare lead data with correct schema structure
       const leadData: InsertLead = {
-        formData: data,
-        selectedItems: cart.items,
-        totalAmount: cart.total,
-        discountAmount: cart.discount,
-        submittedAt: new Date(),
-        recaptchaToken,
+        customer: data,
+        selectedItems: cart.items.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          originalPrice: item.originalPrice
+        })),
+        pricing: {
+          subtotal: cart.subtotal,
+          discount: cart.discount,
+          total: cart.total
+        },
+        gdprConsent: {
+          accepted: data.gdpr_consent || false,
+          text: settings.gdprText,
+          timestamp: new Date()
+        },
+        reCAPTCHAToken: recaptchaToken,
         status: "new"
       };
 
