@@ -257,7 +257,152 @@ export default function ItemManagement() {
                 </div>
               </Button>
             </DialogTrigger>
-          
+
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass bg-brand-primary">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-brand-accent">
+                  {editingItem ? "Modifica Item" : "Nuovo Item"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="title">Titolo *</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      maxLength={40}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="category">Categoria *</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value: "servizio" | "prodotto") => 
+                        setFormData({ ...formData, category: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="servizio">Servizio</SelectItem>
+                        <SelectItem value="prodotto">Prodotto</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="subtitle">Sottotitolo</Label>
+                  <Input
+                    id="subtitle"
+                    value={formData.subtitle}
+                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Descrizione</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="price">Prezzo Attuale *</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="originalPrice">Prezzo Originale</Label>
+                    <Input
+                      id="originalPrice"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.originalPrice}
+                      onChange={(e) => setFormData({ ...formData, originalPrice: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sortOrder">Ordine</Label>
+                    <Input
+                      id="sortOrder"
+                      type="number"
+                      min="0"
+                      value={formData.sortOrder}
+                      onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="image">Immagine</Label>
+                  <div className="mt-2">
+                    <input
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="mb-4"
+                    />
+                    {imagePreview && (
+                      <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="active"
+                    checked={formData.active}
+                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <Label htmlFor="active">Attivo</Label>
+                </div>
+
+                <div className="flex space-x-2 pt-4">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="btn-primary"
+                  >
+                    {isSubmitting ? "Salvando..." : "Salva"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                    className="hover:bg-brand-secondary hover:text-brand-text"
+                  >
+                    Annulla
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
         
         {/* Decorative glow effect */}
@@ -266,153 +411,7 @@ export default function ItemManagement() {
                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)' 
              }}></div>
       </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass bg-brand-primary">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-brand-accent">
-                {editingItem ? "Modifica Item" : "Nuovo Item"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Titolo *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    maxLength={40}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="category">Categoria *</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value: "servizio" | "prodotto") => 
-                      setFormData({ ...formData, category: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="servizio">Servizio</SelectItem>
-                      <SelectItem value="prodotto">Prodotto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="subtitle">Sottotitolo</Label>
-                <Input
-                  id="subtitle"
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Descrizione</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="price">Prezzo Attuale *</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="originalPrice">Prezzo Originale</Label>
-                  <Input
-                    id="originalPrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.originalPrice}
-                    onChange={(e) => setFormData({ ...formData, originalPrice: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="sortOrder">Ordine</Label>
-                  <Input
-                    id="sortOrder"
-                    type="number"
-                    min="0"
-                    value={formData.sortOrder}
-                    onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="image">Immagine</Label>
-                <div className="mt-2">
-                  <input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="mb-4"
-                  />
-                  {imagePreview && (
-                    <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="active"
-                  checked={formData.active}
-                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <Label htmlFor="active">Attivo</Label>
-              </div>
-
-              <div className="flex space-x-2 pt-4">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn-primary"
-                >
-                  {isSubmitting ? "Salvando..." : "Salva"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                  className="hover:bg-brand-secondary hover:text-brand-text"
-                >
-                  Annulla
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+          
       </div>
 
       <Card className="card-premium shadow-elegant">
