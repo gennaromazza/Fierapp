@@ -52,24 +52,64 @@ export default function DiscountManagement() {
         if (discountsData.global) {
           // Convert Firebase Timestamps to Date objects safely
           const globalDiscount = { ...discountsData.global };
-          if (globalDiscount.startDate && typeof globalDiscount.startDate !== 'object') {
-            globalDiscount.startDate = new Date(globalDiscount.startDate);
+          
+          // Handle startDate conversion
+          if (globalDiscount.startDate) {
+            if (globalDiscount.startDate.toDate && typeof globalDiscount.startDate.toDate === 'function') {
+              // Firebase Timestamp
+              globalDiscount.startDate = globalDiscount.startDate.toDate();
+            } else if (typeof globalDiscount.startDate === 'string' || typeof globalDiscount.startDate === 'number') {
+              // String or number timestamp
+              const date = new Date(globalDiscount.startDate);
+              globalDiscount.startDate = isNaN(date.getTime()) ? undefined : date;
+            } else if (!(globalDiscount.startDate instanceof Date)) {
+              globalDiscount.startDate = undefined;
+            }
           }
-          if (globalDiscount.endDate && typeof globalDiscount.endDate !== 'object') {
-            globalDiscount.endDate = new Date(globalDiscount.endDate);
+          
+          // Handle endDate conversion
+          if (globalDiscount.endDate) {
+            if (globalDiscount.endDate.toDate && typeof globalDiscount.endDate.toDate === 'function') {
+              // Firebase Timestamp
+              globalDiscount.endDate = globalDiscount.endDate.toDate();
+            } else if (typeof globalDiscount.endDate === 'string' || typeof globalDiscount.endDate === 'number') {
+              // String or number timestamp
+              const date = new Date(globalDiscount.endDate);
+              globalDiscount.endDate = isNaN(date.getTime()) ? undefined : date;
+            } else if (!(globalDiscount.endDate instanceof Date)) {
+              globalDiscount.endDate = undefined;
+            }
           }
+          
           setGlobalDiscount(globalDiscount);
         }
         
         if (discountsData.perItemOverrides) {
           const itemDiscounts = { ...discountsData.perItemOverrides };
-          // Convert all timestamps to Date objects
+          // Convert all timestamps to Date objects safely
           Object.keys(itemDiscounts).forEach(key => {
-            if (itemDiscounts[key].startDate && typeof itemDiscounts[key].startDate !== 'object') {
-              itemDiscounts[key].startDate = new Date(itemDiscounts[key].startDate);
+            // Handle startDate
+            if (itemDiscounts[key].startDate) {
+              if (itemDiscounts[key].startDate.toDate && typeof itemDiscounts[key].startDate.toDate === 'function') {
+                itemDiscounts[key].startDate = itemDiscounts[key].startDate.toDate();
+              } else if (typeof itemDiscounts[key].startDate === 'string' || typeof itemDiscounts[key].startDate === 'number') {
+                const date = new Date(itemDiscounts[key].startDate);
+                itemDiscounts[key].startDate = isNaN(date.getTime()) ? undefined : date;
+              } else if (!(itemDiscounts[key].startDate instanceof Date)) {
+                itemDiscounts[key].startDate = undefined;
+              }
             }
-            if (itemDiscounts[key].endDate && typeof itemDiscounts[key].endDate !== 'object') {
-              itemDiscounts[key].endDate = new Date(itemDiscounts[key].endDate);
+            
+            // Handle endDate
+            if (itemDiscounts[key].endDate) {
+              if (itemDiscounts[key].endDate.toDate && typeof itemDiscounts[key].endDate.toDate === 'function') {
+                itemDiscounts[key].endDate = itemDiscounts[key].endDate.toDate();
+              } else if (typeof itemDiscounts[key].endDate === 'string' || typeof itemDiscounts[key].endDate === 'number') {
+                const date = new Date(itemDiscounts[key].endDate);
+                itemDiscounts[key].endDate = isNaN(date.getTime()) ? undefined : date;
+              } else if (!(itemDiscounts[key].endDate instanceof Date)) {
+                itemDiscounts[key].endDate = undefined;
+              }
             }
           });
           setItemDiscounts(itemDiscounts);
@@ -267,7 +307,7 @@ export default function DiscountManagement() {
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {globalDiscount.startDate ? (
+                        {globalDiscount.startDate && globalDiscount.startDate instanceof Date && !isNaN(globalDiscount.startDate.getTime()) ? (
                           format(globalDiscount.startDate, "dd/MM/yyyy", { locale: it })
                         ) : (
                           "Seleziona data"
@@ -297,7 +337,7 @@ export default function DiscountManagement() {
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {globalDiscount.endDate ? (
+                        {globalDiscount.endDate && globalDiscount.endDate instanceof Date && !isNaN(globalDiscount.endDate.getTime()) ? (
                           format(globalDiscount.endDate, "dd/MM/yyyy", { locale: it })
                         ) : (
                           "Seleziona data"
@@ -316,7 +356,7 @@ export default function DiscountManagement() {
                 </div>
               </div>
 
-              {globalDiscount.endDate && isDiscountExpired(globalDiscount) && (
+              {globalDiscount.endDate && globalDiscount.endDate instanceof Date && !isNaN(globalDiscount.endDate.getTime()) && isDiscountExpired(globalDiscount) && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <div className="flex items-center space-x-2 text-red-700">
                     <Clock className="w-4 h-4" />
