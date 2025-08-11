@@ -49,23 +49,14 @@ export default function Admin() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8 glass rounded-xl p-6 shadow-elegant">
           <h1 className="text-4xl font-bold text-gradient animate-fade-in">Pannello Amministrazione</h1>
-          <div className="flex items-center space-x-3">
-            <a
-              href={window.location.pathname.includes('/fiera') ? "/fiera" : "/"}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg glass hover:shadow-elegant transition-all duration-300 hover:scale-105"
-              style={{ color: 'var(--brand-accent)' }}
-            >
-              <span className="font-semibold">Torna al Sito</span>
-            </a>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg glass hover:shadow-elegant transition-all duration-300 hover:scale-105"
-              style={{ color: 'var(--brand-accent)' }}
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="font-semibold">Esci</span>
-            </button>
-          </div>
+          <button
+            onClick={handleSignOut}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg glass hover:shadow-elegant transition-all duration-300 hover:scale-105"
+            style={{ color: 'var(--brand-accent)' }}
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="font-semibold">Esci</span>
+          </button>
         </div>
 
         <Tabs defaultValue="items" className="space-y-6">
