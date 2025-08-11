@@ -206,7 +206,7 @@ export default function ItemManagement() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between glass rounded-xl p-6 shadow-elegant">
-        <h2 className="text-3xl font-bold text-gradient">Gestione Items</h2>
+        <h2 className="text-3xl font-bold text-brand-accent">Gestione Items</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreateDialog} className="btn-premium">
