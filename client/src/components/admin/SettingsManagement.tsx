@@ -359,7 +359,7 @@ export default function SettingsManagement() {
                   <h3 className="text-xl font-bold text-brand-accent">
                     Informazioni Studio
                   </h3>
-                  <p className="text-sm text-brand-secondary mt-1">
+                  <p className="text-sm text-gray-600 mt-1">
                     Configura i dati base del tuo studio
                   </p>
                 </div>
@@ -737,7 +737,7 @@ export default function SettingsManagement() {
                   <h3 className="text-xl font-bold text-brand-accent">
                     Informazioni di Contatto
                   </h3>
-                  <p className="text-sm text-brand-secondary mt-1">
+                  <p className="text-sm text-gray-600 mt-1">
                     Configura i canali di contatto dello studio
                   </p>
                 </div>
@@ -803,7 +803,7 @@ export default function SettingsManagement() {
                   <h3 className="text-xl font-bold text-brand-accent">
                     Orari di Apertura
                   </h3>
-                  <p className="text-sm text-brand-secondary mt-1">
+                  <p className="text-sm text-gray-600 mt-1">
                     Configura gli orari di apertura dello studio
                   </p>
                 </div>
@@ -1113,7 +1113,7 @@ export default function SettingsManagement() {
                   <h3 className="text-xl font-bold text-brand-accent">
                     Social Media
                   </h3>
-                  <p className="text-sm text-brand-secondary mt-1">
+                  <p className="text-sm text-gray-600 mt-1">
                     Configura i link ai tuoi profili social
                   </p>
                 </div>
