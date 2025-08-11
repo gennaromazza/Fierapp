@@ -83,7 +83,7 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
           {/* Logo Section */}
           <div className="flex items-center space-x-4 group cursor-pointer">
             {/* Studio logo */}
-            <div className="w-14 h-14 rounded-xl gradient-accent flex items-center justify-center overflow-hidden shadow-glow animate-float"
+            <div className="w-14 h-14 rounded-xl gradient-accent flex items-center justify-center overflow-hidden shadow-glow"
                  style={{ backgroundColor: 'var(--brand-accent)' }}>
               {logoUrl ? (
                 <img src={logoUrl} alt="Studio Logo" className="w-full h-full object-cover" />
