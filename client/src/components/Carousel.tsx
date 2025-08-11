@@ -35,6 +35,39 @@ export default function Carousel() {
         setCurrentSlide(0);
       } catch (error) {
         console.error("Error loading items:", error);
+        // Set demo items as fallback when Firebase fails
+        const demoItems: Item[] = [
+          {
+            id: "demo-1",
+            title: activeTab === "servizi" ? "Servizio Fotografico Base" : "Album Fotografico Premium",
+            category: activeTab === "servizi" ? "servizio" : "prodotto",
+            description: activeTab === "servizi" 
+              ? "Servizio fotografico professionale con 2 ore di shooting e 20 foto modificate" 
+              : "Album fotografico di alta qualità con copertina rigida e 50 pagine",
+            price: activeTab === "servizi" ? 250 : 89,
+            originalPrice: activeTab === "servizi" ? 350 : 120,
+            active: true,
+            sortOrder: 1,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: "demo-2", 
+            title: activeTab === "servizi" ? "Servizio Video Completo" : "Stampe Professionali",
+            category: activeTab === "servizi" ? "servizio" : "prodotto",
+            description: activeTab === "servizi"
+              ? "Servizio video completo con riprese, montaggio e consegna finale"
+              : "Set di 30 stampe professionali su carta fotografica premium",
+            price: activeTab === "servizi" ? 450 : 45,
+            originalPrice: activeTab === "servizi" ? 600 : 60,
+            active: true,
+            sortOrder: 2,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        ];
+        setItems(demoItems);
+        setCurrentSlide(0);
       } finally {
         setLoading(false);
       }
