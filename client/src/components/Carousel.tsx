@@ -156,10 +156,13 @@ export default function Carousel() {
           <button
             className={`flex-1 py-3 px-3 rounded-lg font-semibold text-xs transition-all duration-300 ${
               activeTab === "tutti"
-                ? "gradient-accent text-white shadow-glow"
+                ? "text-white shadow-glow"
                 : "hover:scale-105"
             }`}
-            style={activeTab !== "tutti" ? { color: 'var(--brand-accent)' } : {}}
+            style={activeTab === "tutti" 
+              ? { backgroundColor: 'var(--brand-accent)' }
+              : { color: 'var(--brand-accent)' }
+            }
             onClick={() => setActiveTab("tutti")}
           >
             TUTTI
@@ -167,10 +170,13 @@ export default function Carousel() {
           <button
             className={`flex-1 py-3 px-3 rounded-lg font-semibold text-xs transition-all duration-300 ${
               activeTab === "servizi"
-                ? "gradient-accent text-white shadow-glow"
+                ? "text-white shadow-glow"
                 : "hover:scale-105"
             }`}
-            style={activeTab !== "servizi" ? { color: 'var(--brand-accent)' } : {}}
+            style={activeTab === "servizi" 
+              ? { backgroundColor: 'var(--brand-accent)' }
+              : { color: 'var(--brand-accent)' }
+            }
             onClick={() => setActiveTab("servizi")}
           >
             SERVIZI
@@ -178,10 +184,13 @@ export default function Carousel() {
           <button
             className={`flex-1 py-3 px-3 rounded-lg font-semibold text-xs transition-all duration-300 ${
               activeTab === "prodotti"
-                ? "gradient-accent text-white shadow-glow"
+                ? "text-white shadow-glow"
                 : "hover:scale-105"
             }`}
-            style={activeTab !== "prodotti" ? { color: 'var(--brand-accent)' } : {}}
+            style={activeTab === "prodotti" 
+              ? { backgroundColor: 'var(--brand-accent)' }
+              : { color: 'var(--brand-accent)' }
+            }
             onClick={() => setActiveTab("prodotti")}
           >
             PRODOTTI
