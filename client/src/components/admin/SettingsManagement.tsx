@@ -1240,15 +1240,28 @@ export default function SettingsManagement() {
         </TabsContent>
 
         <TabsContent value="forms">
-          <Card className="card-brand">
-            <CardHeader className="card-header-brand">
-              <CardTitle>Configurazione Form Lead</CardTitle>
+          <Card className="card-premium shadow-elegant">
+            <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
+              <CardTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                     style={{ backgroundColor: 'var(--brand-accent)' }}>
+                  <SettingsIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-brand-accent">
+                    Configurazione Form Lead
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Personalizza i campi del form di contatto
+                  </p>
+                </div>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <Label>Campi Form</Label>
-                  <Button onClick={addFormField} size="sm" variant="outline">
+                  <Label className="text-sm font-semibold text-brand-accent">Campi Form</Label>
+                  <Button onClick={addFormField} size="sm" variant="outline" className="btn-secondary">
                     <Plus className="w-4 h-4 mr-2" />
                     Aggiungi Campo
                   </Button>
@@ -1330,35 +1343,57 @@ export default function SettingsManagement() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="gdprText">Testo Consenso GDPR</Label>
+              <div className="space-y-2">
+                <Label htmlFor="gdprText" className="text-sm font-semibold text-brand-accent">
+                  Testo Consenso GDPR
+                </Label>
                 <Textarea
                   id="gdprText"
                   value={settings.gdprText || ""}
                   onChange={(e) => setSettings({ ...settings, gdprText: e.target.value })}
                   rows={3}
                   placeholder="Testo del consenso GDPR che verrà mostrato nel form"
+                  className="resize-none"
                 />
+                <p className="text-xs text-gray-500">
+                  Questo testo verrà mostrato insieme alla checkbox di consenso GDPR
+                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="integrations">
-          <Card className="card-brand">
-            <CardHeader className="card-header-brand">
-              <CardTitle>Integrazioni Esterne</CardTitle>
+          <Card className="card-premium shadow-elegant">
+            <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
+              <CardTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                     style={{ backgroundColor: 'var(--brand-accent)' }}>
+                  <SettingsIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-brand-accent">
+                    Integrazioni Esterne
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Configura i servizi di terze parti
+                  </p>
+                </div>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="recaptchaSiteKey">reCAPTCHA Site Key</Label>
+              <div className="space-y-2">
+                <Label htmlFor="recaptchaSiteKey" className="text-sm font-semibold text-brand-accent">
+                  reCAPTCHA Site Key
+                </Label>
                 <Input
                   id="recaptchaSiteKey"
                   value={settings.reCAPTCHASiteKey || ""}
                   onChange={(e) => setSettings({ ...settings, reCAPTCHASiteKey: e.target.value })}
                   placeholder="6Le..."
+                  className="h-11"
                 />
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-xs text-gray-500">
                   Chiave pubblica di Google reCAPTCHA v3 per protezione anti-spam
                 </p>
               </div>
