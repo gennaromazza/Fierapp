@@ -202,12 +202,12 @@ export default function ItemCard({ item }: ItemCardProps) {
           {/* Price Display with Savings */}
           <div className="space-y-2 mb-4">
             {savings > 0 && (
-              <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500 line-through">
                   €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                 </span>
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-bold">
-                  Risparmi €{savings.toLocaleString('it-IT')}
+                <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                  -€{savings.toLocaleString('it-IT')}
                 </span>
               </div>
             )}
