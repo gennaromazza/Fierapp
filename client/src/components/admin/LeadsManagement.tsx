@@ -456,7 +456,7 @@ export default function LeadsManagement() {
 
       {/* Lead Detail Modal */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--brand-primary)' }}>
           <DialogHeader>
             <DialogTitle>
               Dettagli Lead - {selectedLead?.customer.nome} {selectedLead?.customer.cognome}
