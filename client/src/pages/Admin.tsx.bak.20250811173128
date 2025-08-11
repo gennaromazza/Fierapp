@@ -15,15 +15,19 @@ export default function Admin() {
 
   useEffect(() => {
     if (!loading && !user) {
-      // Con Wouter configurato con base = import.meta.env.BASE_URL
-      // i percorsi vanno SEMPRE senza /fiera
-      setLocation("/admin/login");
+      // Maintain the current path structure (with or without /fiera)
+      const currentPath = window.location.pathname;
+      const isUsingFieraPrefix = currentPath.includes('/fiera');
+      setLocation(isUsingFieraPrefix ? "/fiera/admin/login" : "/admin/login");
     }
   }, [user, loading, setLocation]);
 
   const handleSignOut = async () => {
     await signOut();
-    setLocation("/admin/login");
+    // Maintain the current path structure (with or without /fiera)
+    const currentPath = window.location.pathname;
+    const isUsingFieraPrefix = currentPath.includes('/fiera');
+    setLocation(isUsingFieraPrefix ? "/fiera/admin/login" : "/admin/login");
   };
 
   if (loading) {
@@ -41,24 +45,26 @@ export default function Admin() {
   return (
     <div className="min-h-screen gradient-radial">
       <Header />
-
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8 glass rounded-xl p-6 shadow-elegant">
-          <h1 className="text-4xl font-bold text-gradient animate-fade-in">
-            Pannello Amministrazione
-          </h1>
+          <h1 className="text-4xl font-bold text-gradient animate-fade-in">Pannello Amministrazione</h1>
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => setLocation("/")}
+              onClick={() => {
+                const currentPath = window.location.pathname;
+                const isUsingFieraPrefix = currentPath.includes('/fiera');
+                setLocation(isUsingFieraPrefix ? "/fiera" : "/");
+              }}
               className="flex items-center space-x-2 px-4 py-2 rounded-lg glass hover:shadow-elegant transition-all duration-300 hover:scale-105"
-              style={{ color: "var(--brand-accent)" }}
+              style={{ color: 'var(--brand-accent)' }}
             >
               <span className="font-semibold">Torna Al Sito</span>
             </button>
             <button
               onClick={handleSignOut}
               className="flex items-center space-x-2 px-4 py-2 rounded-lg glass hover:shadow-elegant transition-all duration-300 hover:scale-105"
-              style={{ color: "var(--brand-accent)" }}
+              style={{ color: 'var(--brand-accent)' }}
             >
               <LogOut className="w-5 h-5" />
               <span className="font-semibold">Esci</span>
@@ -68,31 +74,19 @@ export default function Admin() {
 
         <Tabs defaultValue="items" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 glass rounded-xl p-2 shadow-elegant">
-            <TabsTrigger
-              className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105"
-              value="items"
-            >
+            <TabsTrigger value="items" className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105">
               <ShoppingBag className="w-4 h-4" />
               <span>Items</span>
             </TabsTrigger>
-            <TabsTrigger
-              className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105"
-              value="discounts"
-            >
+            <TabsTrigger value="discounts" className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105">
               <Percent className="w-4 h-4" />
               <span>Sconti</span>
             </TabsTrigger>
-            <TabsTrigger
-              className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105"
-              value="settings"
-            >
+            <TabsTrigger value="settings" className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105">
               <Settings className="w-4 h-4" />
               <span>Impostazioni</span>
             </TabsTrigger>
-            <TabsTrigger
-              className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105"
-              value="leads"
-            >
+            <TabsTrigger value="leads" className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105">
               <Users className="w-4 h-4" />
               <span>Lead</span>
             </TabsTrigger>

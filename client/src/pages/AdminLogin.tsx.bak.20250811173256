@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,14 +26,18 @@ export default function AdminLogin() {
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
   useEffect(() => {
     if (!loading && user) {
-      // Con Wouter configurato con base = import.meta.env.BASE_URL
-      // i percorsi vanno SEMPRE senza /fiera
-      setLocation("/admin");
+      // Maintain the current path structure (with or without /fiera)
+      const currentPath = window.location.pathname;
+      const isUsingFieraPrefix = currentPath.includes('/fiera');
+      setLocation(isUsingFieraPrefix ? "/fiera/admin" : "/admin");
     }
   }, [user, loading, setLocation]);
 
@@ -45,12 +49,15 @@ export default function AdminLogin() {
         title: "Accesso effettuato",
         description: "Benvenuto nel pannello amministrazione",
       });
-      setLocation("/admin");
+      // Maintain the current path structure (with or without /fiera)
+      const currentPath = window.location.pathname;
+      const isUsingFieraPrefix = currentPath.includes('/fiera');
+      setLocation(isUsingFieraPrefix ? "/fiera/admin" : "/admin");
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
         title: "Errore di accesso",
-        description: error?.message || "Credenziali non valide",
+        description: error.message || "Credenziali non valide",
         variant: "destructive",
       });
     } finally {
@@ -66,7 +73,9 @@ export default function AdminLogin() {
     );
   }
 
-  if (user) return null;
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -133,12 +142,12 @@ export default function AdminLogin() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link
-              href="/"
+            <a
+              href="/fiera/"
               className="text-sm text-brand-accent hover:underline"
             >
               ← Torna al sito pubblico
-            </Link>
+            </a>
           </div>
         </CardContent>
       </Card>

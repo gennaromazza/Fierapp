@@ -3,9 +3,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { Settings, Discounts } from "@shared/schema";
-import { Link } from "wouter";
 import { Camera, Settings as SettingsIcon, Clock, Percent } from "lucide-react";
-import { format, isAfter } from "date-fns";
+import { format, isAfter, isBefore } from "date-fns";
 import { it } from "date-fns/locale";
 
 type TabType = "servizi" | "prodotti";
@@ -15,10 +14,7 @@ interface HeaderProps {
   onTabChange?: (tab: TabType) => void;
 }
 
-export default function Header({
-  activeTab = "servizi",
-  onTabChange,
-}: HeaderProps) {
+export default function Header({ activeTab = "servizi", onTabChange }: HeaderProps) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
@@ -30,31 +26,18 @@ export default function Header({
         if (settingsDoc.exists()) {
           const settingsData = settingsDoc.data() as Settings;
           setSettings(settingsData);
-
+          
           // Apply brand colors to CSS variables
-          if (
-            settingsData.brandPrimary ||
-            settingsData.brandSecondary ||
-            settingsData.brandAccent
-          ) {
+          if (settingsData.brandPrimary || settingsData.brandSecondary || settingsData.brandAccent) {
             const root = document.documentElement;
             if (settingsData.brandPrimary) {
-              root.style.setProperty(
-                "--brand-primary",
-                settingsData.brandPrimary,
-              );
+              root.style.setProperty('--brand-primary', settingsData.brandPrimary);
             }
             if (settingsData.brandSecondary) {
-              root.style.setProperty(
-                "--brand-secondary",
-                settingsData.brandSecondary,
-              );
+              root.style.setProperty('--brand-secondary', settingsData.brandSecondary);
             }
             if (settingsData.brandAccent) {
-              root.style.setProperty(
-                "--brand-accent",
-                settingsData.brandAccent,
-              );
+              root.style.setProperty('--brand-accent', settingsData.brandAccent);
             }
           }
 
@@ -85,30 +68,25 @@ export default function Header({
         console.error("Error loading discounts:", error);
       }
     }
-
+    
     loadSettings();
     loadDiscounts();
   }, []);
 
   return (
-    <header
-      className="sticky top-0 z-50 glass shadow-elegant"
-      style={{ borderBottom: `2px solid var(--brand-secondary)` }}
-    >
+    <header className="sticky top-0 z-50 glass shadow-elegant"
+            style={{ 
+              borderBottom: `2px solid var(--brand-secondary)`
+            }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo Section */}
           <div className="flex items-center space-x-4 group cursor-pointer">
-            <div
-              className="w-14 h-14 rounded-xl gradient-accent flex items-center justify-center overflow-hidden shadow-glow"
-              style={{ backgroundColor: "var(--brand-accent)" }}
-            >
+            {/* Studio logo */}
+            <div className="w-14 h-14 rounded-xl gradient-accent flex items-center justify-center overflow-hidden shadow-glow"
+                 style={{ backgroundColor: 'var(--brand-accent)' }}>
               {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt="Studio Logo"
-                  className="w-full h-full object-cover"
-                />
+                <img src={logoUrl} alt="Studio Logo" className="w-full h-full object-cover" />
               ) : (
                 <Camera className="w-8 h-8 text-white" />
               )}
@@ -117,57 +95,54 @@ export default function Header({
               <h1 className="text-2xl font-bold tracking-tight text-gradient">
                 {settings?.studioName || "STUDIO DEMO"}
               </h1>
-              <p
-                className="text-sm opacity-80"
-                style={{ color: "var(--brand-accent)" }}
-              >
+              <p className="text-sm opacity-80" style={{ color: 'var(--brand-accent)' }}>
                 Servizi professionali per eventi
               </p>
             </div>
           </div>
-
+          
           {/* Navigation */}
           {onTabChange && (
             <nav className="hidden md:flex items-center space-x-6">
               <button
-                className="font-medium pb-1 transition-colors"
-                style={
-                  activeTab === "servizi"
-                    ? {
-                        color: "var(--brand-accent)",
-                        borderBottom: `2px solid var(--brand-accent)`,
-                      }
-                    : { color: "#4B5563" }
-                }
+                className={`font-medium pb-1 transition-colors`}
+                style={activeTab === "servizi" ? {
+                  color: 'var(--brand-accent)',
+                  borderBottom: `2px solid var(--brand-accent)`
+                } : {
+                  color: '#4B5563'
+                }}
                 onMouseEnter={(e) => {
-                  if (activeTab !== "servizi")
-                    e.currentTarget.style.color = "var(--brand-accent)";
+                  if (activeTab !== "servizi") {
+                    e.currentTarget.style.color = 'var(--brand-accent)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  if (activeTab !== "servizi")
-                    e.currentTarget.style.color = "#4B5563";
+                  if (activeTab !== "servizi") {
+                    e.currentTarget.style.color = '#4B5563';
+                  }
                 }}
                 onClick={() => onTabChange("servizi")}
               >
                 SERVIZI
               </button>
               <button
-                className="font-medium pb-1 transition-colors"
-                style={
-                  activeTab === "prodotti"
-                    ? {
-                        color: "var(--brand-accent)",
-                        borderBottom: `2px solid var(--brand-accent)`,
-                      }
-                    : { color: "#4B5563" }
-                }
+                className={`font-medium pb-1 transition-colors`}
+                style={activeTab === "prodotti" ? {
+                  color: 'var(--brand-accent)',
+                  borderBottom: `2px solid var(--brand-accent)`
+                } : {
+                  color: '#4B5563'
+                }}
                 onMouseEnter={(e) => {
-                  if (activeTab !== "prodotti")
-                    e.currentTarget.style.color = "var(--brand-accent)";
+                  if (activeTab !== "prodotti") {
+                    e.currentTarget.style.color = 'var(--brand-accent)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  if (activeTab !== "prodotti")
-                    e.currentTarget.style.color = "#4B5563";
+                  if (activeTab !== "prodotti") {
+                    e.currentTarget.style.color = '#4B5563';
+                  }
                 }}
                 onClick={() => onTabChange("prodotti")}
               >
@@ -175,21 +150,19 @@ export default function Header({
               </button>
             </nav>
           )}
-
+          
           {/* Admin Link */}
-          <Link
-            href="/admin"
+          <a
+            href={window.location.pathname.includes('/fiera') ? "/fiera/admin" : "/admin"}
             className="text-sm transition-colors"
-            onMouseEnter={(e: any) =>
-              (e.currentTarget.style.color = "var(--brand-accent)")
-            }
-            onMouseLeave={(e: any) => (e.currentTarget.style.color = "#6B7280")}
-            style={{ color: "#6B7280" }}
+            style={{ color: '#6B7280' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--brand-accent)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
           >
             <SettingsIcon className="w-4 h-4" />
-          </Link>
+          </a>
         </div>
-
+        
         {/* Mobile Navigation */}
         {onTabChange && (
           <div className="md:hidden pb-3">
@@ -224,10 +197,7 @@ export default function Header({
             <div className="flex items-center justify-center space-x-2 text-sm">
               <Percent className="w-4 h-4 text-brand-accent" />
               <span className="font-semibold text-brand-text-accent">
-                Sconto globale attivo:{" "}
-                {discounts.global.type === "percent"
-                  ? `${discounts.global.value}%`
-                  : `€${discounts.global.value}`}
+                Sconto globale attivo: {discounts.global.type === "percent" ? `${discounts.global.value}%` : `€${discounts.global.value}`}
               </span>
               {discounts.global?.endDate && (
                 <div className="flex items-center space-x-1 text-brand-text-secondary">
@@ -237,33 +207,33 @@ export default function Header({
                       try {
                         let endDate: Date;
                         const rawDate = discounts.global.endDate;
-
-                        if (
-                          rawDate &&
-                          typeof rawDate === "object" &&
-                          "toDate" in rawDate &&
-                          typeof rawDate.toDate === "function"
-                        ) {
+                        
+                        // Handle Firebase Timestamp
+                        if (rawDate && typeof rawDate === 'object' && 'toDate' in rawDate && typeof rawDate.toDate === 'function') {
                           endDate = rawDate.toDate();
-                        } else if (rawDate instanceof Date) {
+                        } 
+                        // Handle Date object
+                        else if (rawDate instanceof Date) {
                           endDate = rawDate;
-                        } else if (rawDate) {
+                        } 
+                        // Handle string or number
+                        else if (rawDate) {
                           endDate = new Date(rawDate);
                         } else {
                           return "";
                         }
-
-                        if (isNaN(endDate.getTime())) return "";
-
+                        
+                        // Validate the date
+                        if (isNaN(endDate.getTime())) {
+                          return "";
+                        }
+                        
                         const isExpired = isAfter(new Date(), endDate);
-                        return isExpired
+                        return isExpired 
                           ? `Scaduto: ${format(endDate, "d MMM yyyy", { locale: it })}`
                           : `Scade: ${format(endDate, "d MMM yyyy", { locale: it })}`;
                       } catch (error) {
-                        console.error(
-                          "Error formatting discount end date:",
-                          error,
-                        );
+                        console.error("Error formatting discount end date:", error);
                         return "";
                       }
                     })()}
