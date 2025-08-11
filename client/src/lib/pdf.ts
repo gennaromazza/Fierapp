@@ -10,7 +10,24 @@ export function generateQuotePDF(lead: Lead, studioName = 'Studio Demo'): void {
   
   // Lead info
   doc.setFontSize(12);
-  doc.text(`Data: ${lead.createdAt.toLocaleDateString('it-IT')}`, 20, 50);
+  
+  // Handle different createdAt formats
+  let leadDate;
+  try {
+    if (lead.createdAt instanceof Date) {
+      leadDate = lead.createdAt;
+    } else if (lead.createdAt?.seconds) {
+      leadDate = new Date(lead.createdAt.seconds * 1000);
+    } else if (lead.createdAt) {
+      leadDate = new Date(lead.createdAt);
+    } else {
+      leadDate = new Date();
+    }
+  } catch (e) {
+    leadDate = new Date();
+  }
+  
+  doc.text(`Data: ${leadDate.toLocaleDateString('it-IT')}`, 20, 50);
   doc.text(`Cliente: ${lead.customer.nome} ${lead.customer.cognome}`, 20, 60);
   doc.text(`Email: ${lead.customer.email}`, 20, 70);
   doc.text(`Telefono: ${lead.customer.telefono}`, 20, 80);
