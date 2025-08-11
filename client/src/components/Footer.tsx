@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Settings } from "@shared/schema";
-import { Phone, Mail, MessageCircle, MapPin, Clock, Facebook, Instagram, Youtube } from "lucide-react";
+import { Phone, Mail, MessageCircle, MapPin, Clock } from "lucide-react";
+import SocialLinks from "./SocialLinks";
 
 export default function Footer() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -40,17 +41,11 @@ export default function Footer() {
             </p>
             
             {/* Social Links */}
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                <Youtube className="w-5 h-5" />
-              </a>
-            </div>
+            <SocialLinks 
+              socialMedia={settings?.socialMedia}
+              variant="footer"
+              className="mt-4"
+            />
           </div>
           
           {/* Contact Info */}

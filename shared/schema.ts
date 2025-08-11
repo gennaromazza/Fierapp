@@ -71,6 +71,14 @@ export const settingsSchema = z.object({
     lat: z.number(),
     lng: z.number(),
   }).optional(),
+  socialMedia: z.object({
+    facebook: z.string().url().optional(),
+    instagram: z.string().url().optional(),
+    youtube: z.string().url().optional(),
+    twitter: z.string().url().optional(),
+    linkedin: z.string().url().optional(),
+    tiktok: z.string().url().optional(),
+  }).optional(),
   formFields: z.array(formFieldSchema).default([
     { type: "text", label: "Nome", required: true },
     { type: "text", label: "Cognome", required: true },

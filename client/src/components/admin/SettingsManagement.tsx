@@ -38,8 +38,16 @@ export default function SettingsManagement() {
     ],
     gdprText: "Acconsento al trattamento dei miei dati personali secondo la Privacy Policy.",
     reCAPTCHASiteKey: "",
+    socialMedia: {
+      facebook: "",
+      instagram: "",
+      youtube: "",
+      twitter: "",
+      linkedin: "",
+      tiktok: ""
+    }
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -63,7 +71,7 @@ export default function SettingsManagement() {
           .map(line => line.trim())
           .filter(line => line.startsWith('#'))
           .slice(0, 9); // Take first 9 colors
-        
+
         if (colors.length >= 3) {
           palette = {
             brandPrimary: colors[0] || "#F1EFEC",
@@ -164,7 +172,7 @@ export default function SettingsManagement() {
       if (settingsDoc.exists()) {
         const settingsData = settingsDoc.data() as Settings;
         setSettings(settingsData);
-        
+
         // Load logo preview if exists
         if (settingsData.logoUrl) {
           try {
@@ -191,9 +199,9 @@ export default function SettingsManagement() {
   const saveSettings = async () => {
     try {
       setSaving(true);
-      
+
       let logoUrl = settings.logoUrl;
-      
+
       // Upload logo if file is selected
       if (logoFile) {
         setLogoUploading(true);
@@ -201,7 +209,7 @@ export default function SettingsManagement() {
         const logoRef = ref(storage, `uploads/logo-${Date.now()}.jpg`);
         await uploadBytes(logoRef, compressedLogo);
         logoUrl = await getDownloadURL(logoRef);
-        
+
         // Delete old logo if exists
         if (settings.logoUrl) {
           try {
@@ -211,7 +219,7 @@ export default function SettingsManagement() {
             console.warn("Could not delete old logo:", error);
           }
         }
-        
+
         setLogoPreview(logoUrl);
         setLogoUploading(false);
       }
@@ -224,7 +232,7 @@ export default function SettingsManagement() {
       await setDoc(doc(db, "settings", "app"), updatedSettings);
       setSettings(updatedSettings);
       setLogoFile(null);
-      
+
       toast({
         title: "Impostazioni salvate",
         description: "Le impostazioni sono state salvate con successo",
@@ -375,7 +383,7 @@ export default function SettingsManagement() {
                       Supporta file JSON con colori hex o file Adobe Swatch Exchange (.ase)
                     </p>
                   </div>
-                  
+
                   {/* Preset Palettes */}
                   <div>
                     <Label>Palette Predefinite</Label>
@@ -713,6 +721,126 @@ export default function SettingsManagement() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Social Media Section */}
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Social Media</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="facebook">Facebook</Label>
+                <Input
+                  id="facebook"
+                  type="url"
+                  placeholder="https://facebook.com/tuapagina"
+                  value={settings.socialMedia?.facebook || ""}
+                  onChange={(e) =>
+                    setSettings({ 
+                      ...settings, 
+                      socialMedia: { 
+                        ...settings.socialMedia, 
+                        facebook: e.target.value 
+                      } 
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="instagram">Instagram</Label>
+                <Input
+                  id="instagram"
+                  type="url"
+                  placeholder="https://instagram.com/tuoaccount"
+                  value={settings.socialMedia?.instagram || ""}
+                  onChange={(e) =>
+                    setSettings({ 
+                      ...settings, 
+                      socialMedia: { 
+                        ...settings.socialMedia, 
+                        instagram: e.target.value 
+                      } 
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="youtube">YouTube</Label>
+                <Input
+                  id="youtube"
+                  type="url"
+                  placeholder="https://youtube.com/c/tuocanale"
+                  value={settings.socialMedia?.youtube || ""}
+                  onChange={(e) =>
+                    setSettings({ 
+                      ...settings, 
+                      socialMedia: { 
+                        ...settings.socialMedia, 
+                        youtube: e.target.value 
+                      } 
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="twitter">Twitter</Label>
+                <Input
+                  id="twitter"
+                  type="url"
+                  placeholder="https://twitter.com/tuoaccount"
+                  value={settings.socialMedia?.twitter || ""}
+                  onChange={(e) =>
+                    setSettings({ 
+                      ...settings, 
+                      socialMedia: { 
+                        ...settings.socialMedia, 
+                        twitter: e.target.value 
+                      } 
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="linkedin">LinkedIn</Label>
+                <Input
+                  id="linkedin"
+                  type="url"
+                  placeholder="https://linkedin.com/company/tuoaccount"
+                  value={settings.socialMedia?.linkedin || ""}
+                  onChange={(e) =>
+                    setSettings({ 
+                      ...settings, 
+                      socialMedia: { 
+                        ...settings.socialMedia, 
+                        linkedin: e.target.value 
+                      } 
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tiktok">TikTok</Label>
+                <Input
+                  id="tiktok"
+                  type="url"
+                  placeholder="https://tiktok.com/@tuoaccount"
+                  value={settings.socialMedia?.tiktok || ""}
+                  onChange={(e) =>
+                    setSettings({ 
+                      ...settings, 
+                      socialMedia: { 
+                        ...settings.socialMedia, 
+                        tiktok: e.target.value 
+                      } 
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="forms">
@@ -729,7 +857,7 @@ export default function SettingsManagement() {
                     Aggiungi Campo
                   </Button>
                 </div>
-                
+
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
