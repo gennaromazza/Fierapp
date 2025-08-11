@@ -206,7 +206,10 @@ export default function ItemCard({ item }: ItemCardProps) {
                 <span className="text-sm text-gray-500 line-through">
                   €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                 </span>
-                <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                <span 
+                  className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold cursor-help" 
+                  title="Risparmio totale (include sconto globale se attivo)"
+                >
                   -€{savings.toLocaleString('it-IT')}
                 </span>
               </div>
