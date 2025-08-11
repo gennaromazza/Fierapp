@@ -151,38 +151,51 @@ export default function ItemCard({ item }: ItemCardProps) {
           <p className="text-gray-600 mb-4">{item.description}</p>
         )}
         
-        {/* Price Display with Detailed Discount Breakdown */}
+        {/* Prominent Discount Section */}
+        {hasAnyActiveDiscount && savings > 0 && (
+          <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-green-800 font-semibold text-sm">SCONTO APPLICATO</span>
+              <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                -{discountPercent}%
+              </span>
+            </div>
+            <div className="space-y-1">
+              {hasItemSpecificDiscount && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-green-700">Sconto prodotto:</span>
+                  <span className="font-bold text-green-800">
+                    -€{discountInfo.itemDiscount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+              {hasGlobalDiscount && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-green-700">Sconto globale:</span>
+                  <span className="font-bold text-green-800">
+                    -€{discountInfo.globalDiscount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+              <div className="border-t border-green-300 pt-1 mt-1">
+                <div className="flex items-center justify-between text-sm font-semibold">
+                  <span className="text-green-700">Risparmio totale:</span>
+                  <span className="text-green-800">
+                    €{savings.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Price Display */}
         <div className="space-y-2 mb-4">
           {savings > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500 line-through">
-                  €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                </span>
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-bold">
-                  Risparmi €{savings.toLocaleString('it-IT')}
-                </span>
-              </div>
-              
-              {/* Detailed Discount Breakdown */}
-              <div className="space-y-1">
-                {hasItemSpecificDiscount && (
-                  <div className="flex items-center justify-between text-xs bg-blue-50 px-2 py-1 rounded">
-                    <span className="text-blue-700">Sconto specifico articolo:</span>
-                    <span className="font-medium text-blue-800">
-                      -€{discountInfo.itemDiscount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
-                {hasGlobalDiscount && (
-                  <div className="flex items-center justify-between text-xs bg-orange-50 px-2 py-1 rounded">
-                    <span className="text-orange-700">Sconto globale:</span>
-                    <span className="font-medium text-orange-800">
-                      -€{discountInfo.globalDiscount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500 line-through">
+                Prezzo originale: €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+              </span>
             </div>
           )}
           <div className={`text-2xl font-bold price-drop ${discountedPrice === 0 ? 'text-green-600' : 'text-brand-accent'}`}>
