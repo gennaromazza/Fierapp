@@ -275,201 +275,134 @@ export default function DiscountManagement() {
         </Button>
       </div>
 
-      <Tabs defaultValue="global" className="space-y-6">
-        <TabsList className="glass rounded-xl p-2 shadow-elegant">
-          <TabsTrigger value="global" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Sconto Globale</TabsTrigger>
-          <TabsTrigger value="overview" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Panoramica</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
 
-        <TabsContent value="global">
-          <Card className="card-premium shadow-elegant">
-            <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
-              <CardTitle className="flex items-center space-x-2">
-                <Percent className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} />
-                <span>Sconto Globale</span>
-                {globalDiscount.value && globalDiscount.value > 0 && getStatusBadge(getDiscountStatus(globalDiscount))}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="global-type">Tipo Sconto</Label>
-                  <Select
-                    value={globalDiscount.type}
-                    onValueChange={(value: "percent" | "fixed") => updateGlobalDiscount("type", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percent">Percentuale (%)</SelectItem>
-                      <SelectItem value="fixed">Importo Fisso (€)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="global-value">
-                    Valore {globalDiscount.type === "percent" ? "(%)" : "(€)"}
-                  </Label>
-                  <Input
-                    id="global-value"
-                    type="number"
-                    min="0"
-                    max={globalDiscount.type === "percent" ? "100" : undefined}
-                    step={globalDiscount.type === "percent" ? "1" : "0.01"}
-                    value={globalDiscount.value || ""}
-                    onChange={(e) => updateGlobalDiscount("value", parseFloat(e.target.value) || 0)}
-                    placeholder="0"
-                  />
-                </div>
-
-                <div>
-                  <Label>Stato</Label>
-                  <div className="mt-2">
-                    {getStatusBadge(getDiscountStatus(globalDiscount))}
-                  </div>
-                </div>
+        <Card className="card-premium shadow-elegant">
+          <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
+            <CardTitle className="flex items-center space-x-2">
+              <Percent className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} />
+              <span>Sconto Globale</span>
+              {globalDiscount.value && globalDiscount.value > 0 && getStatusBadge(getDiscountStatus(globalDiscount))}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="global-type">Tipo Sconto</Label>
+                <Select
+                  value={globalDiscount.type}
+                  onValueChange={(value: "percent" | "fixed") => updateGlobalDiscount("type", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percent">Percentuale (%)</SelectItem>
+                    <SelectItem value="fixed">Importo Fisso (€)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Data Inizio (Opzionale)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !globalDiscount.startDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {globalDiscount.startDate && globalDiscount.startDate instanceof Date && !isNaN(globalDiscount.startDate.getTime()) ? (
-                          format(globalDiscount.startDate, "dd/MM/yyyy", { locale: it })
-                        ) : (
-                          "Seleziona data"
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={globalDiscount.startDate}
-                        onSelect={(date) => updateGlobalDiscount("startDate", date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div>
-                  <Label>Data Fine (Opzionale)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !globalDiscount.endDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {globalDiscount.endDate && globalDiscount.endDate instanceof Date && !isNaN(globalDiscount.endDate.getTime()) ? (
-                          format(globalDiscount.endDate, "dd/MM/yyyy", { locale: it })
-                        ) : (
-                          "Seleziona data"
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={globalDiscount.endDate}
-                        onSelect={(date) => updateGlobalDiscount("endDate", date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+              <div>
+                <Label htmlFor="global-value">
+                  Valore {globalDiscount.type === "percent" ? "(%)" : "(€)"}
+                </Label>
+                <Input
+                  id="global-value"
+                  type="number"
+                  min="0"
+                  max={globalDiscount.type === "percent" ? "100" : undefined}
+                  step={globalDiscount.type === "percent" ? "1" : "0.01"}
+                  value={globalDiscount.value || ""}
+                  onChange={(e) => updateGlobalDiscount("value", parseFloat(e.target.value) || 0)}
+                  placeholder="0"
+                />
               </div>
 
-              {globalDiscount.endDate && globalDiscount.endDate instanceof Date && !isNaN(globalDiscount.endDate.getTime()) && isDiscountExpired(globalDiscount) && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 text-red-700">
-                    <Clock className="w-4 h-4" />
-                    <span className="font-medium">Sconto Scaduto</span>
-                  </div>
-                  <p className="text-red-600 text-sm mt-1">
-                    Questo sconto è scaduto il {format(globalDiscount.endDate, "dd/MM/yyyy", { locale: it })}
-                  </p>
+              <div>
+                <Label>Stato</Label>
+                <div className="mt-2">
+                  {getStatusBadge(getDiscountStatus(globalDiscount))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        
-
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-brand-accent">
-                  {globalDiscount.value && globalDiscount.value > 0 ? 1 : 0}
-                </div>
-                <p className="text-xs text-muted-foreground">Sconto Globale</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-green-600">
-                  {getDiscountStatus(globalDiscount) === "active" ? 1 : 0}
-                </div>
-                <p className="text-xs text-muted-foreground">Sconto Globale Attivo</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-blue-600">
-                  {getDiscountStatus(globalDiscount) === "scheduled" ? 1 : 0}
-                </div>
-                <p className="text-xs text-muted-foreground">Sconto Globale Programmato</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-red-600">
-                  {getDiscountStatus(globalDiscount) === "expired" ? 1 : 0}
-                </div>
-                <p className="text-xs text-muted-foreground">Sconto Globale Scaduto</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Riepilogo Configurazione</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {globalDiscount.value && globalDiscount.value > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-medium text-blue-900">Sconto Globale</h4>
-                    <p className="text-blue-700">
-                      {globalDiscount.type === "percent" ? `${globalDiscount.value}%` : `€${globalDiscount.value}`}
-                      {globalDiscount.startDate && ` dal ${format(globalDiscount.startDate, "dd/MM/yyyy", { locale: it })}`}
-                      {globalDiscount.endDate && ` fino al ${format(globalDiscount.endDate, "dd/MM/yyyy", { locale: it })}`}
-                    </p>
-                  </div>
-                )}
-
-                
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Data Inizio (Opzionale)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !globalDiscount.startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {globalDiscount.startDate && globalDiscount.startDate instanceof Date && !isNaN(globalDiscount.startDate.getTime()) ? (
+                        format(globalDiscount.startDate, "dd/MM/yyyy", { locale: it })
+                      ) : (
+                        "Seleziona data"
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={globalDiscount.startDate}
+                      onSelect={(date) => updateGlobalDiscount("startDate", date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <Label>Data Fine (Opzionale)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !globalDiscount.endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {globalDiscount.endDate && globalDiscount.endDate instanceof Date && !isNaN(globalDiscount.endDate.getTime()) ? (
+                        format(globalDiscount.endDate, "dd/MM/yyyy", { locale: it })
+                      ) : (
+                        "Seleziona data"
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={globalDiscount.endDate}
+                      onSelect={(date) => updateGlobalDiscount("endDate", date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {globalDiscount.endDate && globalDiscount.endDate instanceof Date && !isNaN(globalDiscount.endDate.getTime()) && isDiscountExpired(globalDiscount) && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2 text-red-700">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-medium">Sconto Scaduto</span>
+                </div>
+                <p className="text-red-600 text-sm mt-1">
+                  Questo sconto è scaduto il {format(globalDiscount.endDate, "dd/MM/yyyy", { locale: it })}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
