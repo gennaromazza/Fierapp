@@ -199,26 +199,33 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
               <span className="font-semibold text-brand-text-accent">
                 Sconto globale attivo: {discounts.global.type === "percent" ? `${discounts.global.value}%` : `€${discounts.global.value}`}
               </span>
-              {discounts.global.endDate && (
+              {discounts.global?.endDate && (
                 <div className="flex items-center space-x-1 text-brand-text-secondary">
                   <Clock className="w-3 h-3" />
                   <span>
                     {(() => {
                       try {
                         let endDate: Date;
+                        const rawDate = discounts.global.endDate;
                         
                         // Handle Firebase Timestamp
-                        if (discounts.global.endDate && typeof discounts.global.endDate === 'object' && 'toDate' in discounts.global.endDate) {
-                          endDate = (discounts.global.endDate as any).toDate();
-                        } else if (discounts.global.endDate instanceof Date) {
-                          endDate = discounts.global.endDate;
+                        if (rawDate && typeof rawDate === 'object' && 'toDate' in rawDate && typeof rawDate.toDate === 'function') {
+                          endDate = rawDate.toDate();
+                        } 
+                        // Handle Date object
+                        else if (rawDate instanceof Date) {
+                          endDate = rawDate;
+                        } 
+                        // Handle string or number
+                        else if (rawDate) {
+                          endDate = new Date(rawDate);
                         } else {
-                          endDate = new Date(discounts.global.endDate);
+                          return "";
                         }
                         
                         // Validate the date
                         if (isNaN(endDate.getTime())) {
-                          return "Data non valida";
+                          return "";
                         }
                         
                         const isExpired = isAfter(new Date(), endDate);
