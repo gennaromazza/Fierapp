@@ -193,24 +193,16 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
 
         {/* Global Discount Banner */}
         {discounts?.global?.isActive && discounts.global.value > 0 && (
-          <div className="py-3 px-4 shadow-lg animate-pulse" 
-               style={{ 
-                 background: `linear-gradient(135deg, var(--brand-accent), var(--brand-secondary))`,
-                 borderTop: `2px solid var(--brand-accent)`
-               }}>
-            <div className="flex items-center justify-center space-x-3 text-sm">
-              <div className="rounded-full p-1" 
-                   style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
-                <Percent className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-white text-lg">
-                🎉 SCONTO GLOBALE ATTIVO: {discounts.global.type === "percent" ? `${discounts.global.value}%` : `€${discounts.global.value}`} 🎉
+          <div className="py-2 px-4 bg-brand-accent/10 border-t border-brand-border">
+            <div className="flex items-center justify-center space-x-2 text-sm">
+              <Percent className="w-4 h-4 text-brand-accent" />
+              <span className="font-semibold text-brand-text-accent">
+                Sconto globale attivo: {discounts.global.type === "percent" ? `${discounts.global.value}%` : `€${discounts.global.value}`}
               </span>
               {discounts.global.endDate && (
-                <div className="flex items-center space-x-2 rounded-full px-3 py-1" 
-                     style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
-                  <Clock className="w-4 h-4 text-white" />
-                  <span className="text-white font-medium">
+                <div className="flex items-center space-x-1 text-brand-text-secondary">
+                  <Clock className="w-3 h-3" />
+                  <span>
                     {(() => {
                       try {
                         let endDate: Date;
