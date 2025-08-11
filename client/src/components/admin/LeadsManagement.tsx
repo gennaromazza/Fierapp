@@ -53,12 +53,19 @@ export default function LeadsManagement() {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(lead => 
-        lead.customer.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.customer.cognome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.customer.telefono?.includes(searchTerm)
-      );
+      filtered = filtered.filter(lead => {
+        const customer = lead.customer || {};
+        return (
+          (customer.nome || customer.Nome || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (customer.cognome || customer.Cognome || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (customer.email || customer.Email || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (customer.telefono || customer.Telefono || '')?.includes(searchTerm) ||
+          // Also search in form data keys
+          Object.values(customer).some(value => 
+            typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        );
+      });
     }
 
     // Status filter
@@ -69,8 +76,14 @@ export default function LeadsManagement() {
     // Date filter
     if (dateFilter) {
       filtered = filtered.filter(lead => {
-        const leadDate = lead.createdAt instanceof Date ? lead.createdAt : new Date(lead.createdAt);
-        return format(leadDate, "yyyy-MM-dd") === format(dateFilter, "yyyy-MM-dd");
+        try {
+          const leadDate = lead.createdAt instanceof Date ? lead.createdAt : 
+                          lead.createdAt?.seconds ? new Date(lead.createdAt.seconds * 1000) :
+                          new Date(lead.createdAt);
+          return format(leadDate, "yyyy-MM-dd") === format(dateFilter, "yyyy-MM-dd");
+        } catch (e) {
+          return false;
+        }
       });
     }
 
@@ -328,50 +341,57 @@ export default function LeadsManagement() {
               </TableHeader>
               <TableBody>
                 {filteredLeads.map((lead) => {
-                  const leadDate = lead.createdAt instanceof Date ? lead.createdAt : new Date(lead.createdAt);
+                  let leadDate;
+                  try {
+                    leadDate = lead.createdAt instanceof Date ? lead.createdAt : 
+                               lead.createdAt?.seconds ? new Date(lead.createdAt.seconds * 1000) :
+                               new Date(lead.createdAt);
+                  } catch (e) {
+                    leadDate = new Date();
+                  }
                   
                   return (
                     <TableRow key={lead.id} className="hover:bg-gray-50/50 transition-colors">
                       <TableCell>
                         <div>
                           <div className="font-medium">
-                            {lead.customer.nome} {lead.customer.cognome}
+                            {lead.customer?.nome || lead.customer?.Nome || ''} {lead.customer?.cognome || lead.customer?.Cognome || ''}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {lead.selectedItems.length} item{lead.selectedItems.length !== 1 ? 's' : ''}
+                            {lead.selectedItems?.length || 0} item{(lead.selectedItems?.length || 0) !== 1 ? 's' : ''}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {lead.customer.email && (
+                          {(lead.customer?.email || lead.customer?.Email) && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Mail className="w-3 h-3" />
-                              <span>{lead.customer.email}</span>
+                              <span>{lead.customer.email || lead.customer.Email}</span>
                             </div>
                           )}
-                          {lead.customer.telefono && (
+                          {(lead.customer?.telefono || lead.customer?.Telefono) && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Phone className="w-3 h-3" />
-                              <span>{lead.customer.telefono}</span>
+                              <span>{lead.customer.telefono || lead.customer.Telefono}</span>
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {lead.customer.data_evento && (
+                        {(lead.customer?.data_evento || lead.customer?.['Data evento']) && (
                           <div className="flex items-center space-x-1 text-sm">
                             <CalendarDays className="w-3 h-3" />
-                            <span>{lead.customer.data_evento}</span>
+                            <span>{lead.customer.data_evento || lead.customer['Data evento']}</span>
                           </div>
                         )}
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">€{lead.pricing.total.toLocaleString('it-IT')}</div>
-                          {lead.pricing.discount > 0 && (
+                          <div className="font-medium">€{(lead.pricing?.total || 0).toLocaleString('it-IT')}</div>
+                          {(lead.pricing?.discount || 0) > 0 && (
                             <div className="text-sm text-green-600">
-                              -€{lead.pricing.discount.toLocaleString('it-IT')}
+                              -€{(lead.pricing.discount || 0).toLocaleString('it-IT')}
                             </div>
                           )}
                         </div>
@@ -394,10 +414,10 @@ export default function LeadsManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {format(leadDate, "dd/MM/yyyy", { locale: it })}
+                          {leadDate && !isNaN(leadDate.getTime()) ? format(leadDate, "dd/MM/yyyy", { locale: it }) : 'Data non valida'}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {format(leadDate, "HH:mm", { locale: it })}
+                          {leadDate && !isNaN(leadDate.getTime()) ? format(leadDate, "HH:mm", { locale: it }) : ''}
                         </div>
                       </TableCell>
                       <TableCell>
