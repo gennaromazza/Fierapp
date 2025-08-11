@@ -30,26 +30,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         const parsedCart = JSON.parse(savedCart);
         
-        // Migrate old cart format to include separate discount tracking
-        if (parsedCart.items) {
-          parsedCart.items = parsedCart.items.map((item: any) => ({
-            ...item,
-            itemDiscountAmount: item.itemDiscountAmount || 0,
-            globalDiscountAmount: item.globalDiscountAmount || 0,
-            globalDiscountApplied: item.globalDiscountApplied || false
-          }));
+        // Check if this is the old cart format - if so, clear it
+        if (!parsedCart.globalDiscount && !parsedCart.itemDiscount) {
+          console.log("Clearing old cart format to apply new discount logic");
+          localStorage.removeItem("fiera-cart");
+          return;
         }
         
-        // Ensure cart has all required fields
-        const migratedCart = {
-          ...parsedCart,
-          globalDiscount: parsedCart.globalDiscount || 0,
-          itemDiscount: parsedCart.itemDiscount || 0
-        };
-        
-        setCart(migratedCart);
+        setCart(parsedCart);
       } catch (error) {
         console.error("Error parsing saved cart:", error);
+        localStorage.removeItem("fiera-cart");
       }
     }
   }, []);
