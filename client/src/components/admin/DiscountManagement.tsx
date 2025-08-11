@@ -163,44 +163,8 @@ export default function DiscountManagement() {
       
       const discountsData: Discounts = {
         global: globalDiscount.value && globalDiscount.value > 0 ? globalDiscount as Discount : undefined,
-        perItemOverrides: Object.fromEntries(
-          Object.entries(itemDiscounts).filter(([_, discount]) => discount.value && discount.value > 0)
-        ) as Record<string, Discount>,
       };
 
-      // Apply discounts to items
-      const updatePromises = items.map(async (item) => {
-        const discount = itemDiscounts[item.id];
-        if (discount && discount.value && discount.value > 0) {
-          // Set originalPrice if not already set
-          const originalPrice = item.originalPrice || item.price;
-          
-          // Calculate new price with discount
-          let newPrice = originalPrice;
-          if (discount.type === "percent") {
-            newPrice = originalPrice - (originalPrice * discount.value) / 100;
-          } else {
-            newPrice = Math.max(0, originalPrice - discount.value);
-          }
-          
-          // Update item in Firestore
-          await updateDoc(doc(db, "items", item.id), {
-            price: newPrice,
-            originalPrice: originalPrice,
-            updatedAt: new Date(),
-          });
-        } else {
-          // If no discount, restore original price if it exists
-          if (item.originalPrice && item.originalPrice !== item.price) {
-            await updateDoc(doc(db, "items", item.id), {
-              price: item.originalPrice,
-              updatedAt: new Date(),
-            });
-          }
-        }
-      });
-      
-      await Promise.all(updatePromises);
       await setDoc(doc(db, "settings", "discounts"), discountsData);
       setDiscounts(discountsData);
       
@@ -314,7 +278,6 @@ export default function DiscountManagement() {
       <Tabs defaultValue="global" className="space-y-6">
         <TabsList className="glass rounded-xl p-2 shadow-elegant">
           <TabsTrigger value="global" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Sconto Globale</TabsTrigger>
-          <TabsTrigger value="items" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Sconti per Item</TabsTrigger>
           <TabsTrigger value="overview" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Panoramica</TabsTrigger>
         </TabsList>
 
@@ -446,213 +409,7 @@ export default function DiscountManagement() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="items">
-          <Card className="card-premium shadow-elegant">
-            <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
-              <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
-                     style={{ backgroundColor: 'var(--brand-accent)' }}>
-                  <Percent className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-brand-accent">
-                    Sconti Specifici per Item
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Gestisci sconti individuali per singoli prodotti
-                  </p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Item</TableHead>
-                        <TableHead>Prezzo Originale</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Valore</TableHead>
-                        <TableHead>Importo Sconto</TableHead>
-                        <TableHead>Data Inizio</TableHead>
-                        <TableHead>Data Fine</TableHead>
-                        <TableHead>Stato</TableHead>
-                        <TableHead>Azioni</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {items
-                        .filter(item => itemDiscounts[item.id] || discounts.perItemOverrides?.[item.id])
-                        .map((item) => {
-                          // Use local state discount if exists, otherwise use saved discount
-                          const discount = itemDiscounts[item.id] || discounts.perItemOverrides?.[item.id] || { type: "percent", value: 0 };
-                          
-                          // Calculate discount amount to match ItemManagement logic
-                          const originalPrice = item.originalPrice || item.price;
-                          const currentPrice = item.price;
-                          
-                          // If there's already a price difference, show that as the actual discount
-                          let discountAmount = 0;
-                          if (originalPrice > currentPrice) {
-                            discountAmount = originalPrice - currentPrice;
-                          } else if (discount.value && discount.value > 0) {
-                            // Calculate potential discount if no current discount exists
-                            if (discount.type === "percent") {
-                              discountAmount = (originalPrice * discount.value) / 100;
-                            } else {
-                              discountAmount = Math.min(discount.value, originalPrice);
-                            }
-                          }
-                          
-                          return (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <div className="font-medium">{item.title}</div>
-                                <div className="text-sm text-gray-500">{item.category}</div>
-                              </TableCell>
-                              <TableCell>
-                                <div>
-                                  <div className="font-semibold text-brand-accent">
-                                    €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                                  </div>
-                                  {originalPrice !== currentPrice && (
-                                    <div className="text-sm text-gray-500">
-                                      Attuale: €{currentPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                                    </div>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Select
-                                  value={discount.type}
-                                  onValueChange={(value: "percent" | "fixed") => 
-                                    updateItemDiscount(item.id, "type", value)
-                                  }
-                                >
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="percent">%</SelectItem>
-                                    <SelectItem value="fixed">€</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max={discount.type === "percent" ? "100" : undefined}
-                                  step={discount.type === "percent" ? "1" : "0.01"}
-                                  value={discount.value || ""}
-                                  onChange={(e) => 
-                                    updateItemDiscount(item.id, "value", parseFloat(e.target.value) || 0)
-                                  }
-                                  className="w-24"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <div className="font-semibold text-green-600">
-                                  {discountAmount > 0 ? (
-                                    <>
-                                      -€{discountAmount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                                      <div className="text-xs text-gray-500">
-                                        Prezzo finale: €{(originalPrice - discountAmount).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <span className="text-gray-400">-</span>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      {discount.startDate ? (
-                                        format(discount.startDate instanceof Date ? discount.startDate : new Date(discount.startDate), "dd/MM/yy", { locale: it })
-                                      ) : (
-                                        "Imposta"
-                                      )}
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                      mode="single"
-                                      selected={discount.startDate instanceof Date ? discount.startDate : discount.startDate ? new Date(discount.startDate) : undefined}
-                                      onSelect={(date) => updateItemDiscount(item.id, "startDate", date)}
-                                      initialFocus
-                                    />
-                                  </PopoverContent>
-                                </Popover>
-                              </TableCell>
-                              <TableCell>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      {discount.endDate ? (
-                                        format(discount.endDate instanceof Date ? discount.endDate : new Date(discount.endDate), "dd/MM/yy", { locale: it })
-                                      ) : (
-                                        "Imposta"
-                                      )}
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                      mode="single"
-                                      selected={discount.endDate instanceof Date ? discount.endDate : discount.endDate ? new Date(discount.endDate) : undefined}
-                                      onSelect={(date) => updateItemDiscount(item.id, "endDate", date)}
-                                      initialFocus
-                                    />
-                                  </PopoverContent>
-                                </Popover>
-                              </TableCell>
-                              <TableCell>
-                                {getStatusBadge(getDiscountStatus(discount))}
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => removeItemDiscount(item.id)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-2 text-brand-accent">Aggiungi Sconto per Item</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {items
-                      .filter(item => !itemDiscounts[item.id] && !discounts.perItemOverrides?.[item.id])
-                      .map((item) => (
-                        <Button
-                          key={item.id}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addItemDiscount(item.id)}
-                          className="justify-start btn-secondary"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          {item.title}
-                        </Button>
-                      ))}
-                  </div>
-                  {items.filter(item => !itemDiscounts[item.id] && !discounts.perItemOverrides?.[item.id]).length === 0 && (
-                    <p className="text-sm text-gray-500 mt-2">Tutti gli item hanno già uno sconto configurato.</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        
 
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -667,25 +424,25 @@ export default function DiscountManagement() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold text-green-600">
-                  {Object.values(itemDiscounts).filter(d => getDiscountStatus(d) === "active").length}
+                  {getDiscountStatus(globalDiscount) === "active" ? 1 : 0}
                 </div>
-                <p className="text-xs text-muted-foreground">Sconti Attivi</p>
+                <p className="text-xs text-muted-foreground">Sconto Globale Attivo</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold text-blue-600">
-                  {Object.values(itemDiscounts).filter(d => getDiscountStatus(d) === "scheduled").length}
+                  {getDiscountStatus(globalDiscount) === "scheduled" ? 1 : 0}
                 </div>
-                <p className="text-xs text-muted-foreground">Sconti Programmati</p>
+                <p className="text-xs text-muted-foreground">Sconto Globale Programmato</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold text-red-600">
-                  {Object.values(itemDiscounts).filter(d => getDiscountStatus(d) === "expired").length}
+                  {getDiscountStatus(globalDiscount) === "expired" ? 1 : 0}
                 </div>
-                <p className="text-xs text-muted-foreground">Sconti Scaduti</p>
+                <p className="text-xs text-muted-foreground">Sconto Globale Scaduto</p>
               </CardContent>
             </Card>
           </div>
@@ -707,26 +464,7 @@ export default function DiscountManagement() {
                   </div>
                 )}
 
-                {Object.entries(itemDiscounts).filter(([_, discount]) => discount.value && discount.value > 0).length > 0 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h4 className="font-medium text-green-900 mb-2">Sconti Specifici</h4>
-                    <div className="space-y-1">
-                      {Object.entries(itemDiscounts)
-                        .filter(([_, discount]) => discount.value && discount.value > 0)
-                        .map(([itemId, discount]) => {
-                          const item = items.find(i => i.id === itemId);
-                          return (
-                            <div key={itemId} className="text-green-700 text-sm flex items-center gap-2">
-                              <span>
-                                {item?.title}: {discount.type === "percent" ? `${discount.value}%` : `€${discount.value}`}
-                              </span>
-                              {getStatusBadge(getDiscountStatus(discount))}
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
-                )}
+                
               </div>
             </CardContent>
           </Card>
