@@ -93,13 +93,14 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
           ${config.pulse ? 'animate-pulse' : ''}
         `}
         style={{
-          background: `linear-gradient(135deg, var(--brand-accent), var(--brand-secondary), var(--brand-accent))`,
+          background: `linear-gradient(135deg, #FF6B35, #F7931E, #FFD23F)`,
           backgroundSize: '200% 200%',
           animation: config.pulse ? 'gradient-shift 3s ease infinite, pulse 2s ease-in-out infinite' : 'gradient-shift 3s ease infinite',
           boxShadow: `
-            0 0 60px rgba(255, 255, 255, 0.3),
-            0 20px 40px rgba(0, 0, 0, 0.3),
-            inset 0 0 30px rgba(255, 255, 255, 0.2)
+            0 0 80px rgba(255, 107, 53, 0.6),
+            0 30px 60px rgba(0, 0, 0, 0.4),
+            inset 0 0 40px rgba(255, 255, 255, 0.3),
+            0 0 0 3px rgba(255, 255, 255, 0.8)
           `
         }}
       >
@@ -121,12 +122,12 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
 
         {/* Massive Euro Amount */}
         <div className="flex items-center justify-center mb-3">
-          <Euro className="w-8 h-8 text-yellow-300 mr-2 drop-shadow-lg" />
+          <Euro className="w-8 h-8 text-white mr-2 drop-shadow-2xl" />
           <span 
-            className="text-6xl font-black text-yellow-300 tracking-tight drop-shadow-2xl font-mono"
+            className="text-6xl font-black text-white tracking-tight drop-shadow-2xl font-mono"
             style={{ 
-              textShadow: '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,0,0.6)',
-              filter: 'brightness(1.2)'
+              textShadow: '0 0 30px rgba(0,0,0,0.8), 0 0 60px rgba(255,107,53,0.8), 0 4px 8px rgba(0,0,0,0.5)',
+              filter: 'brightness(1.1)'
             }}
           >
             {countUp.toLocaleString('it-IT')}
@@ -153,15 +154,15 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
       {showBurst && Array.from({ length: config.sparkles }).map((_, i) => (
         <div
           key={i}
-          className="absolute w-4 h-4 pointer-events-none"
+          className="absolute w-5 h-5 pointer-events-none"
           style={{
-            backgroundColor: '#FFD700',
+            background: 'radial-gradient(circle, #FFD700, #FF6B35)',
             borderRadius: '50%',
             top: '50%',
             left: '50%',
-            transform: `translate(-50%, -50%) rotate(${i * (360 / config.sparkles)}deg) translateX(80px)`,
+            transform: `translate(-50%, -50%) rotate(${i * (360 / config.sparkles)}deg) translateX(90px)`,
             animation: `sparkle-burst 1.5s ease-out ${i * 0.1}s forwards`,
-            boxShadow: '0 0 15px #FFD700'
+            boxShadow: '0 0 20px #FFD700, 0 0 40px #FF6B35'
           }}
         />
       ))}
@@ -170,12 +171,13 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
       {showBurst && (
         <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 animate-float-up z-10">
           <div 
-            className="px-6 py-3 rounded-2xl text-lg font-black shadow-2xl border-2 uppercase tracking-wide"
+            className="px-6 py-3 rounded-2xl text-lg font-black shadow-2xl border-3 uppercase tracking-wide"
             style={{
-              background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-              color: '#000',
-              borderColor: '#FFF',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              background: 'linear-gradient(135deg, #FFFFFF, #F0F0F0)',
+              color: '#FF6B35',
+              borderColor: '#FF6B35',
+              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              boxShadow: '0 10px 30px rgba(255, 107, 53, 0.3)'
             }}
           >
             🎉 {config.message} 🎉
