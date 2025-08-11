@@ -148,8 +148,9 @@ export default function ItemCard({ item }: ItemCardProps) {
               ? "bg-green-600 text-white hover:bg-green-700"
               : discountedPrice === 0
               ? "bg-green-600 text-white hover:bg-green-700"
-              : "bg-brand-accent text-white hover:bg-brand-hover"
+              : "text-white hover:opacity-90"
           }`}
+          style={!isAdded && discountedPrice !== 0 ? { backgroundColor: 'var(--brand-accent)' } : {}}
         >
           {isAdded ? (
             <>

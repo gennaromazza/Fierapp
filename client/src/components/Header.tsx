@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { Settings } from "@shared/schema";
-import { Camera, Settings as SettingsIcon } from "lucide-react";
+import { Settings, Discounts } from "@shared/schema";
+import { Camera, Settings as SettingsIcon, Clock, Percent } from "lucide-react";
+import { format, isAfter, isBefore } from "date-fns";
+import { it } from "date-fns/locale";
 
 type TabType = "servizi" | "prodotti";
 
@@ -15,6 +17,7 @@ interface HeaderProps {
 export default function Header({ activeTab = "servizi", onTabChange }: HeaderProps) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [discounts, setDiscounts] = useState<Discounts | null>(null);
 
   useEffect(() => {
     async function loadSettings() {
@@ -53,8 +56,21 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
         console.error("Error loading settings:", error);
       }
     }
+
+    async function loadDiscounts() {
+      try {
+        const discountsDoc = await getDoc(doc(db, "settings", "discounts"));
+        if (discountsDoc.exists()) {
+          const discountsData = discountsDoc.data() as Discounts;
+          setDiscounts(discountsData);
+        }
+      } catch (error) {
+        console.error("Error loading discounts:", error);
+      }
+    }
     
     loadSettings();
+    loadDiscounts();
   }, []);
 
   return (
@@ -171,6 +187,26 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
               >
                 PRODOTTI
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Global Discount Banner */}
+        {discounts?.global?.isActive && discounts.global.value > 0 && (
+          <div className="py-2 px-4 bg-brand-accent/10 border-t border-brand-border">
+            <div className="flex items-center justify-center space-x-2 text-sm">
+              <Percent className="w-4 h-4 text-brand-accent" />
+              <span className="font-semibold text-brand-text-accent">
+                Sconto globale attivo: {discounts.global.type === "percent" ? `${discounts.global.value}%` : `€${discounts.global.value}`}
+              </span>
+              {discounts.global.endDate && isBefore(new Date(), discounts.global.endDate) && (
+                <div className="flex items-center space-x-1 text-brand-text-secondary">
+                  <Clock className="w-3 h-3" />
+                  <span>
+                    Scade: {format(discounts.global.endDate, "d MMM yyyy", { locale: it })}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
