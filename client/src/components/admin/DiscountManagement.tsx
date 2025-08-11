@@ -161,9 +161,12 @@ export default function DiscountManagement() {
     try {
       setSaving(true);
       
-      const discountsData: Discounts = {
-        global: globalDiscount.isActive && globalDiscount.value && globalDiscount.value > 0 ? globalDiscount as Discount : undefined,
-      };
+      const discountsData: Discounts = {};
+      
+      // Only add global discount if it's active and has a valid value
+      if (globalDiscount.isActive && globalDiscount.value && globalDiscount.value > 0) {
+        discountsData.global = globalDiscount as Discount;
+      }
 
       await setDoc(doc(db, "settings", "discounts"), discountsData);
       setDiscounts(discountsData);
