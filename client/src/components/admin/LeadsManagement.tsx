@@ -45,6 +45,8 @@ export default function LeadsManagement() {
   const [dateFilter, setDateFilter] = useState<Date | undefined>();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
     if (!allLeads) return;
@@ -88,6 +90,7 @@ export default function LeadsManagement() {
     }
 
     setFilteredLeads(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [allLeads, searchTerm, statusFilter, dateFilter]);
 
   const updateLeadStatus = async (leadId: string, newStatus: Lead["status"]) => {
@@ -156,12 +159,30 @@ export default function LeadsManagement() {
     setIsDetailModalOpen(true);
   };
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredLeads.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedLeads = filteredLeads.slice(startIndex, endIndex);
+
   // Calculate stats from filtered leads
   const stats = {
     total: filteredLeads.length,
     totalValue: filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.total || 0), 0),
     totalDiscount: filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.discount || 0), 0),
     avgValue: filteredLeads.length > 0 ? filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.total || 0), 0) / filteredLeads.length : 0
+  };
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPrevPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
   };
 
   const getStatusBadge = (status: Lead["status"]) => {
@@ -373,7 +394,14 @@ export default function LeadsManagement() {
       {/* Leads Table */}
       <Card className="card-premium shadow-elegant">
         <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
-          <CardTitle className="text-xl font-bold text-gradient">Lead ({filteredLeads.length})</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span className="text-xl font-bold text-gradient">
+              Lead ({filteredLeads.length})
+            </span>
+            <span className="text-sm font-normal text-gray-600">
+              Pagina {currentPage} di {totalPages} - Mostrando {startIndex + 1}-{Math.min(endIndex, filteredLeads.length)} di {filteredLeads.length}
+            </span>
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -390,7 +418,7 @@ export default function LeadsManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLeads.map((lead) => {
+                {paginatedLeads.map((lead) => {
                   let leadDate;
                   let isValidDate = false;
                   
@@ -516,6 +544,71 @@ export default function LeadsManagement() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <Card className="card-premium shadow-elegant">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={goToPrevPage}
+                  disabled={currentPage === 1}
+                  className="flex items-center space-x-1"
+                >
+                  <span>‹</span>
+                  <span>Precedente</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center space-x-1"
+                >
+                  <span>Successivo</span>
+                  <span>›</span>
+                </Button>
+              </div>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let pageNumber;
+                  if (totalPages <= 7) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 4) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 3) {
+                    pageNumber = totalPages - 6 + i;
+                  } else {
+                    pageNumber = currentPage - 3 + i;
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNumber}
+                      variant={currentPage === pageNumber ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => goToPage(pageNumber)}
+                      className={`w-10 h-10 ${
+                        currentPage === pageNumber 
+                          ? 'bg-brand-accent text-white' 
+                          : 'hover:bg-brand-accent/10'
+                      }`}
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <div className="text-sm text-gray-600">
+                {startIndex + 1}-{Math.min(endIndex, filteredLeads.length)} di {filteredLeads.length}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Lead Detail Modal */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
