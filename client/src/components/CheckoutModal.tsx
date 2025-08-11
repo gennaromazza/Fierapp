@@ -105,37 +105,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     }
   }, [isOpen, form]);
 
-  const handleWhatsAppShare = () => {
-    if (!settings?.whatsappNumber) {
-      toast({
-        title: "Errore",
-        description: "Numero WhatsApp non configurato",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    const cartSummary = cart.items.map(item => 
-      `• ${item.title} - €${item.price.toLocaleString('it-IT')}`
-    ).join('\n');
-    
-    const message = `Ciao! Sono interessato/a ai seguenti servizi:\n\n${cartSummary}\n\nTotale: €${cart.total.toLocaleString('it-IT')}\n\nPuoi inviarmi maggiori informazioni? Grazie!`;
-    
-    const whatsappUrl = generateWhatsAppLink(settings.whatsappNumber, message);
-    window.open(whatsappUrl, '_blank');
-    
-    // Clear cart and close modal
-    clearCart();
-    onClose();
-    
-    // Analytics
-    if (analytics) {
-      logEvent(analytics, 'whatsapp_contact', {
-        items: cart.items.length,
-        total_value: cart.total
-      });
-    }
-  };
 
   const onSubmit = async (data: any) => {
     if (!settings) return;
@@ -166,6 +136,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
       // Save to Firestore
       const docRef = await addDoc(collection(db, "leads"), leadData);
+      console.log("Lead saved successfully with ID:", docRef.id);
       
       // Analytics
       if (analytics) {
@@ -176,9 +147,45 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         });
       }
 
+      // Create detailed WhatsApp message with form data
+      if (settings.whatsappNumber) {
+        const cartSummary = cart.items.map(item => 
+          `• ${item.title} - €${item.price.toLocaleString('it-IT')}`
+        ).join('\n');
+        
+        // Format form data for WhatsApp
+        const formDataText = Object.entries(data)
+          .filter(([key, value]) => key !== 'gdpr_consent' && value)
+          .map(([key, value]) => {
+            const label = settings.formFields.find(field => 
+              field.label.toLowerCase().replace(/\s+/g, '_') === key
+            )?.label || key;
+            return `${label}: ${value}`;
+          })
+          .join('\n');
+        
+        const totalText = cart.discount > 0 
+          ? `Subtotale: €${(cart.total + cart.discount).toLocaleString('it-IT')}\nSconto: -€${cart.discount.toLocaleString('it-IT')}\nTotale: €${cart.total.toLocaleString('it-IT')}`
+          : `Totale: €${cart.total.toLocaleString('it-IT')}`;
+        
+        const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${cartSummary}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${docRef.id}`;
+        
+        const whatsappUrl = generateWhatsAppLink(settings.whatsappNumber, message);
+        window.open(whatsappUrl, '_blank');
+        
+        // Analytics for WhatsApp
+        if (analytics) {
+          logEvent(analytics, 'whatsapp_contact', {
+            items: cart.items.length,
+            total_value: cart.total,
+            lead_id: docRef.id
+          });
+        }
+      }
+
       toast({
-        title: "Richiesta inviata",
-        description: "Ti contatteremo al più presto per fornirti tutte le informazioni richieste.",
+        title: "Richiesta inviata con successo!",
+        description: "I tuoi dati sono stati salvati e si è aperta la conversazione WhatsApp. Ti contatteremo al più presto!",
       });
 
       // Clear cart and close modal
@@ -311,26 +318,29 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
               <Button
                 type="submit"
                 disabled={isSubmitting || !form.watch('gdpr_consent')}
-                className="w-full bg-brand-accent text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center space-x-2 bg-brand-accent text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? "Invio in corso..." : "INVIA RICHIESTA"}
+                {isSubmitting ? (
+                  <>
+                    <span>Invio in corso...</span>
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="w-5 h-5" />
+                    <span>INVIA RICHIESTA</span>
+                  </>
+                )}
               </Button>
+              {settings?.whatsappNumber && (
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  La richiesta verrà salvata e si aprirà automaticamente WhatsApp
+                </p>
+              )}
             </div>
           </form>
         )}
         
-        {/* WhatsApp Button */}
-        {settings && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <Button
-              onClick={handleWhatsAppShare}
-              className="w-full flex items-center justify-center space-x-2 bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span>CONTATTACI SU WHATSAPP</span>
-            </Button>
-          </div>
-        )}
+
       </DialogContent>
     </Dialog>
   );
