@@ -438,8 +438,10 @@ export default function DiscountManagement() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Item</TableHead>
+                        <TableHead>Prezzo Unitario</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Valore</TableHead>
+                        <TableHead>Importo Sconto</TableHead>
                         <TableHead>Data Inizio</TableHead>
                         <TableHead>Data Fine</TableHead>
                         <TableHead>Stato</TableHead>
@@ -452,11 +454,28 @@ export default function DiscountManagement() {
                         .map((item) => {
                           // Use local state discount if exists, otherwise use saved discount
                           const discount = itemDiscounts[item.id] || discounts.perItemOverrides?.[item.id] || { type: "percent", value: 0 };
+                          
+                          // Calculate discount amount
+                          const unitPrice = item.price;
+                          let discountAmount = 0;
+                          if (discount.value && discount.value > 0) {
+                            if (discount.type === "percent") {
+                              discountAmount = (unitPrice * discount.value) / 100;
+                            } else {
+                              discountAmount = Math.min(discount.value, unitPrice);
+                            }
+                          }
+                          
                           return (
                             <TableRow key={item.id}>
                               <TableCell>
                                 <div className="font-medium">{item.title}</div>
                                 <div className="text-sm text-gray-500">{item.category}</div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="font-semibold text-brand-accent">
+                                  €{unitPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                                </div>
                               </TableCell>
                               <TableCell>
                                 <Select
@@ -486,6 +505,20 @@ export default function DiscountManagement() {
                                   }
                                   className="w-24"
                                 />
+                              </TableCell>
+                              <TableCell>
+                                <div className="font-semibold text-green-600">
+                                  {discountAmount > 0 ? (
+                                    <>
+                                      -€{discountAmount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                                      <div className="text-xs text-gray-500">
+                                        Prezzo finale: €{(unitPrice - discountAmount).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
+                                </div>
                               </TableCell>
                               <TableCell>
                                 <Popover>
