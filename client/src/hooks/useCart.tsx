@@ -29,7 +29,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart);
-        setCart(parsedCart);
+        
+        // Migrate old cart format to include separate discount tracking
+        if (parsedCart.items) {
+          parsedCart.items = parsedCart.items.map((item: any) => ({
+            ...item,
+            itemDiscountAmount: item.itemDiscountAmount || 0,
+            globalDiscountAmount: item.globalDiscountAmount || 0,
+            globalDiscountApplied: item.globalDiscountApplied || false
+          }));
+        }
+        
+        // Ensure cart has all required fields
+        const migratedCart = {
+          ...parsedCart,
+          globalDiscount: parsedCart.globalDiscount || 0,
+          itemDiscount: parsedCart.itemDiscount || 0
+        };
+        
+        setCart(migratedCart);
       } catch (error) {
         console.error("Error parsing saved cart:", error);
       }
