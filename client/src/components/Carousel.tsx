@@ -4,10 +4,10 @@ import { db } from "../firebase";
 import { Item } from "@shared/schema";
 import ItemCard from "./ItemCard";
 
-type TabType = "servizi" | "prodotti";
+type TabType = "servizi" | "prodotti" | "tutti";
 
 export default function Carousel() {
-  const [activeTab, setActiveTab] = useState<TabType>("servizi");
+  const [activeTab, setActiveTab] = useState<TabType>("tutti");
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -18,11 +18,19 @@ export default function Carousel() {
         setLoading(true);
         
         // First try simple query without orderBy to avoid index requirement
-        let itemsQuery = query(
-          collection(db, "items"),
-          where("active", "==", true),
-          where("category", "==", activeTab === "servizi" ? "servizio" : "prodotto")
-        );
+        let itemsQuery;
+        if (activeTab === "tutti") {
+          itemsQuery = query(
+            collection(db, "items"),
+            where("active", "==", true)
+          );
+        } else {
+          itemsQuery = query(
+            collection(db, "items"),
+            where("active", "==", true),
+            where("category", "==", activeTab === "servizi" ? "servizio" : "prodotto")
+          );
+        }
         
         const snapshot = await getDocs(itemsQuery);
         let itemsData = snapshot.docs.map(doc => ({
@@ -73,9 +81,11 @@ export default function Carousel() {
           })) as Item[];
           
           // Filter by category manually
-          const filteredItems = allItems.filter(item => 
-            item.category === (activeTab === "servizi" ? "servizio" : "prodotto")
-          );
+          const filteredItems = activeTab === "tutti" 
+            ? allItems 
+            : allItems.filter(item => 
+                item.category === (activeTab === "servizi" ? "servizio" : "prodotto")
+              );
           
           // Sort manually
           filteredItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
@@ -142,9 +152,20 @@ export default function Carousel() {
     <div>
       {/* Mobile Tab Navigation */}
       <div className="md:hidden pb-3">
-        <div className="flex space-x-2 glass rounded-xl p-2">
+        <div className="flex space-x-1 glass rounded-xl p-2">
           <button
-            className={`flex-1 py-3 px-5 rounded-lg font-semibold text-sm transition-all duration-300 ${
+            className={`flex-1 py-3 px-3 rounded-lg font-semibold text-xs transition-all duration-300 ${
+              activeTab === "tutti"
+                ? "gradient-accent text-white shadow-glow"
+                : "hover:scale-105"
+            }`}
+            style={activeTab !== "tutti" ? { color: 'var(--brand-accent)' } : {}}
+            onClick={() => setActiveTab("tutti")}
+          >
+            TUTTI
+          </button>
+          <button
+            className={`flex-1 py-3 px-3 rounded-lg font-semibold text-xs transition-all duration-300 ${
               activeTab === "servizi"
                 ? "gradient-accent text-white shadow-glow"
                 : "hover:scale-105"
@@ -155,7 +176,7 @@ export default function Carousel() {
             SERVIZI
           </button>
           <button
-            className={`flex-1 py-3 px-5 rounded-lg font-semibold text-sm transition-all duration-300 ${
+            className={`flex-1 py-3 px-3 rounded-lg font-semibold text-xs transition-all duration-300 ${
               activeTab === "prodotti"
                 ? "gradient-accent text-white shadow-glow"
                 : "hover:scale-105"
@@ -170,6 +191,17 @@ export default function Carousel() {
 
       {/* Desktop Tab Navigation */}
       <div className="hidden md:flex items-center justify-center space-x-8 mb-10">
+        <button
+          className={`font-semibold text-lg pb-2 transition-all duration-300 ${
+            activeTab === "tutti"
+              ? "text-gradient border-b-3 shadow-glow scale-110"
+              : "opacity-70 hover:opacity-100 hover:scale-105"
+          }`}
+          style={activeTab === "tutti" ? { borderBottom: '3px solid var(--brand-accent)' } : { color: 'var(--brand-accent)' }}
+          onClick={() => setActiveTab("tutti")}
+        >
+          TUTTI
+        </button>
         <button
           className={`font-semibold text-lg pb-2 transition-all duration-300 ${
             activeTab === "servizi"
@@ -187,6 +219,7 @@ export default function Carousel() {
               ? "text-gradient border-b-3 shadow-glow scale-110"
               : "opacity-70 hover:opacity-100 hover:scale-105"
           }`}
+          style={activeTab === "prodotti" ? { borderBottom: '3px solid var(--brand-accent)' } : { color: 'var(--brand-accent)' }}
           onClick={() => setActiveTab("prodotti")}
         >
           PRODOTTI
@@ -254,7 +287,10 @@ export default function Carousel() {
       ) : (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg">
-            Nessun {activeTab === "servizi" ? "servizio" : "prodotto"} disponibile al momento.
+            {activeTab === "tutti" 
+              ? "Nessun articolo disponibile al momento."
+              : `Nessun ${activeTab === "servizi" ? "servizio" : "prodotto"} disponibile al momento.`
+            }
           </div>
         </div>
       )}
