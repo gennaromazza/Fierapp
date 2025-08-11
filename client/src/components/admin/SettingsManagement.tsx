@@ -295,25 +295,56 @@ export default function SettingsManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between glass rounded-xl p-6 shadow-elegant">
-        <h2 className="text-3xl font-bold text-gradient">Impostazioni</h2>
-        <Button
-          onClick={saveSettings}
-          disabled={saving || logoUploading}
-          className="btn-premium animate-pulse-shadow"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {saving ? "Salvando..." : "Salva Impostazioni"}
-        </Button>
+      {/* Header Section */}
+      <div className="glass rounded-xl p-6 shadow-elegant">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold text-gradient">
+            Impostazioni
+          </h2>
+          <Button
+            onClick={saveSettings}
+            disabled={saving || logoUploading}
+            className="btn-premium animate-pulse-shadow"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? "Salvando..." : "Salva Impostazioni"}
+          </Button>
+        </div>
       </div>
 
+      {/* Main Tabs Navigation */}
       <Tabs defaultValue="studio" className="space-y-6">
         <TabsList className="glass rounded-xl p-2 shadow-elegant">
-          <TabsTrigger value="studio" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Studio</TabsTrigger>
-          <TabsTrigger value="branding" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Branding</TabsTrigger>
-          <TabsTrigger value="contacts" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Contatti</TabsTrigger>
-          <TabsTrigger value="forms" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Form</TabsTrigger>
-          <TabsTrigger value="integrations" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Integrazioni</TabsTrigger>
+          <TabsTrigger 
+            value="studio" 
+            className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
+          >
+            Studio
+          </TabsTrigger>
+          <TabsTrigger 
+            value="branding" 
+            className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
+          >
+            Branding
+          </TabsTrigger>
+          <TabsTrigger 
+            value="contacts" 
+            className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
+          >
+            Contatti
+          </TabsTrigger>
+          <TabsTrigger 
+            value="forms" 
+            className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
+          >
+            Form
+          </TabsTrigger>
+          <TabsTrigger 
+            value="integrations" 
+            className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
+          >
+            Integrazioni
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="studio">
