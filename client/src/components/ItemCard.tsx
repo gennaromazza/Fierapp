@@ -74,7 +74,8 @@ export default function ItemCard({ item }: ItemCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-brand-secondary/20 hover:shadow-xl transition-all duration-300 group">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group"
+         style={{ borderColor: 'var(--brand-secondary)', borderWidth: '1px', borderStyle: 'solid' }}>
       {/* Image with discount badge */}
       <div className="relative">
         {item.imageUrl ? (

@@ -58,13 +58,18 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-brand-secondary/20 shadow-sm">
+    <header className="sticky top-0 z-50 backdrop-blur-sm shadow-sm"
+            style={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              borderBottom: `1px solid var(--brand-secondary)`
+            }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo Section */}
           <div className="flex items-center space-x-3">
             {/* Studio logo */}
-            <div className="w-10 h-10 bg-brand-accent rounded-lg flex items-center justify-center overflow-hidden">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden"
+                 style={{ backgroundColor: 'var(--brand-accent)' }}>
               {logoUrl ? (
                 <img src={logoUrl} alt="Studio Logo" className="w-full h-full object-cover" />
               ) : (
@@ -72,7 +77,8 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
               )}
             </div>
             <div>
-              <h1 className="text-lg font-bold text-brand-accent tracking-tight">
+              <h1 className="text-lg font-bold tracking-tight"
+                  style={{ color: 'var(--brand-accent)' }}>
                 {settings?.studioName || "STUDIO DEMO"}
               </h1>
               <p className="text-xs text-gray-600 hidden sm:block">
@@ -85,21 +91,45 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
           {onTabChange && (
             <nav className="hidden md:flex items-center space-x-6">
               <button
-                className={`font-medium pb-1 transition-colors ${
-                  activeTab === "servizi"
-                    ? "text-brand-accent border-b-2 border-brand-accent"
-                    : "text-gray-600 hover:text-brand-accent"
-                }`}
+                className={`font-medium pb-1 transition-colors`}
+                style={activeTab === "servizi" ? {
+                  color: 'var(--brand-accent)',
+                  borderBottom: `2px solid var(--brand-accent)`
+                } : {
+                  color: '#4B5563'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== "servizi") {
+                    e.currentTarget.style.color = 'var(--brand-accent)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== "servizi") {
+                    e.currentTarget.style.color = '#4B5563';
+                  }
+                }}
                 onClick={() => onTabChange("servizi")}
               >
                 SERVIZI
               </button>
               <button
-                className={`font-medium pb-1 transition-colors ${
-                  activeTab === "prodotti"
-                    ? "text-brand-accent border-b-2 border-brand-accent"
-                    : "text-gray-600 hover:text-brand-accent"
-                }`}
+                className={`font-medium pb-1 transition-colors`}
+                style={activeTab === "prodotti" ? {
+                  color: 'var(--brand-accent)',
+                  borderBottom: `2px solid var(--brand-accent)`
+                } : {
+                  color: '#4B5563'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== "prodotti") {
+                    e.currentTarget.style.color = 'var(--brand-accent)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== "prodotti") {
+                    e.currentTarget.style.color = '#4B5563';
+                  }
+                }}
                 onClick={() => onTabChange("prodotti")}
               >
                 PRODOTTI
@@ -110,7 +140,10 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
           {/* Admin Link */}
           <a
             href={window.location.pathname.includes('/fiera') ? "/fiera/admin" : "/admin"}
-            className="text-sm text-gray-500 hover:text-brand-accent transition-colors"
+            className="text-sm transition-colors"
+            style={{ color: '#6B7280' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--brand-accent)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
           >
             <SettingsIcon className="w-4 h-4" />
           </a>

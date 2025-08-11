@@ -10,6 +10,17 @@ The system enables businesses to display special promotional offers at trade sho
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (January 10, 2025)
+
+### Dynamic Brand Theming System Implementation
+- **CSS Variables**: Implemented comprehensive CSS custom properties for brand colors (--brand-primary, --brand-secondary, --brand-accent)
+- **Real-time Updates**: Brand colors from Firebase admin settings apply instantly across the entire application
+- **useBrandColors Hook**: Created custom React hook that listens to Firebase and updates CSS variables in real-time
+- **Enhanced Color Functions**: Added HSL conversion, color lightening/darkening, and contrast detection for automatic text color adjustment
+- **Component Integration**: Updated all major components (Header, ItemCard, Carousel) to use dynamic CSS variables instead of fixed Tailwind classes
+- **Admin Preview**: Added live color preview in admin settings panel to show changes before saving
+- **Tailwind Integration**: Modified Tailwind config to support CSS variable-based theming while maintaining utility class support
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -48,6 +59,7 @@ Preferred communication style: Simple, everyday language.
 - **Export System**: Excel/CSV export capabilities for leads and items
 - **WhatsApp Integration**: Direct messaging for customer communication
 - **PDF Generation**: Quote/invoice generation with jsPDF
+- **Dynamic Brand Theming**: Real-time CSS variable-based theming system that applies brand colors from Firebase settings to all UI components
 
 ## External Dependencies
 
