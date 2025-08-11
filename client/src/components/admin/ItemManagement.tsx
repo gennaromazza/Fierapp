@@ -5,14 +5,17 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  query,
   orderBy,
+  getDoc
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../../firebase";
-import { Item, InsertItem } from "@shared/schema";
+import { Item, Discounts } from "@shared/schema";
 import { useCollection } from "../../hooks/useFirestore";
-import { compressImage, validateImageFile } from "../../lib/image";
 import { useToast } from "@/hooks/use-toast";
+import { calculateSeparateDiscounts, isDiscountActive } from "../../lib/discounts";
+import { compressImage, validateImageFile } from "../../lib/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,23 +28,49 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Upload, Image as ImageIcon } from "lucide-react";
 
 export default function ItemManagement() {
-  const { data: items, loading } = useCollection<Item>("items", [orderBy("sortOrder", "asc")]);
+  const { data: items, loading } = useCollection<Item>("items", query(collection(db, "items"), orderBy("sortOrder", "asc")));
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
-  const [formData, setFormData] = useState<Partial<InsertItem>>({
+  const [formData, setFormData] = useState<Partial<Item>>({
     title: "",
     subtitle: "",
     description: "",
     price: 0,
     originalPrice: 0,
     category: "servizio",
+    imageUrl: "",
     active: true,
     sortOrder: 0,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discounts, setDiscounts] = useState<Discounts | null>(null);
+
+  // Load discounts configuration
+  useEffect(() => {
+    async function loadDiscounts() {
+      try {
+        const discountsDoc = await getDoc(doc(db, "settings", "discounts"));
+        if (discountsDoc.exists()) {
+          const discountsData = discountsDoc.data() as Discounts;
+          setDiscounts(discountsData);
+        } else {
+          setDiscounts({
+            global: { type: "percent", value: 0, isActive: false }
+          });
+        }
+      } catch (error) {
+        console.error("Error loading discounts:", error);
+        setDiscounts({
+          global: { type: "percent", value: 0, isActive: false }
+        });
+      }
+    }
+
+    loadDiscounts();
+  }, []);
 
   useEffect(() => {
     if (editingItem) {
@@ -65,12 +94,12 @@ export default function ItemManagement() {
         originalPrice: 0,
         category: "servizio",
         active: true,
-        sortOrder: items.length,
+        sortOrder: items.length > 0 ? items.reduce((max, item) => Math.max(max, item.sortOrder), 0) + 1 : 0,
       });
       setImagePreview(null);
     }
     setImageFile(null);
-  }, [editingItem, items.length]);
+  }, [editingItem, items.length, items]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -107,8 +136,16 @@ export default function ItemManagement() {
         // Delete old image if updating
         if (editingItem?.imageUrl) {
           try {
-            const oldImageRef = ref(storage, editingItem.imageUrl);
-            await deleteObject(oldImageRef);
+            // Extract path from URL
+            const oldImageUrlParts = editingItem.imageUrl.split('/');
+            const oldImageName = oldImageUrlParts[oldImageUrlParts.length - 1].split('?')[0]; // Remove query params
+            const oldImageRef = ref(storage, `uploads/items/${oldImageName}`); // Assuming path structure
+
+            // Check if the ref actually points to an upload
+            // This is a basic check, a more robust solution might involve storing the storage path with the item
+            if (oldImageRef.fullPath.startsWith('uploads/items/')) {
+              await deleteObject(oldImageRef);
+            }
           } catch (error) {
             console.warn("Could not delete old image:", error);
           }
@@ -118,6 +155,8 @@ export default function ItemManagement() {
       const itemData = {
         ...formData,
         imageUrl: imageUrl || null,
+        // Ensure originalPrice is set if it's not provided but price is
+        originalPrice: formData.originalPrice === undefined || formData.originalPrice === null ? formData.price : formData.originalPrice,
       };
 
       if (editingItem) {
@@ -155,8 +194,10 @@ export default function ItemManagement() {
     }
   };
 
-  const handleDelete = async (item: Item) => {
-    if (!confirm(`Sei sicuro di voler eliminare "${item.title}"?`)) return;
+  const handleDeleteItem = async (item: Item) => {
+    if (!window.confirm("Sei sicuro di voler eliminare questo item?")) {
+      return;
+    }
 
     try {
       await deleteDoc(doc(db, "items", item.id));
@@ -164,10 +205,15 @@ export default function ItemManagement() {
       // Delete image if exists
       if (item.imageUrl) {
         try {
-          const imageRef = ref(storage, item.imageUrl);
-          await deleteObject(imageRef);
-        } catch (error) {
-          console.warn("Could not delete image:", error);
+          const oldImageUrlParts = item.imageUrl.split('/');
+          const oldImageName = oldImageUrlParts[oldImageUrlParts.length - 1].split('?')[0];
+          const imageRef = ref(storage, `uploads/items/${oldImageName}`);
+
+          if (imageRef.fullPath.startsWith('uploads/items/')) {
+            await deleteObject(imageRef);
+          }
+        } catch (imageError) {
+          console.warn("Error deleting image:", imageError);
         }
       }
 
@@ -179,10 +225,33 @@ export default function ItemManagement() {
       console.error("Error deleting item:", error);
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante l'eliminazione",
+        description: "Errore nell'eliminazione dell'item",
         variant: "destructive",
       });
     }
+  };
+
+  // Function to calculate and display discount info for an item
+  const getItemDiscountInfo = (item: Item) => {
+    if (!discounts) return null;
+
+    const originalPrice = item.originalPrice || item.price;
+    const discountInfo = calculateSeparateDiscounts(originalPrice, item.id, discounts);
+
+    const hasItemDiscount = discountInfo.itemDiscount > 0;
+    const hasGlobalDiscount = discountInfo.globalDiscount > 0;
+    const totalSavings = originalPrice - discountInfo.finalPrice;
+    const discountPercent = totalSavings > 0 ? Math.round((totalSavings / originalPrice) * 100) : 0;
+
+    return {
+      hasItemDiscount,
+      hasGlobalDiscount,
+      totalSavings,
+      discountPercent,
+      itemDiscount: discountInfo.itemDiscount,
+      globalDiscount: discountInfo.globalDiscount,
+      finalPrice: discountInfo.finalPrice
+    };
   };
 
   const openCreateDialog = () => {
@@ -236,7 +305,7 @@ export default function ItemManagement() {
                   <Label htmlFor="category">Categoria *</Label>
                   <Select
                     value={formData.category}
-                    onValueChange={(value: "servizio" | "prodotto") => 
+                    onValueChange={(value: "servizio" | "prodotto") =>
                       setFormData({ ...formData, category: value })
                     }
                   >
@@ -372,9 +441,11 @@ export default function ItemManagement() {
                 <TableRow>
                   <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Immagine</TableHead>
                   <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Titolo</TableHead>
-                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Categoria</TableHead>
                   <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Prezzo</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Sconti</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Categoria</TableHead>
                   <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Stato</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Ordine</TableHead>
                   <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Azioni</TableHead>
                 </TableRow>
               </TableHeader>
@@ -403,11 +474,6 @@ export default function ItemManagement() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={item.category === "servizio" ? "default" : "secondary"}>
-                        {item.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
                       <div>
                         <div className="font-medium">€{item.price.toFixed(2)}</div>
                         {item.originalPrice && item.originalPrice !== item.price && (
@@ -416,6 +482,45 @@ export default function ItemManagement() {
                           </div>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const discountInfo = getItemDiscountInfo(item);
+                        if (!discountInfo || discountInfo.totalSavings === 0) {
+                          return <span className="text-gray-400">Nessuno</span>;
+                        }
+
+                        return (
+                          <div className="space-y-1">
+                            <div className="font-medium text-green-700">
+                              -{discountInfo.discountPercent}%
+                              <span className="text-sm text-gray-600 ml-1">
+                                (-€{discountInfo.totalSavings.toFixed(2)})
+                              </span>
+                            </div>
+                            <div className="text-xs space-y-1">
+                              {discountInfo.hasItemDiscount && (
+                                <div className="bg-blue-50 px-2 py-1 rounded text-blue-700">
+                                  Specifico: -€{discountInfo.itemDiscount.toFixed(2)}
+                                </div>
+                              )}
+                              {discountInfo.hasGlobalDiscount && (
+                                <div className="bg-orange-50 px-2 py-1 rounded text-orange-700">
+                                  Globale: -€{discountInfo.globalDiscount.toFixed(2)}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-xs font-medium text-brand-accent">
+                              Finale: €{discountInfo.finalPrice.toFixed(2)}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={item.category === "servizio" ? "default" : "secondary"}>
+                        {item.category}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={item.active ? "default" : "secondary"}>
@@ -435,7 +540,7 @@ export default function ItemManagement() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDelete(item)}
+                          onClick={() => handleDeleteItem(item)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
