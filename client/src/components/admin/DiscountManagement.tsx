@@ -455,12 +455,16 @@ export default function DiscountManagement() {
                           // Use local state discount if exists, otherwise use saved discount
                           const discount = itemDiscounts[item.id] || discounts.perItemOverrides?.[item.id] || { type: "percent", value: 0 };
                           
-                          // Calculate discount amount using originalPrice as base
+                          // Calculate discount amount to match ItemManagement logic
                           const originalPrice = item.originalPrice || item.price;
                           const currentPrice = item.price;
-                          let discountAmount = 0;
                           
-                          if (discount.value && discount.value > 0) {
+                          // If there's already a price difference, show that as the actual discount
+                          let discountAmount = 0;
+                          if (originalPrice > currentPrice) {
+                            discountAmount = originalPrice - currentPrice;
+                          } else if (discount.value && discount.value > 0) {
+                            // Calculate potential discount if no current discount exists
                             if (discount.type === "percent") {
                               discountAmount = (originalPrice * discount.value) / 100;
                             } else {
