@@ -679,10 +679,12 @@ export default function DiscountManagement() {
                         .map(([itemId, discount]) => {
                           const item = items.find(i => i.id === itemId);
                           return (
-                            <p key={itemId} className="text-green-700 text-sm">
-                              {item?.title}: {discount.type === "percent" ? `${discount.value}%` : `€${discount.value}`}
+                            <div key={itemId} className="text-green-700 text-sm flex items-center gap-2">
+                              <span>
+                                {item?.title}: {discount.type === "percent" ? `${discount.value}%` : `€${discount.value}`}
+                              </span>
                               {getStatusBadge(getDiscountStatus(discount))}
-                            </p>
+                            </div>
                           );
                         })}
                     </div>
