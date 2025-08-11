@@ -26,37 +26,14 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
               </div>
               
               {/* Price Details */}
-              <div className="flex-1">
-                {/* Desktop view */}
-                <div className="hidden sm:flex items-center space-x-3 text-sm">
+              <div className="hidden sm:block">
+                <div className="flex items-center space-x-4 text-sm">
                   <div className="text-gray-600">
                     Subtotale: <span className="font-semibold">€{cart.subtotal.toLocaleString('it-IT')}</span>
                   </div>
-                  {cart.itemDiscount > 0 && (
+                  {cart.discount > 0 && (
                     <div className="text-green-600">
-                      Sconto prodotto: <span className="font-bold">-€{cart.itemDiscount.toLocaleString('it-IT')}</span>
-                    </div>
-                  )}
-                  {cart.globalDiscount > 0 && (
-                    <div className="text-green-600">
-                      Sconto globale: <span className="font-bold">-€{cart.globalDiscount.toLocaleString('it-IT')}</span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Mobile view - compact */}
-                <div className="sm:hidden text-xs">
-                  <div className="text-gray-600 mb-1">
-                    Subtotale: €{cart.subtotal.toLocaleString('it-IT')}
-                  </div>
-                  {(cart.itemDiscount > 0 || cart.globalDiscount > 0) && (
-                    <div className="flex space-x-2 text-green-600">
-                      {cart.itemDiscount > 0 && (
-                        <span>Sconto prod.: -€{cart.itemDiscount.toLocaleString('it-IT')}</span>
-                      )}
-                      {cart.globalDiscount > 0 && (
-                        <span>Sconto glob.: -€{cart.globalDiscount.toLocaleString('it-IT')}</span>
-                      )}
+                      Sconto: <span className="font-bold animate-counter">-€{cart.discount.toLocaleString('it-IT')}</span>
                     </div>
                   )}
                 </div>

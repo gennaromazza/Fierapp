@@ -17,8 +17,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     items: [],
     subtotal: 0,
     discount: 0,
-    globalDiscount: 0,
-    itemDiscount: 0,
     total: 0,
     itemCount: 0,
   });
@@ -29,18 +27,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart);
-        
-        // Check if this is the old cart format - if so, clear it
-        if (!parsedCart.globalDiscount && !parsedCart.itemDiscount) {
-          console.log("Clearing old cart format to apply new discount logic");
-          localStorage.removeItem("fiera-cart");
-          return;
-        }
-        
         setCart(parsedCart);
       } catch (error) {
         console.error("Error parsing saved cart:", error);
-        localStorage.removeItem("fiera-cart");
       }
     }
   }, []);
@@ -56,17 +45,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const discount = subtotal - total;
     const itemCount = items.length;
 
-    // Calculate separate discounts using the stored amounts
-    let itemDiscount = 0;
-    let globalDiscount = 0;
-    
-    items.forEach(item => {
-      // Use the pre-calculated discount amounts from when the item was added
-      itemDiscount += item.itemDiscountAmount || 0;
-      globalDiscount += item.globalDiscountAmount || 0;
-    });
-
-    return { subtotal, discount, globalDiscount, itemDiscount, total, itemCount };
+    return { subtotal, discount, total, itemCount };
   };
 
   const addItem = (item: CartItem) => {
@@ -113,8 +92,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       items: [],
       subtotal: 0,
       discount: 0,
-      globalDiscount: 0,
-      itemDiscount: 0,
       total: 0,
       itemCount: 0,
     });

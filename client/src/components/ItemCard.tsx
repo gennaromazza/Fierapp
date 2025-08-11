@@ -3,7 +3,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Item, Discounts } from "@shared/schema";
 import { useCart } from "../hooks/useCart";
-import { calculateDiscountedPrice, calculateSeparateDiscounts, isDiscountActive } from "../lib/discounts";
+import { calculateDiscountedPrice } from "../lib/discounts";
 import { Plus, Check, Clock, Gift } from "lucide-react";
 import { format, isAfter, isBefore } from "date-fns";
 import { it } from "date-fns/locale";
@@ -15,6 +15,7 @@ interface ItemCardProps {
 export default function ItemCard({ item }: ItemCardProps) {
   const { addItem, removeItem, isInCart } = useCart();
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
+  const [discountExpiry, setDiscountExpiry] = useState<Date | null>(null);
   const isAdded = isInCart(item.id);
 
   useEffect(() => {
@@ -24,6 +25,12 @@ export default function ItemCard({ item }: ItemCardProps) {
         if (discountsDoc.exists()) {
           const discountsData = discountsDoc.data() as Discounts;
           setDiscounts(discountsData);
+          
+          // Check for discount expiry
+          const itemDiscount = discountsData.perItemOverrides?.[item.id] || discountsData.global;
+          if (itemDiscount?.endDate) {
+            setDiscountExpiry(itemDiscount.endDate);
+          }
         } else {
           // Set default discount structure if document doesn't exist
           setDiscounts({
@@ -42,29 +49,14 @@ export default function ItemCard({ item }: ItemCardProps) {
     loadDiscounts();
   }, [item.id]);
 
+  const discountedPrice = discounts ? calculateDiscountedPrice(item.price, item.id, discounts) : item.price;
   const originalPrice = item.originalPrice || item.price;
-  
-  // Calculate separate discounts
-  const discountInfo = discounts ? calculateSeparateDiscounts(originalPrice, item.id, discounts) : {
-    itemDiscount: 0,
-    globalDiscount: 0,
-    finalPrice: originalPrice
-  };
-  
-  const discountedPrice = discountInfo.finalPrice;
   const savings = originalPrice - discountedPrice;
   const discountPercent = savings > 0 ? Math.round((savings / originalPrice) * 100) : 0;
   
-  // Determine if each type of discount is applied
-  const hasGlobalDiscount = discountInfo.globalDiscount > 0;
-  const hasItemSpecificDiscount = discountInfo.itemDiscount > 0;
-  
-  // Check if discount is active using the same logic as the calculation functions
-  const hasActiveItemDiscount = discounts?.perItemOverrides?.[item.id] ? 
-    isDiscountActive(discounts.perItemOverrides[item.id]) : false;
-  const hasActiveGlobalDiscount = discounts?.global ? 
-    isDiscountActive(discounts.global) : false;
-  const hasAnyActiveDiscount = hasActiveItemDiscount || hasActiveGlobalDiscount;
+  // Check if discount is expired
+  const isDiscountExpired = discountExpiry ? isAfter(new Date(), discountExpiry) : false;
+  const isDiscountActive = discountExpiry ? isBefore(new Date(), discountExpiry) : savings > 0;
 
   const handleToggle = () => {
     if (isAdded) {
@@ -77,9 +69,6 @@ export default function ItemCard({ item }: ItemCardProps) {
         originalPrice: originalPrice,
         imageUrl: item.imageUrl,
         category: item.category,
-        globalDiscountApplied: hasGlobalDiscount,
-        itemDiscountAmount: discountInfo.itemDiscount,
-        globalDiscountAmount: discountInfo.globalDiscount,
       });
     }
   };
@@ -101,7 +90,7 @@ export default function ItemCard({ item }: ItemCardProps) {
         )}
         
         {/* Discount Badge */}
-        {hasAnyActiveDiscount && discountPercent > 0 && (
+        {isDiscountActive && discountPercent > 0 && (
           <div className="absolute top-3 left-3 bg-brand-accent text-white px-4 py-2 rounded-full text-sm font-bold shadow-glow">
             -{discountPercent}%
           </div>
@@ -114,32 +103,15 @@ export default function ItemCard({ item }: ItemCardProps) {
           </div>
         )}
         
-        {/* Expiry Notice - show the earliest expiry date from active discounts */}
-        {hasAnyActiveDiscount && (() => {
-          const itemDiscount = discounts?.perItemOverrides?.[item.id];
-          const globalDiscount = discounts?.global;
-          
-          let earliestExpiry: Date | null = null;
-          
-          if (itemDiscount?.endDate && hasActiveItemDiscount) {
-            earliestExpiry = itemDiscount.endDate;
-          }
-          
-          if (globalDiscount?.endDate && hasActiveGlobalDiscount) {
-            if (!earliestExpiry || globalDiscount.endDate < earliestExpiry) {
-              earliestExpiry = globalDiscount.endDate;
-            }
-          }
-          
-          return earliestExpiry ? (
-            <div className="absolute top-3 right-3 glass text-gray-800 px-3 py-1 rounded-lg text-xs font-medium">
-              <Clock className="w-3 h-3 inline mr-1" />
-              <span>
-                {format(earliestExpiry, "d MMM", { locale: it })}
-              </span>
-            </div>
-          ) : null;
-        })()}
+        {/* Expiry Notice */}
+        {discountExpiry && isDiscountActive && (
+          <div className="absolute top-3 right-3 glass text-gray-800 px-3 py-1 rounded-lg text-xs font-medium">
+            <Clock className="w-3 h-3 inline mr-1" />
+            <span>
+              {format(discountExpiry, "d MMM", { locale: it })}
+            </span>
+          </div>
+        )}
       </div>
       
       <div className="p-6">
@@ -151,50 +123,15 @@ export default function ItemCard({ item }: ItemCardProps) {
           <p className="text-gray-600 mb-4">{item.description}</p>
         )}
         
-        {/* Prominent Discount Section */}
-        {hasAnyActiveDiscount && savings > 0 && (
-          <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-3 mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-green-800 font-semibold text-sm">SCONTO APPLICATO</span>
-              <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                -{discountPercent}%
-              </span>
-            </div>
-            <div className="space-y-1">
-              {hasItemSpecificDiscount && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-green-700">Sconto prodotto:</span>
-                  <span className="font-bold text-green-800">
-                    -€{discountInfo.itemDiscount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              )}
-              {hasGlobalDiscount && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-green-700">Sconto globale:</span>
-                  <span className="font-bold text-green-800">
-                    -€{discountInfo.globalDiscount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              )}
-              <div className="border-t border-green-300 pt-1 mt-1">
-                <div className="flex items-center justify-between text-sm font-semibold">
-                  <span className="text-green-700">Risparmio totale:</span>
-                  <span className="text-green-800">
-                    €{savings.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Price Display */}
+        {/* Price Display with Savings */}
         <div className="space-y-2 mb-4">
           {savings > 0 && (
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500 line-through">
-                Prezzo originale: €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+              </span>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-bold">
+                Risparmi €{savings.toLocaleString('it-IT')}
               </span>
             </div>
           )}

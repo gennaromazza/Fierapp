@@ -200,7 +200,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--brand-primary)' }} aria-describedby="checkout-description">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="checkout-description">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-brand-accent">RICHIEDI INFORMAZIONI</DialogTitle>
           <DialogDescription id="checkout-description">
@@ -218,16 +218,10 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 <span>€{item.price.toLocaleString('it-IT')}</span>
               </div>
             ))}
-            {cart.itemDiscount > 0 && (
+            {cart.discount > 0 && (
               <div className="flex justify-between text-green-600 font-semibold">
-                <span>Sconto prodotto</span>
-                <span>-€{cart.itemDiscount.toLocaleString('it-IT')}</span>
-              </div>
-            )}
-            {cart.globalDiscount > 0 && (
-              <div className="flex justify-between text-green-600 font-semibold">
-                <span>Sconto globale</span>
-                <span>-€{cart.globalDiscount.toLocaleString('it-IT')}</span>
+                <span>Sconto totale</span>
+                <span>-€{cart.discount.toLocaleString('it-IT')}</span>
               </div>
             )}
             <hr className="border-brand-secondary" />

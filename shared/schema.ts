@@ -140,9 +140,6 @@ export const cartItemSchema = z.object({
   originalPrice: z.number().optional(),
   imageUrl: z.string().optional(),
   category: z.enum(["prodotto", "servizio"]),
-  globalDiscountApplied: z.boolean().optional(),
-  itemDiscountAmount: z.number().optional(),
-  globalDiscountAmount: z.number().optional(),
 });
 
 export type CartItem = z.infer<typeof cartItemSchema>;
@@ -152,8 +149,6 @@ export const cartSchema = z.object({
   items: z.array(cartItemSchema),
   subtotal: z.number(),
   discount: z.number(),
-  globalDiscount: z.number(),
-  itemDiscount: z.number(),
   total: z.number(),
   itemCount: z.number(),
 });
