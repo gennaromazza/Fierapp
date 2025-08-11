@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { analytics } from "../firebase";
 import { logEvent } from "firebase/analytics";
 import Header from "../components/Header";
@@ -11,6 +11,7 @@ import { useCart } from "../hooks/useCart";
 
 export default function Home() {
   const { cart } = useCart();
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   useEffect(() => {
     logEvent(analytics, "page_view", {
@@ -58,10 +59,15 @@ export default function Home() {
       </main>
 
       {/* Price Bar - shown when cart has items */}
-      {cart.itemCount > 0 && <PriceBar />}
+      {cart.itemCount > 0 && (
+        <PriceBar onOpenCheckout={() => setIsCheckoutOpen(true)} />
+      )}
       
       {/* Checkout Modal */}
-      <CheckoutModal isOpen={false} onClose={() => {}} />
+      <CheckoutModal 
+        isOpen={isCheckoutOpen} 
+        onClose={() => setIsCheckoutOpen(false)} 
+      />
 
       <Footer />
     </div>
