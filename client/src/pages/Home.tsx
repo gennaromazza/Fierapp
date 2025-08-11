@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { analytics } from "../firebase";
+import { analytics, db } from "../firebase";
 import { logEvent } from "firebase/analytics";
+import { doc, getDoc } from "firebase/firestore";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Carousel from "../components/Carousel";
@@ -8,16 +9,32 @@ import PriceBar from "../components/PriceBar";
 import CheckoutModal from "../components/CheckoutModal";
 import EnhancedSavingsDisplay from "../components/EnhancedSavingsDisplay";
 import { useCart } from "../hooks/useCart";
+import type { Settings } from "../../shared/schema";
 
 export default function Home() {
   const { cart } = useCart();
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [settings, setSettings] = useState<Settings | null>(null);
 
   useEffect(() => {
     logEvent(analytics, "page_view", {
       page_title: "Home",
       page_location: window.location.href,
     });
+    
+    // Load settings
+    async function loadSettings() {
+      try {
+        const settingsDoc = await getDoc(doc(db, "settings", "app"));
+        if (settingsDoc.exists()) {
+          setSettings(settingsDoc.data() as Settings);
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      }
+    }
+    
+    loadSettings();
   }, []);
 
   return (
@@ -30,10 +47,10 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
             <div className="animate-fade-in">
               <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight uppercase font-serif animate-float">
-                OFFERTE SPECIALI FIERA
+                {settings?.heroTitle || "OFFERTE SPECIALI FIERA"}
               </h2>
               <p className="text-xl md:text-2xl opacity-95 mb-6 font-light">
-                Scopri i nostri pacchetti esclusivi con sconti fino al 30%
+                {settings?.heroSubtitle || "Scopri i nostri pacchetti esclusivi con sconti fino al 30%"}
               </p>
               
               {/* Enhanced Savings Display */}

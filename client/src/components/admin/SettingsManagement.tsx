@@ -28,6 +28,8 @@ export default function SettingsManagement() {
     phoneNumber: "",
     email: "",
     studioAddress: "",
+    heroTitle: "OFFERTE SPECIALI FIERA",
+    heroSubtitle: "Scopri i nostri pacchetti esclusivi con sconti fino al 30%",
     formFields: [
       { type: "text", label: "Nome", required: true },
       { type: "text", label: "Cognome", required: true },
@@ -75,7 +77,7 @@ export default function SettingsManagement() {
         if (colors.length >= 3) {
           palette = {
             brandPrimary: colors[0] || "#F1EFEC",
-            brandSecondary: colors[1] || "#D4C9BE", 
+            brandSecondary: colors[1] || "#D4C9BE",
             brandAccent: colors[2] || "#123458",
             brandTextPrimary: colors[3] || "#1a1a1a",
             brandTextSecondary: colors[4] || "#6b7280",
@@ -107,7 +109,7 @@ export default function SettingsManagement() {
     const palettes = {
       elegant: {
         brandPrimary: "#f8fafc",
-        brandSecondary: "#e2e8f0", 
+        brandSecondary: "#e2e8f0",
         brandAccent: "#475569",
         brandTextPrimary: "#1e293b",
         brandTextSecondary: "#64748b",
@@ -123,7 +125,7 @@ export default function SettingsManagement() {
         brandTextPrimary: "#1e40af",
         brandTextSecondary: "#6b7280",
         brandTextAccent: "#1d4ed8",
-        brandBackground: "#ffffff", 
+        brandBackground: "#ffffff",
         brandSurface: "#f0f9ff",
         brandBorder: "#93c5fd"
       },
@@ -296,11 +298,11 @@ export default function SettingsManagement() {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="relative overflow-hidden rounded-2xl p-8 shadow-2xl border border-white/20 backdrop-blur-lg" 
+      <div className="relative overflow-hidden rounded-2xl p-8 shadow-2xl border border-white/20 backdrop-blur-lg"
            style={{
-             background: `linear-gradient(135deg, 
-               var(--brand-accent) 0%, 
-               rgba(var(--brand-accent-rgb, 18, 52, 88), 0.9) 50%, 
+             background: `linear-gradient(135deg,
+               var(--brand-accent) 0%,
+               rgba(var(--brand-accent-rgb, 18, 52, 88), 0.9) 50%,
                rgba(var(--brand-secondary-rgb, 212, 201, 190), 0.3) 100%)`,
            }}>
         {/* Background Pattern */}
@@ -308,11 +310,11 @@ export default function SettingsManagement() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-32 translate-x-32 animate-pulse"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-24 -translate-x-24 animate-pulse" style={{ animationDelay: '1s' }}></div>
         </div>
-        
+
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl"
-                 style={{ 
+                 style={{
                    background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1))',
                    backdropFilter: 'blur(10px)',
                    border: '1px solid rgba(255,255,255,0.3)'
@@ -328,64 +330,64 @@ export default function SettingsManagement() {
               </p>
             </div>
           </div>
-          
+
           <Button
             onClick={saveSettings}
             disabled={saving || logoUploading}
             className="relative px-8 py-4 text-lg font-bold text-white rounded-xl shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl disabled:opacity-50 disabled:transform-none overflow-hidden group"
             style={{
-              background: saving || logoUploading 
-                ? 'linear-gradient(135deg, #6b7280, #9ca3af)' 
+              background: saving || logoUploading
+                ? 'linear-gradient(135deg, #6b7280, #9ca3af)'
                 : 'linear-gradient(135deg, #10b981, #059669, #047857)',
               boxShadow: '0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2)'
             }}
           >
             {/* Animated background for button */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
-            
+
             <div className="relative z-10 flex items-center">
               <Save className="w-5 h-5 mr-3" />
               {saving ? "Salvando..." : "Salva Impostazioni"}
             </div>
           </Button>
         </div>
-        
+
         {/* Decorative glow effect */}
-        <div className="absolute inset-0 rounded-2xl shadow-inner" 
-             style={{ 
-               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)' 
+        <div className="absolute inset-0 rounded-2xl shadow-inner"
+             style={{
+               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)'
              }}></div>
       </div>
 
       {/* Main Tabs Navigation */}
       <Tabs defaultValue="studio" className="space-y-6">
         <TabsList className="glass rounded-xl p-2 shadow-elegant">
-          <TabsTrigger 
-            value="studio" 
+          <TabsTrigger
+            value="studio"
             className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
           >
             Studio
           </TabsTrigger>
-          <TabsTrigger 
-            value="branding" 
+          <TabsTrigger
+            value="branding"
             className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
           >
             Branding
           </TabsTrigger>
-          <TabsTrigger 
-            value="contacts" 
+          <TabsTrigger
+            value="contacts"
             className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
           >
             Contatti
           </TabsTrigger>
-          <TabsTrigger 
-            value="forms" 
+          <TabsTrigger
+            value="forms"
             className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
           >
             Form
           </TabsTrigger>
-          <TabsTrigger 
-            value="integrations" 
+          <TabsTrigger
+            value="integrations"
             className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow"
           >
             Integrazioni
@@ -396,7 +398,7 @@ export default function SettingsManagement() {
           <Card className="card-premium shadow-elegant">
             <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
               <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                      style={{ backgroundColor: 'var(--brand-accent)' }}>
                   <SettingsIcon className="w-5 h-5 text-white" />
                 </div>
@@ -422,6 +424,28 @@ export default function SettingsManagement() {
                   placeholder="Es. Studio Fotografico Demo"
                   className="h-11"
                   required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="heroTitle" className="text-sm font-semibold text-brand-accent">Titolo Hero Section</Label>
+                <Input
+                  id="heroTitle"
+                  value={settings.heroTitle || "OFFERTE SPECIALI FIERA"}
+                  onChange={(e) => setSettings({ ...settings, heroTitle: e.target.value })}
+                  placeholder="OFFERTE SPECIALI FIERA"
+                  className="h-11"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="heroSubtitle" className="text-sm font-semibold text-brand-accent">Sottotitolo Hero Section</Label>
+                <Input
+                  id="heroSubtitle"
+                  value={settings.heroSubtitle || "Scopri i nostri pacchetti esclusivi con sconti fino al 30%"}
+                  onChange={(e) => setSettings({ ...settings, heroSubtitle: e.target.value })}
+                  placeholder="Scopri i nostri pacchetti esclusivi con sconti fino al 30%"
+                  className="h-11"
                 />
               </div>
 
@@ -460,7 +484,7 @@ export default function SettingsManagement() {
               <Card className="card-premium shadow-elegant">
                 <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
                   <CardTitle className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                          style={{ backgroundColor: 'var(--brand-accent)' }}>
                       <ImageIcon className="w-5 h-5 text-white" />
                     </div>
@@ -497,9 +521,9 @@ export default function SettingsManagement() {
                       Palette Predefinite
                     </Label>
                     <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => applyPresetPalette('elegant')}
                         className="justify-start space-x-2 btn-secondary"
                       >
@@ -510,9 +534,9 @@ export default function SettingsManagement() {
                         </div>
                         <span>Elegante</span>
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => applyPresetPalette('vibrant')}
                         className="justify-start space-x-2 btn-secondary"
                       >
@@ -523,9 +547,9 @@ export default function SettingsManagement() {
                         </div>
                         <span>Vibrante</span>
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => applyPresetPalette('earth')}
                         className="justify-start space-x-2 btn-secondary"
                       >
@@ -536,9 +560,9 @@ export default function SettingsManagement() {
                         </div>
                         <span>Terra</span>
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => applyPresetPalette('ocean')}
                         className="justify-start space-x-2 btn-secondary"
                       >
@@ -558,7 +582,7 @@ export default function SettingsManagement() {
               <Card className="card-premium shadow-elegant">
                 <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
                   <CardTitle className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                          style={{ backgroundColor: 'var(--brand-accent)' }}>
                       <SettingsIcon className="w-5 h-5 text-white" />
                     </div>
@@ -759,7 +783,7 @@ export default function SettingsManagement() {
                   {/* Color Preview */}
                   <div className="space-y-4">
                     <h4 className="text-lg font-semibold text-brand-accent">Anteprima</h4>
-                    <div className="p-6 rounded-lg border-2 shadow-sm" style={{ 
+                    <div className="p-6 rounded-lg border-2 shadow-sm" style={{
                       backgroundColor: settings.brandBackground || "#ffffff",
                       borderColor: settings.brandBorder || "#e2e8f0"
                     }}>
@@ -774,15 +798,15 @@ export default function SettingsManagement() {
                           Testo con colore accento
                         </p>
                         <div className="flex space-x-3 mt-6">
-                          <div 
-                            className="px-6 py-3 rounded-lg text-white font-semibold shadow-md transition-all hover:shadow-lg" 
+                          <div
+                            className="px-6 py-3 rounded-lg text-white font-semibold shadow-md transition-all hover:shadow-lg"
                             style={{ backgroundColor: settings.brandAccent || "#123458" }}
                           >
                             Pulsante Principale
                           </div>
-                          <div 
-                            className="px-6 py-3 rounded-lg font-semibold shadow-sm transition-all hover:shadow-md" 
-                            style={{ 
+                          <div
+                            className="px-6 py-3 rounded-lg font-semibold shadow-sm transition-all hover:shadow-md"
+                            style={{
                               backgroundColor: settings.brandSecondary || "#D4C9BE",
                               color: settings.brandTextPrimary || "#1a1a1a"
                             }}
@@ -804,7 +828,7 @@ export default function SettingsManagement() {
           <Card className="card-premium shadow-elegant">
             <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
               <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                      style={{ backgroundColor: 'var(--brand-accent)' }}>
                   <Phone className="w-5 h-5 text-white" />
                 </div>
@@ -870,7 +894,7 @@ export default function SettingsManagement() {
           <Card className="card-premium shadow-elegant">
             <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
               <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                      style={{ backgroundColor: 'var(--brand-accent)' }}>
                   <SettingsIcon className="w-5 h-5 text-white" />
                 </div>
@@ -899,7 +923,7 @@ export default function SettingsManagement() {
                         weekdays: settings.businessHours?.weekdays || {
                           enabled: true,
                           open: "9:00",
-                          close: "18:00", 
+                          close: "18:00",
                           label: "Lun-Ven"
                         },
                         saturday: settings.businessHours?.saturday || {
@@ -1180,7 +1204,7 @@ export default function SettingsManagement() {
           <Card className="card-premium shadow-elegant">
             <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
               <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                      style={{ backgroundColor: 'var(--brand-accent)' }}>
                   <Mail className="w-5 h-5 text-white" />
                 </div>
@@ -1196,119 +1220,119 @@ export default function SettingsManagement() {
             </CardHeader>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="facebook">Facebook</Label>
-                <Input
-                  id="facebook"
-                  type="url"
-                  placeholder="https://facebook.com/tuapagina"
-                  value={settings.socialMedia?.facebook || ""}
-                  onChange={(e) =>
-                    setSettings({ 
-                      ...settings, 
-                      socialMedia: { 
-                        ...settings.socialMedia, 
-                        facebook: e.target.value 
-                      } 
-                    })
-                  }
-                />
-              </div>
+                <div>
+                  <Label htmlFor="facebook">Facebook</Label>
+                  <Input
+                    id="facebook"
+                    type="url"
+                    placeholder="https://facebook.com/tuapagina"
+                    value={settings.socialMedia?.facebook || ""}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        socialMedia: {
+                          ...settings.socialMedia,
+                          facebook: e.target.value
+                        }
+                      })
+                    }
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="instagram">Instagram</Label>
-                <Input
-                  id="instagram"
-                  type="url"
-                  placeholder="https://instagram.com/tuoaccount"
-                  value={settings.socialMedia?.instagram || ""}
-                  onChange={(e) =>
-                    setSettings({ 
-                      ...settings, 
-                      socialMedia: { 
-                        ...settings.socialMedia, 
-                        instagram: e.target.value 
-                      } 
-                    })
-                  }
-                />
-              </div>
+                <div>
+                  <Label htmlFor="instagram">Instagram</Label>
+                  <Input
+                    id="instagram"
+                    type="url"
+                    placeholder="https://instagram.com/tuoaccount"
+                    value={settings.socialMedia?.instagram || ""}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        socialMedia: {
+                          ...settings.socialMedia,
+                          instagram: e.target.value
+                        }
+                      })
+                    }
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="youtube">YouTube</Label>
-                <Input
-                  id="youtube"
-                  type="url"
-                  placeholder="https://youtube.com/c/tuocanale"
-                  value={settings.socialMedia?.youtube || ""}
-                  onChange={(e) =>
-                    setSettings({ 
-                      ...settings, 
-                      socialMedia: { 
-                        ...settings.socialMedia, 
-                        youtube: e.target.value 
-                      } 
-                    })
-                  }
-                />
-              </div>
+                <div>
+                  <Label htmlFor="youtube">YouTube</Label>
+                  <Input
+                    id="youtube"
+                    type="url"
+                    placeholder="https://youtube.com/c/tuocanale"
+                    value={settings.socialMedia?.youtube || ""}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        socialMedia: {
+                          ...settings.socialMedia,
+                          youtube: e.target.value
+                        }
+                      })
+                    }
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="twitter">Twitter</Label>
-                <Input
-                  id="twitter"
-                  type="url"
-                  placeholder="https://twitter.com/tuoaccount"
-                  value={settings.socialMedia?.twitter || ""}
-                  onChange={(e) =>
-                    setSettings({ 
-                      ...settings, 
-                      socialMedia: { 
-                        ...settings.socialMedia, 
-                        twitter: e.target.value 
-                      } 
-                    })
-                  }
-                />
-              </div>
+                <div>
+                  <Label htmlFor="twitter">Twitter</Label>
+                  <Input
+                    id="twitter"
+                    type="url"
+                    placeholder="https://twitter.com/tuoaccount"
+                    value={settings.socialMedia?.twitter || ""}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        socialMedia: {
+                          ...settings.socialMedia,
+                          twitter: e.target.value
+                        }
+                      })
+                    }
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="linkedin">LinkedIn</Label>
-                <Input
-                  id="linkedin"
-                  type="url"
-                  placeholder="https://linkedin.com/company/tuoaccount"
-                  value={settings.socialMedia?.linkedin || ""}
-                  onChange={(e) =>
-                    setSettings({ 
-                      ...settings, 
-                      socialMedia: { 
-                        ...settings.socialMedia, 
-                        linkedin: e.target.value 
-                      } 
-                    })
-                  }
-                />
-              </div>
+                <div>
+                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <Input
+                    id="linkedin"
+                    type="url"
+                    placeholder="https://linkedin.com/company/tuoaccount"
+                    value={settings.socialMedia?.linkedin || ""}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        socialMedia: {
+                          ...settings.socialMedia,
+                          linkedin: e.target.value
+                        }
+                      })
+                    }
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="tiktok">TikTok</Label>
-                <Input
-                  id="tiktok"
-                  type="url"
-                  placeholder="https://tiktok.com/@tuoaccount"
-                  value={settings.socialMedia?.tiktok || ""}
-                  onChange={(e) =>
-                    setSettings({ 
-                      ...settings, 
-                      socialMedia: { 
-                        ...settings.socialMedia, 
-                        tiktok: e.target.value 
-                      } 
-                    })
-                  }
-                />
-              </div>
+                <div>
+                  <Label htmlFor="tiktok">TikTok</Label>
+                  <Input
+                    id="tiktok"
+                    type="url"
+                    placeholder="https://tiktok.com/@tuoaccount"
+                    value={settings.socialMedia?.tiktok || ""}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        socialMedia: {
+                          ...settings.socialMedia,
+                          tiktok: e.target.value
+                        }
+                      })
+                    }
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -1318,7 +1342,7 @@ export default function SettingsManagement() {
           <Card className="card-premium shadow-elegant">
             <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
               <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                      style={{ backgroundColor: 'var(--brand-accent)' }}>
                   <SettingsIcon className="w-5 h-5 text-white" />
                 </div>
@@ -1359,7 +1383,7 @@ export default function SettingsManagement() {
                           <TableCell>
                             <Select
                               value={field.type}
-                              onValueChange={(value: FormField["type"]) => 
+                              onValueChange={(value: FormField["type"]) =>
                                 updateFormField(index, { type: value })
                               }
                             >
@@ -1395,7 +1419,7 @@ export default function SettingsManagement() {
                             {field.type === "select" && (
                               <Input
                                 value={field.options?.join(", ") || ""}
-                                onChange={(e) => updateFormField(index, { 
+                                onChange={(e) => updateFormField(index, {
                                   options: e.target.value.split(",").map(s => s.trim()).filter(s => s)
                                 })}
                                 placeholder="Opzione 1, Opzione 2, ..."
@@ -1442,7 +1466,7 @@ export default function SettingsManagement() {
           <Card className="card-premium shadow-elegant">
             <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
               <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                      style={{ backgroundColor: 'var(--brand-accent)' }}>
                   <SettingsIcon className="w-5 h-5 text-white" />
                 </div>

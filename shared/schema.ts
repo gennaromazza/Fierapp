@@ -53,6 +53,8 @@ export const formFieldSchema = z.object({
 export const settingsSchema = z.object({
   studioName: z.string(),
   logoUrl: z.string().optional(),
+  heroTitle: z.string().default("OFFERTE SPECIALI FIERA"),
+  heroSubtitle: z.string().default("Scopri i nostri pacchetti esclusivi con sconti fino al 30%"),
   brandPrimary: z.string().default("#F1EFEC"),
   brandSecondary: z.string().default("#D4C9BE"),
   brandAccent: z.string().default("#123458"),
