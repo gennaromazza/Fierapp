@@ -1,0 +1,60 @@
+Options -MultiViews
+RewriteEngine On
+RewriteBase /fiera/
+
+# Handle Angular and React Router - resolve client-side routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
+
+# Security headers
+<IfModule mod_headers.c>
+  # Prevent indexing of admin routes
+  <Files "index.html">
+    Header set X-Robots-Tag "noindex: /fiera/admin"
+  </Files>
+  
+  # Security headers for production
+  Header always set X-Content-Type-Options nosniff
+  Header always set X-Frame-Options DENY
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  
+  # Cache control for static assets
+  <FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  
+  # Cache control for HTML
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+  </FilesMatch>
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/x-javascript
+</IfModule>
+
+# Error pages
+ErrorDocument 404 /fiera/index.html
+ErrorDocument 403 /fiera/index.html
+
+# Block access to sensitive files
+<Files ~ "\.(env|json|md|txt|log)$">
+  Order allow,deny
+  Deny from all
+</Files>
+
+# Block access to hidden files
+<Files ~ "^\.">
+  Order allow,deny
+  Deny from all
+</Files>
+
+# Force HTTPS (uncomment if using SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
