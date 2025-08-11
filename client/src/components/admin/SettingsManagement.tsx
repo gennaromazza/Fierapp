@@ -1098,13 +1098,29 @@ export default function SettingsManagement() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Social Media Section */}
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Social Media</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="card-premium shadow-elegant">
+            <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
+              <CardTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                     style={{ backgroundColor: 'var(--brand-accent)' }}>
+                  <Mail className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-brand-accent">
+                    Social Media
+                  </h3>
+                  <p className="text-sm text-brand-secondary mt-1">
+                    Configura i link ai tuoi profili social
+                  </p>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="facebook">Facebook</Label>
                 <Input
@@ -1218,8 +1234,8 @@ export default function SettingsManagement() {
                   }
                 />
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="forms">
