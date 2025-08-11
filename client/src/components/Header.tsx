@@ -199,11 +199,37 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
               <span className="font-semibold text-brand-text-accent">
                 Sconto globale attivo: {discounts.global.type === "percent" ? `${discounts.global.value}%` : `€${discounts.global.value}`}
               </span>
-              {discounts.global.endDate && isBefore(new Date(), discounts.global.endDate) && (
+              {discounts.global.endDate && (
                 <div className="flex items-center space-x-1 text-brand-text-secondary">
                   <Clock className="w-3 h-3" />
                   <span>
-                    Scade: {format(discounts.global.endDate, "d MMM yyyy", { locale: it })}
+                    {(() => {
+                      try {
+                        let endDate: Date;
+                        
+                        // Handle Firebase Timestamp
+                        if (discounts.global.endDate && typeof discounts.global.endDate === 'object' && 'toDate' in discounts.global.endDate) {
+                          endDate = (discounts.global.endDate as any).toDate();
+                        } else if (discounts.global.endDate instanceof Date) {
+                          endDate = discounts.global.endDate;
+                        } else {
+                          endDate = new Date(discounts.global.endDate);
+                        }
+                        
+                        // Validate the date
+                        if (isNaN(endDate.getTime())) {
+                          return "Data non valida";
+                        }
+                        
+                        const isExpired = isAfter(new Date(), endDate);
+                        return isExpired 
+                          ? `Scaduto: ${format(endDate, "d MMM yyyy", { locale: it })}`
+                          : `Scade: ${format(endDate, "d MMM yyyy", { locale: it })}`;
+                      } catch (error) {
+                        console.error("Error formatting discount end date:", error);
+                        return "";
+                      }
+                    })()}
                   </span>
                 </div>
               )}
