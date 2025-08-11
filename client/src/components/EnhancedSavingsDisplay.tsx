@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { TrendingUp, Gift, Zap, Star } from "lucide-react";
 import { useCart } from "../hooks/useCart";
@@ -33,25 +34,21 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
   
   const levelConfig = {
     standard: {
-      bgGradient: "from-green-400 to-green-600",
       icon: TrendingUp,
       sparkles: 2,
       message: "Ottimo risparmio!"
     },
     good: {
-      bgGradient: "from-green-500 to-emerald-600",
       icon: Gift,
       sparkles: 3,
       message: "Fantastico risparmio!"
     },
     great: {
-      bgGradient: "from-emerald-500 to-teal-600",
       icon: Zap,
       sparkles: 4,
       message: "Risparmio straordinario!"
     },
     exceptional: {
-      bgGradient: "from-yellow-400 via-orange-500 to-red-500",
       icon: Star,
       sparkles: 5,
       message: "Risparmio INCREDIBILE!"
@@ -66,16 +63,16 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
       {/* Main savings display */}
       <div 
         key={animationKey}
-        className={`
-          inline-flex items-center bg-gradient-to-r ${config.bgGradient} 
-          text-white px-8 py-4 rounded-2xl font-bold text-xl shadow-elegant
-          transform transition-all duration-300 hover:scale-110
-          glass border-2 border-white/40
-        `}
+        className="inline-flex items-center px-8 py-4 rounded-2xl font-bold text-xl shadow-elegant transform transition-all duration-300 hover:scale-105 glass border-2"
+        style={{
+          background: `linear-gradient(135deg, var(--brand-accent), var(--brand-secondary))`,
+          borderColor: 'rgba(255, 255, 255, 0.3)',
+          color: 'white'
+        }}
       >
-        <IconComponent className="w-7 h-7 mr-3 animate-float" />
+        <IconComponent className="w-7 h-7 mr-3 animate-bounce-gentle" />
         <span className="mr-3">Risparmi:</span>
-        <span className="font-mono text-2xl tracking-wider text-yellow-300">
+        <span className="font-mono text-2xl tracking-wider" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>
           €{discount.toLocaleString('it-IT')}
         </span>
       </div>
@@ -84,12 +81,12 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
       {showBurst && Array.from({ length: config.sparkles }).map((_, i) => (
         <div
           key={i}
-          className={`
-            absolute w-2 h-2 bg-yellow-300 rounded-full animate-sparkle-${i + 1}
-            top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
-            pointer-events-none
-          `}
+          className="absolute w-2 h-2 rounded-full pointer-events-none animate-bounce-gentle"
           style={{
+            backgroundColor: 'var(--brand-accent)',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
             animationDelay: `${i * 0.1}s`,
             animationDuration: '1s'
           }}
@@ -99,15 +96,27 @@ export default function EnhancedSavingsDisplay({ discount, className = "" }: Enh
       {/* Floating message */}
       {showBurst && (
         <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 animate-float-up">
-          <div className="bg-white text-gray-800 px-3 py-1 rounded-full text-sm font-semibold shadow-lg border-2 border-yellow-300">
+          <div 
+            className="px-3 py-1 rounded-full text-sm font-semibold shadow-lg border-2"
+            style={{
+              backgroundColor: 'var(--brand-background)',
+              color: 'var(--brand-text)',
+              borderColor: 'var(--brand-accent)'
+            }}
+          >
             {config.message}
           </div>
         </div>
       )}
 
-      {/* Glow effect for exceptional savings */}
+      {/* Subtle glow effect for exceptional savings */}
       {level === "exceptional" && (
-        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400 to-red-500 opacity-30 animate-pulse scale-110 blur-sm pointer-events-none" />
+        <div 
+          className="absolute inset-0 rounded-2xl opacity-20 animate-pulse scale-110 blur-sm pointer-events-none"
+          style={{
+            background: `linear-gradient(135deg, var(--brand-accent), var(--brand-secondary))`
+          }}
+        />
       )}
     </div>
   );
