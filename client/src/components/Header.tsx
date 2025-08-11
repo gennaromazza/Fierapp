@@ -24,6 +24,20 @@ export default function Header({ activeTab = "servizi", onTabChange }: HeaderPro
           const settingsData = settingsDoc.data() as Settings;
           setSettings(settingsData);
           
+          // Apply brand colors to CSS variables
+          if (settingsData.brandPrimary || settingsData.brandSecondary || settingsData.brandAccent) {
+            const root = document.documentElement;
+            if (settingsData.brandPrimary) {
+              root.style.setProperty('--brand-primary', settingsData.brandPrimary);
+            }
+            if (settingsData.brandSecondary) {
+              root.style.setProperty('--brand-secondary', settingsData.brandSecondary);
+            }
+            if (settingsData.brandAccent) {
+              root.style.setProperty('--brand-accent', settingsData.brandAccent);
+            }
+          }
+
           // Load logo from Firebase Storage if configured
           if (settingsData.logoUrl) {
             try {

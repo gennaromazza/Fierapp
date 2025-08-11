@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./hooks/useAuth";
 import { CartProvider } from "./hooks/useCart";
+import { useBrandColors } from "./hooks/useBrandColors";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
@@ -28,17 +29,26 @@ function Router() {
   );
 }
 
+function AppContent() {
+  // Apply dynamic brand colors from Firebase settings
+  useBrandColors();
+
+  return (
+    <AuthProvider>
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </CartProvider>
+    </AuthProvider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </CartProvider>
-      </AuthProvider>
+      <AppContent />
     </QueryClientProvider>
   );
 }

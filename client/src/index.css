@@ -30,10 +30,10 @@
   --chart-5: hsl(341, 75%, 51%);
   --radius: 0.5rem;
   
-  /* Brand Colors */
-  --brand-primary: hsl(44, 28%, 94%);
-  --brand-secondary: hsl(30, 18%, 74%);
-  --brand-accent: hsl(208, 67%, 21%);
+  /* Brand Colors - Will be dynamically updated by Firebase settings */
+  --brand-primary: #F1EFEC;
+  --brand-secondary: #D4C9BE;
+  --brand-accent: #123458;
   --brand-text: hsl(210, 25%, 1%);
   --brand-hover: hsl(208, 67%, 25%);
 }

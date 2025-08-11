@@ -51,12 +51,12 @@ export default {
           "4": "var(--chart-4)",
           "5": "var(--chart-5)",
         },
-        // Brand colors
-        "brand-primary": "#F1EFEC",
-        "brand-secondary": "#D4C9BE",
-        "brand-accent": "#123458",
-        "brand-text": "#030303",
-        "brand-hover": "#1a4a73",
+        // Dynamic brand colors from Firebase settings
+        "brand-primary": "var(--brand-primary)",
+        "brand-secondary": "var(--brand-secondary)",
+        "brand-accent": "var(--brand-accent)",
+        "brand-text": "var(--brand-text)",
+        "brand-hover": "var(--brand-hover)",
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],

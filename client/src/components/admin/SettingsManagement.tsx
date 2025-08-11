@@ -269,6 +269,9 @@ export default function SettingsManagement() {
                       placeholder="#F1EFEC"
                     />
                   </div>
+                  <div className="mt-2 p-3 rounded-lg border" style={{ backgroundColor: settings.brandPrimary || "#F1EFEC" }}>
+                    <span className="text-sm font-medium">Anteprima Primario</span>
+                  </div>
                 </div>
 
                 <div>
@@ -286,6 +289,9 @@ export default function SettingsManagement() {
                       onChange={(e) => setSettings({ ...settings, brandSecondary: e.target.value })}
                       placeholder="#D4C9BE"
                     />
+                  </div>
+                  <div className="mt-2 p-3 rounded-lg border" style={{ backgroundColor: settings.brandSecondary || "#D4C9BE" }}>
+                    <span className="text-sm font-medium">Anteprima Secondario</span>
                   </div>
                 </div>
 
@@ -305,6 +311,20 @@ export default function SettingsManagement() {
                       placeholder="#123458"
                     />
                   </div>
+                  <div className="mt-2 p-3 rounded-lg border text-white" style={{ backgroundColor: settings.brandAccent || "#123458" }}>
+                    <span className="text-sm font-medium">Anteprima Accento</span>
+                  </div>
+                </div>
+                
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-2">
+                    <strong>Nota:</strong> I colori vengono applicati automaticamente a tutta l'applicazione in tempo reale.
+                  </p>
+                  <ul className="text-xs text-gray-500 space-y-1">
+                    <li>• <strong>Primario:</strong> Sfondi principali e aree contenuto</li>
+                    <li>• <strong>Secondario:</strong> Bordi, divisori e elementi di supporto</li>
+                    <li>• <strong>Accento:</strong> Pulsanti, titoli e elementi interattivi</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>
