@@ -154,23 +154,23 @@ export default function ItemCard({ item }: ItemCardProps) {
           </div>
         )}
         
-        {/* Discount Badge */}
+        {/* Discount Badge - positioned above image */}
         {isDiscountActive && discountPercent > 0 && (
-          <div className="absolute top-3 left-3 bg-brand-accent text-white px-4 py-2 rounded-full text-sm font-bold shadow-glow">
+          <div className="absolute top-2 left-2 bg-brand-accent text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg z-10">
             -{discountPercent}%
           </div>
         )}
         
-        {/* Free Badge */}
+        {/* Free Badge - positioned above image */}
         {discountedPrice === 0 && (
-          <div className="absolute top-3 left-3 bg-green-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-elegant">
+          <div className="absolute top-2 left-2 bg-green-600 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg z-10">
             GRATIS
           </div>
         )}
         
-        {/* Expiry Notice */}
+        {/* Expiry Notice - positioned above image */}
         {discountExpiry && isDiscountActive && (
-          <div className="absolute top-3 right-3 glass text-gray-800 px-3 py-1 rounded-lg text-xs font-medium">
+          <div className="absolute top-2 right-2 glass text-gray-800 px-2 py-1 rounded-lg text-xs font-medium z-10">
             <Clock className="w-3 h-3 inline mr-1" />
             <span>
               {format(discountExpiry, "d MMM", { locale: it })}
