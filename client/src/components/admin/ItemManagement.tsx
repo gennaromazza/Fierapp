@@ -205,18 +205,18 @@ export default function ItemManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Gestione Items</h2>
+      <div className="flex items-center justify-between glass rounded-xl p-6 shadow-elegant">
+        <h2 className="text-3xl font-bold text-gradient">Gestione Items</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="bg-brand-accent hover:bg-brand-hover">
+            <Button onClick={openCreateDialog} className="btn-premium animate-pulse-shadow">
               <Plus className="w-4 h-4 mr-2" />
               Nuovo Item
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-gradient">
                 {editingItem ? "Modifica Item" : "Nuovo Item"}
               </DialogTitle>
             </DialogHeader>
@@ -361,26 +361,26 @@ export default function ItemManagement() {
         </Dialog>
       </div>
 
-      <Card className="card-brand">
-        <CardHeader className="card-header-brand">
-          <CardTitle>Items ({items.length})</CardTitle>
+      <Card className="card-premium shadow-elegant">
+        <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
+          <CardTitle className="text-xl font-bold text-gradient">Items ({items.length})</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="glass">
                 <TableRow>
-                  <TableHead>Immagine</TableHead>
-                  <TableHead>Titolo</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Prezzo</TableHead>
-                  <TableHead>Stato</TableHead>
-                  <TableHead>Azioni</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Immagine</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Titolo</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Categoria</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Prezzo</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Stato</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Azioni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors">
                     <TableCell>
                       {item.imageUrl ? (
                         <img
@@ -428,6 +428,7 @@ export default function ItemManagement() {
                           size="sm"
                           variant="outline"
                           onClick={() => openEditDialog(item)}
+                          className="hover:scale-105 transition-transform"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>

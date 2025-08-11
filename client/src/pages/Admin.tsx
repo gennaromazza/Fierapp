@@ -43,36 +43,37 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-primary)' }}>
+    <div className="min-h-screen gradient-radial">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold" style={{ color: 'var(--brand-accent)' }}>Pannello Amministrazione</h1>
+        <div className="flex items-center justify-between mb-8 glass rounded-xl p-6 shadow-elegant">
+          <h1 className="text-4xl font-bold text-gradient animate-fade-in">Pannello Amministrazione</h1>
           <button
             onClick={handleSignOut}
-            className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg glass hover:shadow-elegant transition-all duration-300 hover:scale-105"
+            style={{ color: 'var(--brand-accent)' }}
           >
             <LogOut className="w-5 h-5" />
-            <span>Esci</span>
+            <span className="font-semibold">Esci</span>
           </button>
         </div>
 
         <Tabs defaultValue="items" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4" style={{ backgroundColor: 'white', borderColor: 'var(--brand-secondary)' }}>
-            <TabsTrigger value="items" className="flex items-center space-x-2 data-[state=active]:bg-brand-accent data-[state=active]:text-white">
+          <TabsList className="grid w-full grid-cols-4 glass rounded-xl p-2 shadow-elegant">
+            <TabsTrigger value="items" className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105">
               <ShoppingBag className="w-4 h-4" />
               <span>Items</span>
             </TabsTrigger>
-            <TabsTrigger value="discounts" className="flex items-center space-x-2 data-[state=active]:bg-brand-accent data-[state=active]:text-white">
+            <TabsTrigger value="discounts" className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105">
               <Percent className="w-4 h-4" />
               <span>Sconti</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center space-x-2 data-[state=active]:bg-brand-accent data-[state=active]:text-white">
+            <TabsTrigger value="settings" className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105">
               <Settings className="w-4 h-4" />
               <span>Impostazioni</span>
             </TabsTrigger>
-            <TabsTrigger value="leads" className="flex items-center space-x-2 data-[state=active]:bg-brand-accent data-[state=active]:text-white">
+            <TabsTrigger value="leads" className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow hover:scale-105">
               <Users className="w-4 h-4" />
               <span>Lead</span>
             </TabsTrigger>

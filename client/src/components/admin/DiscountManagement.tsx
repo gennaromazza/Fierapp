@@ -224,12 +224,12 @@ export default function DiscountManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Gestione Sconti</h2>
+      <div className="flex items-center justify-between glass rounded-xl p-6 shadow-elegant">
+        <h2 className="text-3xl font-bold text-gradient">Gestione Sconti</h2>
         <Button
           onClick={saveDiscounts}
           disabled={saving}
-          className="btn-primary"
+          className="btn-premium animate-pulse-shadow"
         >
           <Save className="w-4 h-4 mr-2" />
           {saving ? "Salvando..." : "Salva Configurazione"}
@@ -237,17 +237,17 @@ export default function DiscountManagement() {
       </div>
 
       <Tabs defaultValue="global" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="global">Sconto Globale</TabsTrigger>
-          <TabsTrigger value="items">Sconti per Item</TabsTrigger>
-          <TabsTrigger value="overview">Panoramica</TabsTrigger>
+        <TabsList className="glass rounded-xl p-2 shadow-elegant">
+          <TabsTrigger value="global" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Sconto Globale</TabsTrigger>
+          <TabsTrigger value="items" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Sconti per Item</TabsTrigger>
+          <TabsTrigger value="overview" className="rounded-lg font-semibold transition-all duration-300 data-[state=active]:gradient-accent data-[state=active]:text-white data-[state=active]:shadow-glow">Panoramica</TabsTrigger>
         </TabsList>
 
         <TabsContent value="global">
-          <Card className="card-brand">
-            <CardHeader className="card-header-brand">
+          <Card className="card-premium shadow-elegant">
+            <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
               <CardTitle className="flex items-center space-x-2">
-                <Percent className="w-5 h-5" />
+                <Percent className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} />
                 <span>Sconto Globale</span>
                 {globalDiscount.value && globalDiscount.value > 0 && getStatusBadge(getDiscountStatus(globalDiscount))}
               </CardTitle>

@@ -179,10 +179,10 @@ export default function LeadsManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Gestione Lead</h2>
+      <div className="flex items-center justify-between glass rounded-xl p-6 shadow-elegant">
+        <h2 className="text-3xl font-bold text-gradient">Gestione Lead</h2>
         <div className="flex space-x-2">
-          <Button onClick={handleExportExcel} variant="outline" size="sm">
+          <Button onClick={handleExportExcel} className="btn-premium" size="sm">
             <Download className="w-4 h-4 mr-2" />
             Export Excel
           </Button>
@@ -191,44 +191,44 @@ export default function LeadsManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="card-brand">
+        <Card className="card-premium hover-lift">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold" style={{ color: 'var(--brand-accent)' }}>{stats.total}</div>
-            <p className="text-xs text-muted-foreground">Lead Totali</p>
+            <div className="text-3xl font-bold text-gradient">{stats.total}</div>
+            <p className="text-sm font-semibold mt-2" style={{ color: 'var(--brand-accent)' }}>Lead Totali</p>
           </CardContent>
         </Card>
-        <Card className="card-brand">
+        <Card className="card-premium hover-lift">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold" style={{ color: 'var(--brand-accent)' }}>
+            <div className="text-3xl font-bold text-gradient">
               €{stats.totalValue.toLocaleString('it-IT')}
             </div>
-            <p className="text-xs text-muted-foreground">Valore Totale</p>
+            <p className="text-sm font-semibold mt-2" style={{ color: 'var(--brand-accent)' }}>Valore Totale</p>
           </CardContent>
         </Card>
-        <Card className="card-brand">
+        <Card className="card-premium hover-lift">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold" style={{ color: 'var(--brand-secondary)' }}>
+            <div className="text-3xl font-bold text-gradient">
               €{stats.totalDiscount.toLocaleString('it-IT')}
             </div>
-            <p className="text-xs text-muted-foreground">Sconti Totali</p>
+            <p className="text-sm font-semibold mt-2" style={{ color: 'var(--brand-accent)' }}>Sconti Totali</p>
           </CardContent>
         </Card>
-        <Card className="card-brand">
+        <Card className="card-premium hover-lift">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold" style={{ color: 'var(--brand-accent)' }}>
+            <div className="text-3xl font-bold text-gradient">
               €{stats.avgValue.toLocaleString('it-IT')}
             </div>
-            <p className="text-xs text-muted-foreground">Valore Medio</p>
+            <p className="text-sm font-semibold mt-2" style={{ color: 'var(--brand-accent)' }}>Valore Medio</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
+      <Card className="card-premium shadow-elegant">
+        <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
           <CardTitle className="flex items-center space-x-2">
-            <Filter className="w-5 h-5" />
-            <span>Filtri</span>
+            <Filter className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} />
+            <span className="text-xl font-bold text-gradient">Filtri</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -311,22 +311,22 @@ export default function LeadsManagement() {
       </Card>
 
       {/* Leads Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lead ({filteredLeads.length})</CardTitle>
+      <Card className="card-premium shadow-elegant">
+        <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
+          <CardTitle className="text-xl font-bold text-gradient">Lead ({filteredLeads.length})</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="glass">
                 <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Contatti</TableHead>
-                  <TableHead>Data Evento</TableHead>
-                  <TableHead>Valore</TableHead>
-                  <TableHead>Stato</TableHead>
-                  <TableHead>Data Creazione</TableHead>
-                  <TableHead>Azioni</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Cliente</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Contatti</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Data Evento</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Valore</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Stato</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Data Creazione</TableHead>
+                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Azioni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -334,7 +334,7 @@ export default function LeadsManagement() {
                   const leadDate = lead.createdAt instanceof Date ? lead.createdAt : lead.createdAt.toDate();
                   
                   return (
-                    <TableRow key={lead.id}>
+                    <TableRow key={lead.id} className="hover:bg-gray-50/50 transition-colors">
                       <TableCell>
                         <div>
                           <div className="font-medium">
