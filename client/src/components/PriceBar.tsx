@@ -80,29 +80,47 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
               
               {/* Price Details */}
               <div className="hidden sm:block">
-                <div className="flex items-center space-x-4 text-sm">
-                  <div className="text-gray-600">
-                    Subtotale: <span className="font-semibold">€{cart.subtotal.toLocaleString('it-IT')}</span>
+                <div className="space-y-1">
+                  {/* Totale servizi/prodotti senza sconti */}
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span>Totale servizi/prodotti: </span>
+                    <span className="font-semibold ml-1">€{cart.subtotal.toLocaleString('it-IT')}</span>
                   </div>
+                  
+                  {/* Sconti breakdown */}
                   {cart.discount > 0 && (
-                    <div className="flex items-center space-x-3 bg-green-50 border border-green-200 rounded-lg px-3 py-1">
+                    <div className="space-y-1">
                       {globalDiscount > 0 && (
-                        <div className="flex items-center space-x-1 text-green-700">
-                          <Globe className="w-3 h-3" />
-                          <span className="text-xs font-medium">Globale:</span>
-                          <span className="font-bold">-€{Math.round(globalDiscount).toLocaleString('it-IT')}</span>
+                        <div className="flex items-center text-sm text-green-700">
+                          <Globe className="w-3 h-3 mr-1" />
+                          <span>Sconto globale: </span>
+                          <span className="font-bold ml-1">-€{Math.round(globalDiscount).toLocaleString('it-IT')}</span>
+                          {discounts?.global?.endDate && (
+                            <span className="text-xs text-green-600 ml-1">
+                              (fino al {(() => {
+                                try {
+                                  let endDate: Date;
+                                  if (discounts.global.endDate && typeof discounts.global.endDate === 'object' && 'toDate' in discounts.global.endDate) {
+                                    endDate = (discounts.global.endDate as any).toDate();
+                                  } else if (discounts.global.endDate instanceof Date) {
+                                    endDate = discounts.global.endDate;
+                                  } else {
+                                    endDate = new Date(discounts.global.endDate);
+                                  }
+                                  return endDate.toLocaleDateString('it-IT');
+                                } catch {
+                                  return 'data non valida';
+                                }
+                              })()})
+                            </span>
+                          )}
                         </div>
                       )}
                       {itemSpecificDiscount > 0 && (
-                        <div className="flex items-center space-x-1 text-green-700">
-                          <Tag className="w-3 h-3" />
-                          <span className="text-xs font-medium">Prodotti:</span>
-                          <span className="font-bold">-€{Math.round(itemSpecificDiscount).toLocaleString('it-IT')}</span>
-                        </div>
-                      )}
-                      {(globalDiscount > 0 || itemSpecificDiscount > 0) && (
-                        <div className="border-l border-green-300 pl-3">
-                          <span className="text-green-800 font-bold">Tot: -€{cart.discount.toLocaleString('it-IT')}</span>
+                        <div className="flex items-center text-sm text-green-700">
+                          <Tag className="w-3 h-3 mr-1" />
+                          <span>Sconti prodotti/servizi: </span>
+                          <span className="font-bold ml-1">-€{Math.round(itemSpecificDiscount).toLocaleString('it-IT')}</span>
                         </div>
                       )}
                     </div>
@@ -110,9 +128,19 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
                 </div>
               </div>
               
+              {/* Mobile Price Summary */}
+              <div className="block sm:hidden text-right">
+                <div className="text-xs space-y-0.5" style={{ color: 'var(--brand-accent)' }}>
+                  <div>Totale: €{cart.subtotal.toLocaleString('it-IT')}</div>
+                  {cart.discount > 0 && (
+                    <div className="text-green-600">Sconto: -€{cart.discount.toLocaleString('it-IT')}</div>
+                  )}
+                </div>
+              </div>
+
               {/* Total Price */}
               <div className="text-right">
-                <div className="text-xs opacity-70 sm:hidden" style={{ color: 'var(--brand-accent)' }}>Totale</div>
+                <div className="text-xs opacity-70 hidden sm:block" style={{ color: 'var(--brand-accent)' }}>Totale finale</div>
                 <div className="text-2xl font-bold text-brand-accent">
                   €{cart.total.toLocaleString('it-IT')}
                 </div>
