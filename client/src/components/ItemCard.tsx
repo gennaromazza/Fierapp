@@ -3,7 +3,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Item, Discounts } from "@shared/schema";
 import { useCart } from "../hooks/useCart";
-import { calculateDiscountedPrice } from "../lib/discounts";
+import { calculateDiscountedPrice, calculateSeparateDiscounts } from "../lib/discounts";
 import { Plus, Check, Clock, Gift } from "lucide-react";
 import { format, isAfter, isBefore } from "date-fns";
 import { it } from "date-fns/locale";
@@ -49,15 +49,22 @@ export default function ItemCard({ item }: ItemCardProps) {
     loadDiscounts();
   }, [item.id]);
 
-  const discountedPrice = discounts ? calculateDiscountedPrice(item.price, item.id, discounts) : item.price;
   const originalPrice = item.originalPrice || item.price;
+  
+  // Calculate separate discounts
+  const discountInfo = discounts ? calculateSeparateDiscounts(originalPrice, item.id, discounts) : {
+    itemDiscount: 0,
+    globalDiscount: 0,
+    finalPrice: originalPrice
+  };
+  
+  const discountedPrice = discountInfo.finalPrice;
   const savings = originalPrice - discountedPrice;
   const discountPercent = savings > 0 ? Math.round((savings / originalPrice) * 100) : 0;
   
-  // Determine if global discount is applied
-  const hasGlobalDiscount = discounts?.global?.isActive && discounts.global.value > 0;
-  const hasItemSpecificDiscount = discounts?.perItemOverrides?.[item.id]?.isActive && 
-                                  (discounts.perItemOverrides[item.id]?.value || 0) > 0;
+  // Determine if each type of discount is applied
+  const hasGlobalDiscount = discountInfo.globalDiscount > 0;
+  const hasItemSpecificDiscount = discountInfo.itemDiscount > 0;
   
   // Check if discount is expired
   const isDiscountExpired = discountExpiry ? isAfter(new Date(), discountExpiry) : false;
@@ -75,6 +82,8 @@ export default function ItemCard({ item }: ItemCardProps) {
         imageUrl: item.imageUrl,
         category: item.category,
         globalDiscountApplied: hasGlobalDiscount,
+        itemDiscountAmount: discountInfo.itemDiscount,
+        globalDiscountAmount: discountInfo.globalDiscount,
       });
     }
   };

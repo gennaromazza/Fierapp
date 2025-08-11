@@ -6,32 +6,31 @@ export function calculateDiscountedPrice(
   itemId: string,
   discounts: Discounts
 ): number {
-  // Check for item-specific discount first
-  const itemDiscount = discounts.perItemOverrides?.[itemId];
-  const discount = itemDiscount || discounts.global;
-
-  if (!discount) return originalPrice;
-
-  // Check if discount is expired
-  const now = new Date();
-  if (discount.endDate && isAfter(now, discount.endDate)) {
-    return originalPrice;
-  }
+  let finalPrice = originalPrice;
   
-  // Check if discount hasn't started yet
-  if (discount.startDate && isBefore(now, discount.startDate)) {
-    return originalPrice;
+  // Apply item-specific discount first if exists
+  const itemDiscount = discounts.perItemOverrides?.[itemId];
+  if (itemDiscount && isDiscountActive(itemDiscount)) {
+    if (itemDiscount.type === "percent") {
+      const discountAmount = (finalPrice * itemDiscount.value) / 100;
+      finalPrice = Math.max(0, finalPrice - discountAmount);
+    } else if (itemDiscount.type === "fixed") {
+      finalPrice = Math.max(0, finalPrice - itemDiscount.value);
+    }
   }
 
-  // Apply discount
-  if (discount.type === "percent") {
-    const discountAmount = (originalPrice * discount.value) / 100;
-    return Math.max(0, originalPrice - discountAmount);
-  } else if (discount.type === "fixed") {
-    return Math.max(0, originalPrice - discount.value);
+  // Then apply global discount if exists and active
+  const globalDiscount = discounts.global;
+  if (globalDiscount && isDiscountActive(globalDiscount)) {
+    if (globalDiscount.type === "percent") {
+      const discountAmount = (finalPrice * globalDiscount.value) / 100;
+      finalPrice = Math.max(0, finalPrice - discountAmount);
+    } else if (globalDiscount.type === "fixed") {
+      finalPrice = Math.max(0, finalPrice - globalDiscount.value);
+    }
   }
 
-  return originalPrice;
+  return finalPrice;
 }
 
 export function calculateTotalDiscount(
@@ -60,6 +59,9 @@ export function isDiscountActive(discount: Discount): boolean {
   // Check if discount is explicitly marked as inactive
   if (discount.isActive === false) return false;
   
+  // Check if discount value is > 0
+  if (discount.value <= 0) return false;
+  
   // Check if discount has started
   if (discount.startDate && now < discount.startDate) return false;
   
@@ -67,6 +69,45 @@ export function isDiscountActive(discount: Discount): boolean {
   if (discount.endDate && now > discount.endDate) return false;
   
   return true;
+}
+
+// New function to calculate separate discount amounts
+export function calculateSeparateDiscounts(
+  originalPrice: number,
+  itemId: string,
+  discounts: Discounts
+): { itemDiscount: number; globalDiscount: number; finalPrice: number } {
+  let currentPrice = originalPrice;
+  let itemDiscount = 0;
+  let globalDiscount = 0;
+  
+  // Apply item-specific discount first if exists
+  const itemDiscountConfig = discounts.perItemOverrides?.[itemId];
+  if (itemDiscountConfig && isDiscountActive(itemDiscountConfig)) {
+    let discountAmount = 0;
+    if (itemDiscountConfig.type === "percent") {
+      discountAmount = (currentPrice * itemDiscountConfig.value) / 100;
+    } else if (itemDiscountConfig.type === "fixed") {
+      discountAmount = itemDiscountConfig.value;
+    }
+    itemDiscount = Math.min(discountAmount, currentPrice);
+    currentPrice = Math.max(0, currentPrice - itemDiscount);
+  }
+
+  // Then apply global discount if exists and active
+  const globalDiscountConfig = discounts.global;
+  if (globalDiscountConfig && isDiscountActive(globalDiscountConfig)) {
+    let discountAmount = 0;
+    if (globalDiscountConfig.type === "percent") {
+      discountAmount = (currentPrice * globalDiscountConfig.value) / 100;
+    } else if (globalDiscountConfig.type === "fixed") {
+      discountAmount = globalDiscountConfig.value;
+    }
+    globalDiscount = Math.min(discountAmount, currentPrice);
+    currentPrice = Math.max(0, currentPrice - globalDiscount);
+  }
+
+  return { itemDiscount, globalDiscount, finalPrice: currentPrice };
 }
 
 export function isDiscountExpired(discount: Discount): boolean {

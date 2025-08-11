@@ -141,6 +141,8 @@ export const cartItemSchema = z.object({
   imageUrl: z.string().optional(),
   category: z.enum(["prodotto", "servizio"]),
   globalDiscountApplied: z.boolean().optional(),
+  itemDiscountAmount: z.number().optional(),
+  globalDiscountAmount: z.number().optional(),
 });
 
 export type CartItem = z.infer<typeof cartItemSchema>;
