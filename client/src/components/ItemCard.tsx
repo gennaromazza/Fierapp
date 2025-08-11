@@ -151,16 +151,38 @@ export default function ItemCard({ item }: ItemCardProps) {
           <p className="text-gray-600 mb-4">{item.description}</p>
         )}
         
-        {/* Price Display with Savings */}
+        {/* Price Display with Detailed Discount Breakdown */}
         <div className="space-y-2 mb-4">
           {savings > 0 && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 line-through">
-                €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-              </span>
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-bold">
-                Risparmi €{savings.toLocaleString('it-IT')}
-              </span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500 line-through">
+                  €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                </span>
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-bold">
+                  Risparmi €{savings.toLocaleString('it-IT')}
+                </span>
+              </div>
+              
+              {/* Detailed Discount Breakdown */}
+              <div className="space-y-1">
+                {hasItemSpecificDiscount && (
+                  <div className="flex items-center justify-between text-xs bg-blue-50 px-2 py-1 rounded">
+                    <span className="text-blue-700">Sconto specifico articolo:</span>
+                    <span className="font-medium text-blue-800">
+                      -€{discountInfo.itemDiscount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+                {hasGlobalDiscount && (
+                  <div className="flex items-center justify-between text-xs bg-orange-50 px-2 py-1 rounded">
+                    <span className="text-orange-700">Sconto globale:</span>
+                    <span className="font-medium text-orange-800">
+                      -€{discountInfo.globalDiscount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <div className={`text-2xl font-bold price-drop ${discountedPrice === 0 ? 'text-green-600' : 'text-brand-accent'}`}>
