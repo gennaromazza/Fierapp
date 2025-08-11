@@ -372,9 +372,22 @@ export default function DiscountManagement() {
         </TabsContent>
 
         <TabsContent value="items">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sconti Specifici per Item</CardTitle>
+          <Card className="card-premium shadow-elegant">
+            <CardHeader className="glass rounded-t-xl border-b border-brand-accent/20">
+              <CardTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" 
+                     style={{ backgroundColor: 'var(--brand-accent)' }}>
+                  <Percent className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-brand-accent">
+                    Sconti Specifici per Item
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Gestisci sconti individuali per singoli prodotti
+                  </p>
+                </div>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -393,9 +406,10 @@ export default function DiscountManagement() {
                     </TableHeader>
                     <TableBody>
                       {items
-                        .filter(item => itemDiscounts[item.id])
+                        .filter(item => itemDiscounts[item.id] || discounts.perItemOverrides?.[item.id])
                         .map((item) => {
-                          const discount = itemDiscounts[item.id];
+                          // Use local state discount if exists, otherwise use saved discount
+                          const discount = itemDiscounts[item.id] || discounts.perItemOverrides?.[item.id] || { type: "percent", value: 0 };
                           return (
                             <TableRow key={item.id}>
                               <TableCell>
@@ -436,7 +450,7 @@ export default function DiscountManagement() {
                                   <PopoverTrigger asChild>
                                     <Button variant="outline" size="sm">
                                       {discount.startDate ? (
-                                        format(discount.startDate, "dd/MM/yy", { locale: it })
+                                        format(discount.startDate instanceof Date ? discount.startDate : new Date(discount.startDate), "dd/MM/yy", { locale: it })
                                       ) : (
                                         "Imposta"
                                       )}
@@ -445,7 +459,7 @@ export default function DiscountManagement() {
                                   <PopoverContent className="w-auto p-0">
                                     <Calendar
                                       mode="single"
-                                      selected={discount.startDate}
+                                      selected={discount.startDate instanceof Date ? discount.startDate : discount.startDate ? new Date(discount.startDate) : undefined}
                                       onSelect={(date) => updateItemDiscount(item.id, "startDate", date)}
                                       initialFocus
                                     />
@@ -457,7 +471,7 @@ export default function DiscountManagement() {
                                   <PopoverTrigger asChild>
                                     <Button variant="outline" size="sm">
                                       {discount.endDate ? (
-                                        format(discount.endDate, "dd/MM/yy", { locale: it })
+                                        format(discount.endDate instanceof Date ? discount.endDate : new Date(discount.endDate), "dd/MM/yy", { locale: it })
                                       ) : (
                                         "Imposta"
                                       )}
@@ -466,7 +480,7 @@ export default function DiscountManagement() {
                                   <PopoverContent className="w-auto p-0">
                                     <Calendar
                                       mode="single"
-                                      selected={discount.endDate}
+                                      selected={discount.endDate instanceof Date ? discount.endDate : discount.endDate ? new Date(discount.endDate) : undefined}
                                       onSelect={(date) => updateItemDiscount(item.id, "endDate", date)}
                                       initialFocus
                                     />
@@ -493,23 +507,26 @@ export default function DiscountManagement() {
                 </div>
 
                 <div className="border-t pt-4">
-                  <h4 className="font-medium mb-2">Aggiungi Sconto per Item</h4>
+                  <h4 className="font-medium mb-2 text-brand-accent">Aggiungi Sconto per Item</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                     {items
-                      .filter(item => !itemDiscounts[item.id])
+                      .filter(item => !itemDiscounts[item.id] && !discounts.perItemOverrides?.[item.id])
                       .map((item) => (
                         <Button
                           key={item.id}
                           variant="outline"
                           size="sm"
                           onClick={() => addItemDiscount(item.id)}
-                          className="justify-start"
+                          className="justify-start btn-secondary"
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           {item.title}
                         </Button>
                       ))}
                   </div>
+                  {items.filter(item => !itemDiscounts[item.id] && !discounts.perItemOverrides?.[item.id]).length === 0 && (
+                    <p className="text-sm text-gray-500 mt-2">Tutti gli item hanno già uno sconto configurato.</p>
+                  )}
                 </div>
               </div>
             </CardContent>
