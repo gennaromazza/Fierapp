@@ -3,7 +3,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Item, Discounts } from "@shared/schema";
 import { useCart } from "../hooks/useCart";
-import { calculateDiscountedPrice, calculateSeparateDiscounts } from "../lib/discounts";
+import { calculateDiscountedPrice, calculateSeparateDiscounts, isDiscountActive } from "../lib/discounts";
 import { Plus, Check, Clock, Gift } from "lucide-react";
 import { format, isAfter, isBefore } from "date-fns";
 import { it } from "date-fns/locale";
@@ -15,7 +15,6 @@ interface ItemCardProps {
 export default function ItemCard({ item }: ItemCardProps) {
   const { addItem, removeItem, isInCart } = useCart();
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
-  const [discountExpiry, setDiscountExpiry] = useState<Date | null>(null);
   const isAdded = isInCart(item.id);
 
   useEffect(() => {
@@ -25,12 +24,6 @@ export default function ItemCard({ item }: ItemCardProps) {
         if (discountsDoc.exists()) {
           const discountsData = discountsDoc.data() as Discounts;
           setDiscounts(discountsData);
-          
-          // Check for discount expiry
-          const itemDiscount = discountsData.perItemOverrides?.[item.id] || discountsData.global;
-          if (itemDiscount?.endDate) {
-            setDiscountExpiry(itemDiscount.endDate);
-          }
         } else {
           // Set default discount structure if document doesn't exist
           setDiscounts({
@@ -66,9 +59,12 @@ export default function ItemCard({ item }: ItemCardProps) {
   const hasGlobalDiscount = discountInfo.globalDiscount > 0;
   const hasItemSpecificDiscount = discountInfo.itemDiscount > 0;
   
-  // Check if discount is expired
-  const isDiscountExpired = discountExpiry ? isAfter(new Date(), discountExpiry) : false;
-  const isDiscountActive = discountExpiry ? isBefore(new Date(), discountExpiry) : savings > 0;
+  // Check if discount is active using the same logic as the calculation functions
+  const hasActiveItemDiscount = discounts?.perItemOverrides?.[item.id] ? 
+    isDiscountActive(discounts.perItemOverrides[item.id]) : false;
+  const hasActiveGlobalDiscount = discounts?.global ? 
+    isDiscountActive(discounts.global) : false;
+  const hasAnyActiveDiscount = hasActiveItemDiscount || hasActiveGlobalDiscount;
 
   const handleToggle = () => {
     if (isAdded) {
@@ -105,7 +101,7 @@ export default function ItemCard({ item }: ItemCardProps) {
         )}
         
         {/* Discount Badge */}
-        {isDiscountActive && discountPercent > 0 && (
+        {hasAnyActiveDiscount && discountPercent > 0 && (
           <div className="absolute top-3 left-3 bg-brand-accent text-white px-4 py-2 rounded-full text-sm font-bold shadow-glow">
             -{discountPercent}%
           </div>
@@ -118,15 +114,32 @@ export default function ItemCard({ item }: ItemCardProps) {
           </div>
         )}
         
-        {/* Expiry Notice */}
-        {discountExpiry && isDiscountActive && (
-          <div className="absolute top-3 right-3 glass text-gray-800 px-3 py-1 rounded-lg text-xs font-medium">
-            <Clock className="w-3 h-3 inline mr-1" />
-            <span>
-              {format(discountExpiry, "d MMM", { locale: it })}
-            </span>
-          </div>
-        )}
+        {/* Expiry Notice - show the earliest expiry date from active discounts */}
+        {hasAnyActiveDiscount && (() => {
+          const itemDiscount = discounts?.perItemOverrides?.[item.id];
+          const globalDiscount = discounts?.global;
+          
+          let earliestExpiry: Date | null = null;
+          
+          if (itemDiscount?.endDate && hasActiveItemDiscount) {
+            earliestExpiry = itemDiscount.endDate;
+          }
+          
+          if (globalDiscount?.endDate && hasActiveGlobalDiscount) {
+            if (!earliestExpiry || globalDiscount.endDate < earliestExpiry) {
+              earliestExpiry = globalDiscount.endDate;
+            }
+          }
+          
+          return earliestExpiry ? (
+            <div className="absolute top-3 right-3 glass text-gray-800 px-3 py-1 rounded-lg text-xs font-medium">
+              <Clock className="w-3 h-3 inline mr-1" />
+              <span>
+                {format(earliestExpiry, "d MMM", { locale: it })}
+              </span>
+            </div>
+          ) : null;
+        })()}
       </div>
       
       <div className="p-6">

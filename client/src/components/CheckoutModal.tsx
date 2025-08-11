@@ -218,10 +218,16 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 <span>€{item.price.toLocaleString('it-IT')}</span>
               </div>
             ))}
-            {cart.discount > 0 && (
+            {cart.itemDiscount > 0 && (
               <div className="flex justify-between text-green-600 font-semibold">
-                <span>Sconto totale</span>
-                <span>-€{cart.discount.toLocaleString('it-IT')}</span>
+                <span>Sconto prodotto</span>
+                <span>-€{cart.itemDiscount.toLocaleString('it-IT')}</span>
+              </div>
+            )}
+            {cart.globalDiscount > 0 && (
+              <div className="flex justify-between text-green-600 font-semibold">
+                <span>Sconto globale</span>
+                <span>-€{cart.globalDiscount.toLocaleString('it-IT')}</span>
               </div>
             )}
             <hr className="border-brand-secondary" />

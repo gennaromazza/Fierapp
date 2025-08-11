@@ -39,8 +39,8 @@ export function calculateTotalDiscount(
 ): number {
   return items.reduce((total, item) => {
     const originalPrice = item.originalPrice || item.price;
-    const discountedPrice = calculateDiscountedPrice(originalPrice, item.id, discounts);
-    return total + (originalPrice - discountedPrice);
+    const discountInfo = calculateSeparateDiscounts(originalPrice, item.id, discounts);
+    return total + (originalPrice - discountInfo.finalPrice);
   }, 0);
 }
 
