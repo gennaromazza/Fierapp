@@ -210,9 +210,28 @@ export default function ItemCard({ item }: ItemCardProps) {
                   <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
                     -€{savings.toLocaleString('it-IT')}
                   </span>
-                  <span className="text-xs text-gray-500 mt-1">
-                    include sconto globale
-                  </span>
+                  <div className="text-xs text-gray-500 mt-1 text-right">
+                    <div>include sconto globale</div>
+                    {discounts?.global?.endDate && isDiscountActive && (
+                      <div className="text-orange-600 font-medium">
+                        scade: {(() => {
+                          try {
+                            let endDate: Date;
+                            if (discounts.global.endDate.toDate && typeof discounts.global.endDate.toDate === 'function') {
+                              endDate = discounts.global.endDate.toDate();
+                            } else if (discounts.global.endDate instanceof Date) {
+                              endDate = discounts.global.endDate;
+                            } else {
+                              endDate = new Date(discounts.global.endDate);
+                            }
+                            return format(endDate, "d MMM", { locale: it });
+                          } catch {
+                            return 'data non valida';
+                          }
+                        })()}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
