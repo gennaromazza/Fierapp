@@ -89,7 +89,7 @@ export class RulesEngine {
    * @param selectedItemIds - Array degli ID selezionati per performance
    * @returns true se la condizione è soddisfatta
    */
-  private evaluateCondition(
+  public evaluateCondition(
     condition: SelectionRule['conditions'], 
     selectedItems: Item[], 
     selectedItemIds: string[]

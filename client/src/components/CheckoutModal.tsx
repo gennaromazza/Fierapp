@@ -3,7 +3,7 @@ import { doc, getDoc, collection, addDoc } from "firebase/firestore";
 import { db, analytics } from "../firebase";
 import { logEvent } from "firebase/analytics";
 import { Settings, InsertLead } from "@shared/schema";
-import { useCart } from "../hooks/useCart";
+import { useCartWithRules } from "../hooks/useCartWithRules";
 import { generateWhatsAppLink } from "../lib/whatsapp";
 import { generateClientQuotePDF } from "../lib/pdf";
 import { MessageCircle, Download } from "lucide-react";
@@ -29,7 +29,7 @@ interface CheckoutModalProps {
 }
 
 export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
-  const { cart, clearCart } = useCart();
+  const { cart, clearCart, getPricingWithRules } = useCartWithRules();
   const { toast } = useToast();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,17 +134,13 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           price: item.price,
           originalPrice: item.originalPrice
         })),
-        pricing: {
-          subtotal: cart.subtotal,
-          discount: cart.discount,
-          total: cart.total
-        },
+        pricing: getPricingWithRules(),
         gdprConsent: {
           accepted: data.gdpr_consent || false,
           text: settings.gdprText,
           timestamp: new Date()
         },
-        reCAPTCHAToken: recaptchaToken,
+        reCAPTCHAToken: recaptchaToken || undefined,
         status: "new"
       };
 
@@ -153,11 +149,12 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       console.log("Lead saved successfully with ID:", docRef.id);
       
       // Analytics
+      const pricing = getPricingWithRules();
       if (analytics) {
         logEvent(analytics, 'form_submit', {
           form_id: 'checkout_form',
           lead_id: docRef.id,
-          total_value: cart.total
+          total_value: pricing.total
         });
       }
 
@@ -178,20 +175,21 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           })
           .join('\n');
         
-        const totalText = cart.discount > 0 
-          ? `Subtotale: €${(cart.total + cart.discount).toLocaleString('it-IT')}\nSconto: -€${cart.discount.toLocaleString('it-IT')}\nTotale: €${cart.total.toLocaleString('it-IT')}`
-          : `Totale: €${cart.total.toLocaleString('it-IT')}`;
+        const pricing = getPricingWithRules();
+        const totalText = pricing.totalSavings > 0 
+          ? `Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.totalSavings.toLocaleString('it-IT')}\nTotale: €${pricing.total.toLocaleString('it-IT')}`
+          : `Totale: €${pricing.total.toLocaleString('it-IT')}`;
         
         const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${cartSummary}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${docRef.id}`;
         
         const whatsappUrl = generateWhatsAppLink(settings.whatsappNumber, message);
         window.open(whatsappUrl, '_blank');
         
-        // Analytics for WhatsApp
+        // Analytics for WhatsApp  
         if (analytics) {
           logEvent(analytics, 'whatsapp_contact', {
             items: cart.items.length,
-            total_value: cart.total,
+            total_value: pricing.total,
             lead_id: docRef.id
           });
         }
@@ -233,11 +231,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           price: item.price,
           originalPrice: item.originalPrice
         })),
-        pricing: {
-          subtotal: cart.subtotal,
-          discount: cart.discount,
-          total: cart.total
-        }
+        pricing: getPricingWithRules()
       };
 
       const customerName = formData.nome || formData.Nome || 'cliente';

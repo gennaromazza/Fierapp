@@ -227,7 +227,7 @@ export function useCartWithRules() {
       );
       
       for (const rule of applicableRules) {
-        const conditionMet = rulesEngine['evaluateCondition']?.(rule.conditions, cartAsItems, cartAsItems.map(i => i.id));
+        const conditionMet = rulesEngine.evaluateCondition(rule.conditions, cartAsItems, cartAsItems.map(i => i.id));
         
         // Logica specifica per tipo di regola e azione
         let shouldShowReason = false;
