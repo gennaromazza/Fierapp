@@ -22,7 +22,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Upload, Image as ImageIcon, ShoppingBag } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, Image as ImageIcon, ShoppingBag, Settings2, ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SelectionRulesManagement from "./SelectionRulesManagement";
 
 export default function ItemManagement() {
   const { data: items, loading } = useCollection<Item>("items", [orderBy("sortOrder", "asc")]);
@@ -218,8 +220,8 @@ export default function ItemManagement() {
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-24 -translate-x-24 animate-pulse" style={{ animationDelay: '1s' }}></div>
         </div>
         
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        <div className="relative z-10">
+          <div className="flex items-center space-x-4 mb-6">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl"
                  style={{ 
                    background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1))',
@@ -233,38 +235,58 @@ export default function ItemManagement() {
                 Gestione Items
               </h2>
               <p className="text-white/80 text-lg font-medium mt-1 drop-shadow-lg">
-                Configura servizi e prodotti
+                Configura servizi, prodotti e regole di selezione
               </p>
             </div>
           </div>
-          
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                onClick={openCreateDialog}
-                className="relative px-8 py-4 text-lg font-bold text-white rounded-xl shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl overflow-hidden group"
-                style={{
-                  background: 'linear-gradient(135deg, #10b981, #059669, #047857)',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2)'
-                }}
-              >
-                {/* Animated background for button */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
-                
-                <div className="relative z-10 flex items-center">
-                  <Plus className="w-5 h-5 mr-3" />
-                  Nuovo Item
-                </div>
-              </Button>
-            </DialogTrigger>
 
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass bg-brand-primary">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-brand-accent">
-                  {editingItem ? "Modifica Item" : "Nuovo Item"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+          <Tabs defaultValue="items" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 glass rounded-xl p-2 shadow-elegant">
+              <TabsTrigger
+                className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-brand-accent data-[state=active]:shadow-glow hover:scale-105"
+                value="items"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Items</span>
+              </TabsTrigger>
+              <TabsTrigger
+                className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-brand-accent data-[state=active]:shadow-glow hover:scale-105"
+                value="rules"
+              >
+                <Settings2 className="w-4 h-4" />
+                <span>Regole di Selezione</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="items" className="space-y-6">
+              <div className="flex justify-end">
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      onClick={openCreateDialog}
+                      className="relative px-8 py-4 text-lg font-bold text-white rounded-xl shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl overflow-hidden group"
+                      style={{
+                        background: 'linear-gradient(135deg, #10b981, #059669, #047857)',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2)'
+                      }}
+                    >
+                      {/* Animated background for button */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
+                      
+                      <div className="relative z-10 flex items-center">
+                        <Plus className="w-5 h-5 mr-3" />
+                        Nuovo Item
+                      </div>
+                    </Button>
+                  </DialogTrigger>
+
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass bg-brand-primary">
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl font-bold text-brand-accent">
+                        {editingItem ? "Modifica Item" : "Nuovo Item"}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="title">Titolo *</Label>
@@ -399,26 +421,19 @@ export default function ItemManagement() {
                   >
                     Annulla
                   </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-        
-        {/* Decorative glow effect */}
-        <div className="absolute inset-0 rounded-2xl shadow-inner" 
-             style={{ 
-               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)' 
-             }}></div>
-      </div>
+                    </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
 
-      <Card className="card-premium shadow-elegant">
-        <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
-          <CardTitle className="text-xl font-bold text-brand-accent">Items ({items.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
+              <Card className="card-premium shadow-elegant">
+                <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
+                  <CardTitle className="text-xl font-bold text-brand-accent">Items ({items.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
               <TableHeader className="glass">
                 <TableRow>
                   <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Immagine</TableHead>
@@ -495,10 +510,18 @@ export default function ItemManagement() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="rules">
+              <SelectionRulesManagement />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 }
