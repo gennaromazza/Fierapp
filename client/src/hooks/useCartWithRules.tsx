@@ -1,12 +1,13 @@
 import { useCart } from './useCart';
 import { useSelectionRules } from './useSelectionRules';
 import { RulesEngine } from '../lib/rulesEngine';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Item, CartItem } from '../../../shared/schema';
 import type { RulesEvaluationResult, ItemState, SelectionRule } from '../../../shared/rulesSchema';
+import type { NotificationItem } from '../components/GiftNotification';
 
 /**
  * Hook esteso del carrello che integra le regole di selezione

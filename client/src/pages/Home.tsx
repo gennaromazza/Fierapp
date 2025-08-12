@@ -8,6 +8,7 @@ import Carousel from "../components/Carousel";
 import PriceBar from "../components/PriceBar";
 import CheckoutModal from "../components/CheckoutModal";
 import EnhancedSavingsDisplay from "../components/EnhancedSavingsDisplay";
+import RulesInfoPanel from "../components/RulesInfoPanel";
 import { useCartWithRules } from "../hooks/useCartWithRules";
 import type { Settings } from "../../shared/schema";
 
@@ -85,6 +86,9 @@ export default function Home() {
         isOpen={isCheckoutOpen} 
         onClose={() => setIsCheckoutOpen(false)} 
       />
+
+      {/* Rules Info Panel - Always visible */}
+      <RulesInfoPanel />
 
       <Footer />
     </div>
