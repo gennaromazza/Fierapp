@@ -44,22 +44,22 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
       hasGlobalDiscount,
       globalType: discounts?.global?.type,
       globalValue: discounts?.global?.value,
-      globalPercentage: discounts?.global?.percentage,
+      globalPercent: discounts?.global?.percent,
       cartItems: cart.cart.items.length
     });
 
     // Calcola lo sconto globale se attivo
-    if (hasGlobalDiscount) {
+    if (hasGlobalDiscount && discounts.global) {
       if (discounts.global.type === 'fixed') {
         // Sconto fisso
         globalDiscount = discounts.global.value || 0;
-      } else if (discounts.global.type === 'percentage') {
+      } else if (discounts.global.type === 'percent') {
         // Sconto percentuale sul totale
         const subtotal = cart.cart.items.reduce((sum, item) => {
           if (item.price === 0) return sum; // Salta gli omaggi
           return sum + (item.originalPrice || item.price);
         }, 0);
-        globalDiscount = Math.round(subtotal * ((discounts.global.percentage || 0) / 100));
+        globalDiscount = Math.round(subtotal * ((discounts.global.value || 0) / 100));
       }
     }
 
@@ -80,8 +80,8 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
       if (hasItemDiscount && hasItemDiscount.isActive) {
         if (hasItemDiscount.type === 'fixed') {
           itemSpecificDiscount += (hasItemDiscount.value || 0);
-        } else if (hasItemDiscount.type === 'percentage') {
-          const itemDiscountAmount = Math.round(originalPrice * ((hasItemDiscount.percentage || 0) / 100));
+        } else if (hasItemDiscount.type === 'percent') {
+          const itemDiscountAmount = Math.round(originalPrice * ((hasItemDiscount.value || 0) / 100));
           itemSpecificDiscount += itemDiscountAmount;
         }
       }
@@ -131,7 +131,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
                   {cart.cart.items.map((item, index) => (
                     <span key={item.id} className="flex items-center">
                       <span className="text-gray-700">
-                        {item.name}
+                        {item.title}
                         {item.price === 0 && (
                           <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
                         )}
@@ -197,7 +197,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
                 <div className="text-xs text-gray-700">
                   {cart.cart.items.map((item, index) => (
                     <span key={item.id} className="inline-block">
-                      {item.name}
+                      {item.title}
                       {item.price === 0 && (
                         <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
                       )}
@@ -236,7 +236,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
                 <div className="text-xs text-gray-600 mb-1">
                   {cart.cart.items.map((item, index) => (
                     <span key={item.id} className="inline-block">
-                      {item.name}
+                      {item.title}
                       {item.price === 0 && (
                         <span className="text-green-600 font-bold"> (OMAGGIO)</span>
                       )}

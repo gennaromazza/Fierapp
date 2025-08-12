@@ -29,7 +29,7 @@ interface CheckoutModalProps {
 }
 
 export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
-  const { cart, clearCart, getPricingWithRules } = useCartWithRules();
+  const cartWithRules = useCartWithRules();
   const { toast } = useToast();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,13 +128,13 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       // Prepare lead data with correct schema structure
       const leadData: InsertLead = {
         customer: data,
-        selectedItems: cart.items.map(item => ({
+        selectedItems: cartWithRules.cart.items.map(item => ({
           id: item.id,
           title: item.title,
           price: item.price,
           originalPrice: item.originalPrice
         })),
-        pricing: getPricingWithRules(),
+        pricing: cartWithRules.getPricingWithRules(),
         gdprConsent: {
           accepted: data.gdpr_consent || false,
           text: settings.gdprText,
@@ -149,7 +149,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       console.log("Lead saved successfully with ID:", docRef.id);
       
       // Analytics
-      const pricing = getPricingWithRules();
+      const pricing = cartWithRules.getPricingWithRules();
       if (analytics) {
         logEvent(analytics, 'form_submit', {
           form_id: 'checkout_form',
@@ -160,7 +160,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
       // Create detailed WhatsApp message with form data
       if (settings.whatsappNumber) {
-        const cartSummary = cart.items.map(item => 
+        const cartSummary = cartWithRules.cart.items.map(item => 
           `• ${item.title} - €${item.price.toLocaleString('it-IT')}`
         ).join('\n');
         
@@ -175,7 +175,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           })
           .join('\n');
         
-        const pricing = getPricingWithRules();
+        const pricing = cartWithRules.getPricingWithRules();
         const totalText = pricing.totalSavings > 0 
           ? `Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.totalSavings.toLocaleString('it-IT')}\nTotale: €${pricing.total.toLocaleString('it-IT')}`
           : `Totale: €${pricing.total.toLocaleString('it-IT')}`;
@@ -188,7 +188,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         // Analytics for WhatsApp  
         if (analytics) {
           logEvent(analytics, 'whatsapp_contact', {
-            items: cart.items.length,
+            items: cartWithRules.cart.items.length,
             total_value: pricing.total,
             lead_id: docRef.id
           });
@@ -201,7 +201,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       });
 
       // Clear cart and close modal
-      clearCart();
+      cartWithRules.clearCart();
       onClose();
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -225,13 +225,13 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       // Prepare data structure similar to lead data
       const pdfData = {
         customer: formData,
-        selectedItems: cart.items.map(item => ({
+        selectedItems: cartWithRules.cart.items.map(item => ({
           id: item.id,
           title: item.title,
           price: item.price,
           originalPrice: item.originalPrice
         })),
-        pricing: getPricingWithRules()
+        pricing: cartWithRules.getPricingWithRules()
       };
 
       const customerName = formData.nome || formData.Nome || 'cliente';
@@ -255,7 +255,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     }
   };
 
-  if (cart.itemCount === 0) return null;
+  if (cartWithRules.cart.itemCount === 0) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -274,16 +274,16 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         <div className="bg-brand-primary rounded-lg p-4 mb-6">
           <h4 className="font-semibold text-brand-accent mb-3">RIEPILOGO SELEZIONE</h4>
           <div className="space-y-2 text-sm">
-            {cart.cart.items.map((item, index) => (
+            {cartWithRules.cart.items.map((item, index) => (
               <div key={index} className="flex justify-between">
                 <span>
                   {item.title}
-                  {cart.isItemGift && cart.isItemGift(item.id) && (
+                  {cartWithRules.isItemGift && cartWithRules.isItemGift(item.id) && (
                     <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
                   )}
                 </span>
                 <span>
-                  {cart.isItemGift && cart.isItemGift(item.id) ? (
+                  {cartWithRules.isItemGift && cartWithRules.isItemGift(item.id) ? (
                     <>
                       <span className="line-through text-gray-400 mr-2">€{item.price.toLocaleString('it-IT')}</span>
                       <span className="text-green-600 font-bold">GRATIS</span>
@@ -296,7 +296,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             ))}
             
             {(() => {
-              const pricing = getPricingWithRules();
+              const pricing = cartWithRules.getPricingWithRules();
               return (
                 <>
                   <hr className="border-brand-secondary" />
