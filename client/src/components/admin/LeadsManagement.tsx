@@ -29,7 +29,8 @@ import {
   Mail,
   Phone,
   MessageCircle,
-  Calendar as CalendarDays
+  Calendar as CalendarDays,
+  Send
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -208,6 +209,101 @@ export default function LeadsManagement() {
       ...prev,
       [field]: value
     }));
+  };
+
+  const openEmailCompose = (lead: Lead) => {
+    const customer = lead.customer;
+    const email = customer.email || customer.Email;
+    
+    if (!email) {
+      toast({
+        title: "Email mancante",
+        description: "Questo lead non ha un indirizzo email",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Crea oggetto email
+    const subject = `Preventivo ${customer.nome || customer.Nome || ''} ${customer.cognome || customer.Cognome || ''} - ${format(new Date(), 'dd/MM/yyyy')}`;
+    
+    // Crea corpo email con dettagli preventivo
+    const bodyLines = [
+      `Gentile ${customer.nome || customer.Nome || 'Cliente'},`,
+      '',
+      'La ringraziamo per l\'interesse mostrato nei nostri servizi.',
+      'Di seguito trova il dettaglio del preventivo richiesto:',
+      '',
+      '═══════════════════════════════════════════════',
+      '                    PREVENTIVO',
+      '═══════════════════════════════════════════════',
+      '',
+      '📍 STUDIO INFORMAZIONI:',
+      '   Nome: [Il tuo studio]',
+      '   Indirizzo: [Il tuo indirizzo]',
+      '   Telefono: [Il tuo telefono]',
+      '   Email: [La tua email]',
+      '',
+      '👤 CLIENTE:',
+      `   Nome: ${customer.nome || customer.Nome || 'N/A'}`,
+      `   Cognome: ${customer.cognome || customer.Cognome || 'N/A'}`,
+      `   Email: ${customer.email || customer.Email || 'N/A'}`,
+      `   Telefono: ${customer.telefono || customer.Telefono || 'N/A'}`,
+      '',
+      '🛍️ SERVIZI/PRODOTTI SELEZIONATI:',
+      ''
+    ];
+
+    // Aggiungi items
+    lead.selectedItems.forEach((item, index) => {
+      bodyLines.push(`${index + 1}. ${item.title}`);
+      if (item.originalPrice && item.originalPrice !== item.price) {
+        bodyLines.push(`   Prezzo originale: €${item.originalPrice.toLocaleString('it-IT')}`);
+        bodyLines.push(`   Prezzo scontato: €${item.price.toLocaleString('it-IT')}`);
+        bodyLines.push(`   Risparmio: €${(item.originalPrice - item.price).toLocaleString('it-IT')}`);
+      } else {
+        bodyLines.push(`   Prezzo: €${item.price.toLocaleString('it-IT')}`);
+      }
+      bodyLines.push('');
+    });
+
+    // Aggiungi totali
+    bodyLines.push('═══════════════════════════════════════════════');
+    bodyLines.push('💰 RIEPILOGO PREZZI:');
+    bodyLines.push('');
+    bodyLines.push(`Subtotale: €${lead.pricing.subtotal.toLocaleString('it-IT')}`);
+    
+    if (lead.pricing.discount > 0) {
+      bodyLines.push(`Sconto applicato: -€${lead.pricing.discount.toLocaleString('it-IT')}`);
+    }
+    
+    bodyLines.push('');
+    bodyLines.push(`🎯 TOTALE FINALE: €${lead.pricing.total.toLocaleString('it-IT')}`);
+    bodyLines.push('═══════════════════════════════════════════════');
+    bodyLines.push('');
+    bodyLines.push('📝 Note:');
+    bodyLines.push('- Preventivo valido 30 giorni');
+    bodyLines.push('- I prezzi sono comprensivi di IVA');
+    bodyLines.push('- Per qualsiasi chiarimento non esiti a contattarci');
+    bodyLines.push('');
+    bodyLines.push('Restiamo a disposizione per qualsiasi informazione.');
+    bodyLines.push('');
+    bodyLines.push('Cordiali saluti,');
+    bodyLines.push('[Il tuo nome]');
+    bodyLines.push('[Il tuo studio]');
+
+    const body = bodyLines.join('\n');
+    
+    // Crea link mailto
+    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Apri client email
+    window.location.href = mailtoLink;
+    
+    toast({
+      title: "Email aperta",
+      description: "Il tuo client email è stato aperto con il preventivo precompilato",
+    });
   };
 
   // Calculate pagination
@@ -591,6 +687,15 @@ export default function LeadsManagement() {
                           <Button
                             size="sm"
                             variant="outline"
+                            onClick={() => openEmailCompose(lead)}
+                            title="Invia email preventivo"
+                            disabled={!lead.customer.email && !lead.customer.Email}
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             onClick={() => deleteLead(lead.id)}
                             title="Elimina lead"
                           >
@@ -788,7 +893,7 @@ export default function LeadsManagement() {
 
       {/* Edit Lead Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#8b8c92]">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Modifica Lead - {editingLead?.customer.nome} {editingLead?.customer.cognome}
