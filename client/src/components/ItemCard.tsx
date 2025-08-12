@@ -198,16 +198,9 @@ export default function ItemCard({ item }: ItemCardProps) {
           </div>
         )}
         
-        {/* Unavailable Overlay */}
+        {/* Unavailable Overlay - Only dims the image */}
         {!itemAvailable && (
-          <div className="absolute inset-0 bg-gray-500/80 flex items-center justify-center z-30">
-            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold text-center max-w-[200px]">
-              <div>Non Disponibile</div>
-              <div className="text-xs mt-1 opacity-90 font-normal">
-                {getUnavailableReason(item.id)}
-              </div>
-            </div>
-          </div>
+          <div className="absolute inset-0 bg-gray-500/50 z-10"></div>
         )}
         
         {/* Expiry Notice - positioned above image */}
@@ -269,6 +262,16 @@ export default function ItemCard({ item }: ItemCardProps) {
             </div>
           </div>
         </div>
+        
+        {/* Unavailable Notice - Above button for better visibility */}
+        {!itemAvailable && (
+          <div className="bg-orange-100 border border-orange-300 text-orange-800 px-4 py-2 rounded-lg text-sm mb-3 text-center">
+            <div className="font-semibold">Non Disponibile</div>
+            <div className="text-xs mt-1">
+              {getUnavailableReason(item.id)}
+            </div>
+          </div>
+        )}
         
         {/* Add/Remove Button - Fixed at bottom */}
         <button
