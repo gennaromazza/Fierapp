@@ -368,18 +368,19 @@ export default function ItemManagement() {
           <Tabs defaultValue="items" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 bg-white/20 rounded-xl p-2 shadow-elegant border border-white/30">
               <TabsTrigger
-                className="flex items-center space-x-2 rounded-lg font-bold transition-all duration-300 text-white/80 hover:text-white hover:bg-white/10 data-[state=active]:bg-brand-accent data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105"
+                className="flex items-center justify-center space-x-1 sm:space-x-2 rounded-lg font-bold transition-all duration-300 text-white/80 hover:text-white hover:bg-white/10 data-[state=active]:bg-brand-accent data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 px-1 sm:px-3"
                 value="items"
               >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Items</span>
+                <ShoppingBag className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm sm:text-base">Items</span>
               </TabsTrigger>
               <TabsTrigger
-                className="flex items-center space-x-2 rounded-lg font-bold transition-all duration-300 text-white/80 hover:text-white hover:bg-white/10 data-[state=active]:bg-brand-accent data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105"
+                className="flex items-center justify-center space-x-1 sm:space-x-2 rounded-lg font-bold transition-all duration-300 text-white/80 hover:text-white hover:bg-white/10 data-[state=active]:bg-brand-accent data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 px-1 sm:px-3"
                 value="rules"
               >
-                <Settings2 className="w-4 h-4" />
-                <span>Regole di Selezione</span>
+                <Settings2 className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm sm:text-base hidden xs:inline">Regole di Selezione</span>
+                <span className="text-sm sm:text-base xs:hidden">Regole</span>
               </TabsTrigger>
             </TabsList>
 
