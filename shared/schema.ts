@@ -18,6 +18,7 @@ export const itemSchema = z.object({
     priority: z.number().default(1),
     tags: z.array(z.string()).default([]),
   }).optional(),
+  mutuallyExclusiveWith: z.array(z.string()).optional(), // IDs degli item mutualmente esclusivi
   createdAt: z.date(),
   updatedAt: z.date(),
 });

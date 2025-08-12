@@ -65,6 +65,22 @@ export class RulesEngine {
         }
       });
 
+    // Gestione esclusione mutua basata su regole
+    this.rules
+      .filter(rule => rule.type === 'availability' && rule.conditions.type === 'mutually_exclusive')
+      .forEach(rule => {
+        // Se uno degli elementi mutualmente esclusivi è selezionato, disabilita gli altri target
+        if (rule.conditions.mutuallyExclusiveWith?.some(itemId => selectedItemIds.includes(itemId))) {
+          rule.targetItems.forEach(targetItemId => {
+            if (!selectedItemIds.includes(targetItemId)) {
+              itemStates[targetItemId].isAvailable = false;
+              itemStates[targetItemId].appliedRules.push(rule.id);
+            }
+          });
+          appliedRules.push(rule.id);
+        }
+      });
+
     // Seconda passa: regole di trasformazione regalo
     this.rules
       .filter(rule => rule.type === 'gift_transformation')
@@ -108,6 +124,9 @@ export class RulesEngine {
         
       case 'category_count':
         return this.evaluateCategoryCount(condition, selectedItems);
+        
+      case 'mutually_exclusive':
+        return this.evaluateMutuallyExclusive(condition, selectedItemIds);
         
       default:
         console.warn(`Unknown condition type: ${condition.type}`);
@@ -201,6 +220,23 @@ export class RulesEngine {
     ).length;
     
     return count >= condition.value;
+  }
+
+  /**
+   * Valuta condizione di esclusione mutua
+   */
+  private evaluateMutuallyExclusive(
+    condition: SelectionRule['conditions'],
+    selectedItemIds: string[]
+  ): boolean {
+    if (!condition.mutuallyExclusiveWith || condition.mutuallyExclusiveWith.length === 0) {
+      return false;
+    }
+    
+    // Restituisce true se almeno uno degli item mutualmente esclusivi è selezionato
+    return condition.mutuallyExclusiveWith.some(itemId => 
+      selectedItemIds.includes(itemId)
+    );
   }
 
   /**

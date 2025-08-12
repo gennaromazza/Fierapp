@@ -34,7 +34,9 @@ export default function SelectionRulesManagement() {
     priority: 1,
     action: "disable" as "disable" | "enable" | "make_gift",
     targetItems: [] as string[],
-    requiredItems: [] as string[]
+    requiredItems: [] as string[],
+    conditionType: "required_items" as "required_items" | "mutually_exclusive",
+    mutuallyExclusiveWith: [] as string[]
   });
 
   useEffect(() => {
@@ -75,6 +77,20 @@ export default function SelectionRulesManagement() {
 
   const handleSaveRule = async () => {
     try {
+      // Costruisci le condizioni basate sul tipo selezionato
+      let conditions;
+      if (formData.conditionType === "mutually_exclusive") {
+        conditions = {
+          type: "mutually_exclusive" as const,
+          mutuallyExclusiveWith: formData.mutuallyExclusiveWith
+        };
+      } else {
+        conditions = {
+          type: "required_items" as const,
+          requiredItems: formData.requiredItems
+        };
+      }
+
       const ruleData = {
         name: formData.name,
         description: formData.description,
@@ -83,10 +99,7 @@ export default function SelectionRulesManagement() {
         priority: formData.priority,
         action: formData.action,
         targetItems: formData.targetItems,
-        conditions: {
-          type: "required_items" as const,
-          requiredItems: formData.requiredItems
-        },
+        conditions,
         updatedAt: new Date(),
       };
 
@@ -145,13 +158,16 @@ export default function SelectionRulesManagement() {
       priority: 1,
       action: "disable",
       targetItems: [],
-      requiredItems: []
+      requiredItems: [],
+      conditionType: "required_items",
+      mutuallyExclusiveWith: []
     });
     setEditingRule(null);
   };
 
   const openEditDialog = (rule: SelectionRule) => {
     setEditingRule(rule);
+    const conditionType = rule.conditions.type;
     setFormData({
       name: rule.name,
       description: rule.description || "",
@@ -160,7 +176,9 @@ export default function SelectionRulesManagement() {
       priority: rule.priority,
       action: rule.action,
       targetItems: rule.targetItems,
-      requiredItems: rule.conditions.requiredItems || []
+      requiredItems: rule.conditions.requiredItems || [],
+      conditionType: conditionType,
+      mutuallyExclusiveWith: rule.conditions.mutuallyExclusiveWith || []
     });
     setIsDialogOpen(true);
   };
@@ -365,31 +383,76 @@ export default function SelectionRulesManagement() {
                 </div>
               </div>
 
-              {/* Items richiesti */}
+              {/* Tipo di condizione */}
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <Label className="text-brand-text-primary">Items Richiesti</Label>
+                  <Label className="text-brand-text-primary">Tipo di Condizione</Label>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
                         <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
                       </TooltipTrigger>
                       <TooltipContent 
-                        className="max-w-72 bg-brand-surface border-brand-border z-50" 
+                        className="max-w-80 bg-brand-surface border-brand-border z-50" 
                         side="top" 
                         align="start"
                       >
                         <div className="text-brand-text-primary text-xs">
-                          <p className="font-semibold">Items Richiesti (Condizioni)</p>
-                          <p className="mt-1">Prodotti/servizi che il cliente DEVE aver scelto.</p>
-                          <p className="mt-2 text-brand-text-secondary">
-                            Es: "Videomaker" come condizione per rendere "Foto Invitati" gratis.
-                          </p>
+                          <p className="font-semibold mb-2">Tipi di Condizione:</p>
+                          <div className="space-y-2">
+                            <div>
+                              <p className="font-medium">Items Richiesti</p>
+                              <p className="text-brand-text-secondary">Il cliente deve selezionare prodotti specifici</p>
+                            </div>
+                            <div>
+                              <p className="font-medium">Esclusione Mutua</p>
+                              <p className="text-brand-text-secondary">Se selezionato uno, disabilita automaticamente gli altri</p>
+                            </div>
+                          </div>
                         </div>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
+                <Select value={formData.conditionType} onValueChange={(value: "required_items" | "mutually_exclusive") => 
+                  setFormData(prev => ({ ...prev, conditionType: value }))
+                }>
+                  <SelectTrigger className="bg-brand-primary border-brand-border text-brand-text-primary">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-brand-surface border-brand-border">
+                    <SelectItem value="required_items" className="text-brand-text-primary">Items Richiesti</SelectItem>
+                    <SelectItem value="mutually_exclusive" className="text-brand-text-primary">Esclusione Mutua</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Items richiesti - Solo per condizione "required_items" */}
+              {formData.conditionType === "required_items" && (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-brand-text-primary">Items Richiesti</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          className="max-w-72 bg-brand-surface border-brand-border z-50" 
+                          side="top" 
+                          align="start"
+                        >
+                          <div className="text-brand-text-primary text-xs">
+                            <p className="font-semibold">Items Richiesti (Condizioni)</p>
+                            <p className="mt-1">Prodotti/servizi che il cliente DEVE aver scelto.</p>
+                            <p className="mt-2 text-brand-text-secondary">
+                              Es: "Videomaker" come condizione per rendere "Foto Invitati" gratis.
+                            </p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-brand-primary p-4 rounded border-brand-border border">
                   {items.map(item => (
                     <div key={item.id} className="flex items-center space-x-2">
@@ -414,7 +477,61 @@ export default function SelectionRulesManagement() {
                     </div>
                   ))}
                 </div>
-              </div>
+                </div>
+              )}
+
+              {/* Items per esclusione mutua - Solo per condizione "mutually_exclusive" */}
+              {formData.conditionType === "mutually_exclusive" && (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-brand-text-primary">Items Mutualmente Esclusivi</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          className="max-w-72 bg-brand-surface border-brand-border z-50" 
+                          side="top" 
+                          align="start"
+                        >
+                          <div className="text-brand-text-primary text-xs">
+                            <p className="font-semibold">Items Mutualmente Esclusivi</p>
+                            <p className="mt-1">Se il cliente seleziona uno di questi, gli altri diventano non disponibili.</p>
+                            <p className="mt-2 text-brand-text-secondary">
+                              Es: "Album Big" e "Album Piccolo" si escludono a vicenda.
+                            </p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-brand-primary p-4 rounded border-brand-border border">
+                    {items.map(item => (
+                      <div key={item.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`mutually-exclusive-${item.id}`}
+                          checked={formData.mutuallyExclusiveWith.includes(item.id)}
+                          onChange={(e) => {
+                            const mutuallyExclusiveWith = e.target.checked
+                              ? [...formData.mutuallyExclusiveWith, item.id]
+                              : formData.mutuallyExclusiveWith.filter(id => id !== item.id);
+                            setFormData(prev => ({ ...prev, mutuallyExclusiveWith }));
+                          }}
+                          className="accent-brand-accent"
+                        />
+                        <label
+                          htmlFor={`mutually-exclusive-${item.id}`}
+                          className="text-sm cursor-pointer text-brand-text-primary"
+                        >
+                          {item.title}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Items target */}
               <div className="space-y-2">

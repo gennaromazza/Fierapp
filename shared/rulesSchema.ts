@@ -2,12 +2,13 @@ import { z } from "zod";
 
 // Tipi di condizioni per le regole
 export const ruleConditionSchema = z.object({
-  type: z.enum(["min_selection_count", "specific_items", "category_count", "required_items"]),
+  type: z.enum(["min_selection_count", "specific_items", "category_count", "required_items", "mutually_exclusive"]),
   value: z.number().optional(), // per min_selection_count, category_count
   categories: z.array(z.string()).optional(), // per category_count
   specificItems: z.array(z.string()).optional(), // per specific_items
   requiredItems: z.array(z.string()).optional(), // per required_items (tutti devono essere presenti)
   minimumCount: z.number().optional(), // per required_items (minimo N tra quelli specificati)
+  mutuallyExclusiveWith: z.array(z.string()).optional(), // per mutually_exclusive (item che si escludono a vicenda)
 });
 
 // Schema per le impostazioni regalo
