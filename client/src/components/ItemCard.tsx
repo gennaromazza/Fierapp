@@ -353,9 +353,9 @@ export default function ItemCard({ item }: ItemCardProps) {
         
         {/* Unavailable Notice - Above button for better visibility */}
         {!itemAvailable && (
-          <div className="bg-orange-100 border border-orange-300 text-orange-800 px-4 py-2 rounded-lg text-sm mb-3 text-center">
-            <div className="font-semibold">Non Disponibile</div>
-            <div className="text-xs mt-1">
+          <div className="bg-orange-100 border border-orange-300 text-orange-800 px-4 py-3 rounded-lg text-sm mb-3 text-center">
+            <div className="font-semibold mb-2">Non Disponibile</div>
+            <div className="text-sm leading-relaxed">
               {createClickableMessage(getUnavailableReason(item.id))}
             </div>
           </div>
