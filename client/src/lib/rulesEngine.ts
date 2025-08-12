@@ -45,9 +45,23 @@ export class RulesEngine {
     this.rules
       .filter(rule => rule.type === 'availability')
       .forEach(rule => {
-        if (this.evaluateCondition(rule.conditions, selectedItems, selectedItemIds)) {
-          appliedRules.push(rule.id);
-          this.applyRule(rule, itemStates, selectedItemIds);
+        const conditionMet = this.evaluateCondition(rule.conditions, selectedItems, selectedItemIds);
+        
+        // Per regole di disponibilità con azione "disable":
+        // - Se condizione è SODDISFATTA → item disponibile 
+        // - Se condizione NON è soddisfatta → item NON disponibile (disable)
+        if (rule.action === 'disable') {
+          if (!conditionMet) {
+            // Condizione non soddisfatta → applica disable
+            appliedRules.push(rule.id);
+            this.applyRule(rule, itemStates, selectedItemIds);
+          }
+        } else {
+          // Per altre azioni (enable), logica normale
+          if (conditionMet) {
+            appliedRules.push(rule.id);
+            this.applyRule(rule, itemStates, selectedItemIds);
+          }
         }
       });
 
@@ -222,29 +236,31 @@ export class RulesEngine {
   /**
    * Ottiene informazioni di debug sulle regole applicate
    */
-  getDebugInfo(selectedItems: Item[]): {
-    totalRules: number;
-    activeRules: number;
-    evaluatedConditions: Array<{
-      ruleId: string;
-      ruleName: string;
-      conditionMet: boolean;
-      conditionType: string;
-    }>;
-  } {
+  getDebugInfo(selectedItems: Item[]): any {
+    const result = this.evaluate(selectedItems);
     const selectedItemIds = selectedItems.map(item => item.id);
     
-    const evaluatedConditions = this.rules.map(rule => ({
-      ruleId: rule.id,
-      ruleName: rule.name,
-      conditionMet: this.evaluateCondition(rule.conditions, selectedItems, selectedItemIds),
-      conditionType: rule.conditions.type,
-    }));
+    const evaluatedConditions = this.rules.map(rule => {
+      const conditionMet = this.evaluateCondition(rule.conditions, selectedItems, selectedItemIds);
+      const willApply = rule.action === 'disable' ? !conditionMet : conditionMet;
+      
+      return {
+        ruleId: rule.id,
+        ruleName: rule.name,
+        conditionMet,
+        conditionType: rule.conditions.type,
+        action: rule.action,
+        willApply,
+        targetItems: rule.targetItems,
+      };
+    });
 
     return {
       totalRules: this.rules.length,
       activeRules: this.rules.filter(rule => rule.active).length,
       evaluatedConditions,
+      itemStates: result.itemStates,
+      appliedRules: result.appliedRules,
     };
   }
 }
