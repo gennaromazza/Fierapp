@@ -46,17 +46,6 @@ export default function Carousel() {
         setItems(itemsData);
         setCurrentSlide(0);
         
-        // Debug: log items loaded in first query
-        console.log("🔍 QUERY PRINCIPALE - Items caricati:", {
-          activeTab,
-          count: itemsData.length,
-          items: itemsData.map(item => ({ 
-            title: item.title, 
-            category: item.category,
-            active: item.active 
-          }))
-        });
-        
         // If we got data successfully, log that we need indices for optimization
         if (itemsData.length > 0) {
           console.info(
@@ -103,24 +92,6 @@ export default function Carousel() {
           
           setItems(filteredItems);
           console.info("✅ Caricati " + filteredItems.length + " items dal database");
-          console.log("🔍 QUERY FALLBACK - Items per categoria:", {
-            activeTab,
-            totalItems: allItems.length,
-            filteredItems: filteredItems.length,
-            itemsByCategory: allItems.reduce((acc, item) => {
-              acc[item.category] = (acc[item.category] || 0) + 1;
-              return acc;
-            }, {} as Record<string, number>),
-            allItems: allItems.map(item => ({ 
-              title: item.title, 
-              category: item.category,
-              active: item.active 
-            })),
-            filtered: filteredItems.map(item => ({ 
-              title: item.title, 
-              category: item.category 
-            }))
-          });
           
         } catch (fallbackError) {
           console.error("Fallback query failed:", fallbackError);
@@ -289,10 +260,10 @@ export default function Carousel() {
               <div className="flex justify-between items-center mt-6">
                 <button
                   onClick={prevSlide}
-                  className="p-2 rounded-full bg-white shadow-lg hover:shadow-xl transition-shadow"
-                  disabled={currentSlide === 0}
+                  className="p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
+                  style={{ color: 'var(--brand-accent)' }}
                 >
-                  <svg className="w-5 h-5 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
@@ -302,22 +273,32 @@ export default function Carousel() {
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-colors ${
-                        index === currentSlide ? "bg-brand-accent" : "bg-gray-300"
+                      className={`w-4 h-4 rounded-full transition-all duration-200 hover:scale-125 ${
+                        index === currentSlide ? "shadow-lg" : "hover:bg-gray-400"
                       }`}
+                      style={{ 
+                        backgroundColor: index === currentSlide ? 'var(--brand-accent)' : '#d1d5db'
+                      }}
                     />
                   ))}
                 </div>
                 
                 <button
                   onClick={nextSlide}
-                  className="p-2 rounded-full bg-white shadow-lg hover:shadow-xl transition-shadow"
-                  disabled={currentSlide === totalSlides - 1}
+                  className="p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
+                  style={{ color: 'var(--brand-accent)' }}
                 >
-                  <svg className="w-5 h-5 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
+              </div>
+              
+              {/* Items counter */}
+              <div className="text-center mt-4 text-sm opacity-70">
+                <span style={{ color: 'var(--brand-text-secondary)' }}>
+                  Pagina {currentSlide + 1} di {totalSlides} • {items.length} {activeTab === "tutti" ? "elementi" : activeTab}
+                </span>
               </div>
             </>
           )}
