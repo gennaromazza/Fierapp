@@ -140,9 +140,13 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           text: settings.gdprText,
           timestamp: new Date()
         },
-        reCAPTCHAToken: recaptchaToken || undefined,
         status: "new"
       };
+
+      // Only add reCAPTCHA token if it exists
+      if (recaptchaToken) {
+        leadData.reCAPTCHAToken = recaptchaToken;
+      }
 
       // Save to Firestore
       const docRef = await addDoc(collection(db, "leads"), leadData);
