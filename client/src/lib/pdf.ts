@@ -298,43 +298,50 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
     y = ensureNextLine(doc, y);
   });
 
-  // Sezione Totali
-  y += 10;
+  // Sezione Totali - Layout migliorato
+  y += 15;
   const pricing = leadData.pricing || {};
   const totalBoxY = y;
-  const totalBoxH = pricing.discount > 0 ? 30 : 20;
+  const totalBoxH = pricing.discount > 0 ? 40 : 25;
   
-  // Box per i totali
-  doc.setFillColor(248, 249, 250);
-  doc.setDrawColor(200, 200, 200);
+  // Box per i totali con sfondo più scuro
+  doc.setFillColor(240, 242, 247);
+  doc.setDrawColor(180, 180, 180);
   doc.rect(tableX, totalBoxY, tableW, totalBoxH, "FD");
   
-  y = totalBoxY + 8;
+  y = totalBoxY + 10;
+  
   if (pricing.discount > 0) {
+    // Subtotale
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
-    doc.text("Subtotale:", tableX + 4, y);
-    doc.text(`€${pricing.subtotal?.toLocaleString('it-IT') || '0'}`, tableX + tableW - 4, y, { align: "right" });
-    y += 7;
+    doc.text("Subtotale:", tableX + 8, y);
+    doc.text(`€${pricing.subtotal?.toLocaleString('it-IT') || '0'}`, tableX + tableW - 8, y, { align: "right" });
+    y += 8;
     
-    doc.setTextColor(220, 53, 69); // Bootstrap danger color
-    doc.text("Sconto:", tableX + 4, y);
-    doc.text(`-€${pricing.discount.toLocaleString('it-IT')}`, tableX + tableW - 4, y, { align: "right" });
+    // Sconto
+    doc.setTextColor(220, 53, 69);
+    doc.text("Sconto:", tableX + 8, y);
+    doc.text(`-€${pricing.discount.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
     doc.setTextColor(33, 33, 33);
-    y += 7;
+    y += 12;
+  } else {
+    y += 5;
   }
 
-  // Separatore
-  doc.setDrawColor(160, 160, 160);
-  doc.line(tableX + 4, y, tableX + tableW - 4, y);
-  y += 5;
+  // Separatore più visibile
+  doc.setDrawColor(120, 120, 120);
+  doc.setLineWidth(0.5);
+  doc.line(tableX + 8, y - 3, tableX + tableW - 8, y - 3);
+  doc.setLineWidth(0.2);
 
+  // Totale finale con font più grande
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("TOTALE:", tableX + 4, y);
-  doc.text(`€${pricing.total?.toLocaleString('it-IT') || '0'}`, tableX + tableW - 4, y, { align: "right" });
+  doc.setFontSize(14);
+  doc.text("TOTALE:", tableX + 8, y);
+  doc.text(`€${pricing.total?.toLocaleString('it-IT') || '0'}`, tableX + tableW - 8, y, { align: "right" });
   
-  y = totalBoxY + totalBoxH + 5;
+  y = totalBoxY + totalBoxH + 10;
 
   drawFooter(doc);
   doc.save(filename || `preventivo-${new Date().toISOString().slice(0, 10)}.pdf`);
@@ -405,25 +412,51 @@ export async function generateQuotePDF(lead: Lead): Promise<void> {
     });
   }
 
-  // Totali
-  y = ensureNextLine(doc, y + 6);
-  const [ar, ag, ab] = parseCssColor(brand.accent);
-  doc.setFillColor(ar, ag, ab);
-  doc.roundedRect(tableX, y, tableW, 24, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  let yTot = y + 8;
-  doc.text(`Subtotale: ${fmt(lead.pricing?.subtotal || 0)}`, tableX + 4, yTot);
-  yTot += 7;
-  if ((lead.pricing?.discount || 0) > 0) {
-    doc.text(`Sconto: -${fmt(lead.pricing!.discount)}`, tableX + 4, yTot);
-    yTot += 7;
+  // Sezione Totali - Layout migliorato come nella versione cliente
+  y = ensureNextLine(doc, y + 15);
+  const pricing = lead.pricing || {};
+  const totalBoxY = y;
+  const totalBoxH = pricing.discount > 0 ? 40 : 25;
+  
+  // Box per i totali con sfondo più scuro
+  doc.setFillColor(240, 242, 247);
+  doc.setDrawColor(180, 180, 180);
+  doc.rect(tableX, totalBoxY, tableW, totalBoxH, "FD");
+  doc.setTextColor(33, 33, 33);
+  
+  y = totalBoxY + 10;
+  
+  if (pricing.discount > 0) {
+    // Subtotale
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text("Subtotale:", tableX + 8, y);
+    doc.text(fmt(pricing.subtotal || 0), tableX + tableW - 8, y, { align: "right" });
+    y += 8;
+    
+    // Sconto
+    doc.setTextColor(220, 53, 69);
+    doc.text("Sconto:", tableX + 8, y);
+    doc.text(`-${fmt(pricing.discount)}`, tableX + tableW - 8, y, { align: "right" });
+    doc.setTextColor(33, 33, 33);
+    y += 12;
+  } else {
+    y += 5;
   }
+
+  // Separatore più visibile
+  doc.setDrawColor(120, 120, 120);
+  doc.setLineWidth(0.5);
+  doc.line(tableX + 8, y - 3, tableX + tableW - 8, y - 3);
+  doc.setLineWidth(0.2);
+
+  // Totale finale con font più grande
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text(`TOTALE: ${fmt(lead.pricing?.total || 0)}`, tableX + 4, yTot);
-  doc.setTextColor(33);
-  y += 30;
+  doc.text("TOTALE:", tableX + 8, y);
+  doc.text(fmt(pricing.total || 0), tableX + tableW - 8, y, { align: "right" });
+  
+  y = totalBoxY + totalBoxH + 10;
 
   // Note
   if (lead.customer?.note_aggiuntive) {
