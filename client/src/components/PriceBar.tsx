@@ -125,18 +125,18 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             <div className="hidden xl:block flex-1 min-w-0">
               <div className="space-y-1">
                 {/* Lista prodotti nel carrello - Desktop with scroll if needed */}
-                <div className="flex items-center gap-2 text-base max-w-full overflow-x-auto scrollbar-hide">
-                  <div className="flex items-center gap-2 whitespace-nowrap">
+                <div className="flex items-center gap-1 text-sm max-w-full overflow-x-auto scrollbar-hide">
+                  <div className="flex items-center gap-1 whitespace-nowrap">
                     {cart.cart.items.map((item, index) => (
                       <span key={item.id} className="flex items-center flex-shrink-0">
-                        <span className="text-gray-900 text-base font-medium">
+                        <span className="text-gray-700 text-sm">
                           {item.title}
                           {item.price === 0 && (
-                            <span className="ml-2 text-green-600 font-bold text-sm px-2 py-1 bg-green-100 rounded-full">(OMAGGIO)</span>
+                            <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
                           )}
                         </span>
                         {index < cart.cart.items.length - 1 && (
-                          <span className="mx-2 text-gray-500 font-bold">•</span>
+                          <span className="mx-1 text-gray-400">•</span>
                         )}
                       </span>
                     ))}
