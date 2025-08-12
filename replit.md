@@ -11,7 +11,29 @@ The system enables businesses to display special promotional offers at trade sho
 Preferred communication style: Simple, everyday language.
 User preference: Dislikes flashing/pulsing animation effects - prefers clean, static design without distracting animations.
 
-## Recent Changes (January 11, 2025)
+## Recent Changes (January 12, 2025)
+
+### Modular Selection Rules System
+- **New Modular Component**: Implemented `SelectionRulesEngine` - a completely separate system for product/service selection rules
+- **Two Rule Types**:
+  - **Availability Rules**: Products become unavailable based on selection conditions (e.g., "Riprese Drone" → non selezionabile without "Videomaker")  
+  - **Gift Transformation Rules**: Products become free when specific conditions are met (e.g., "Foto Invitati" → GRATIS if "Prod 1" + "Prod 2" selected)
+- **Database Structure**: Added new Firebase collection `selection_rules` with flexible condition system
+- **Extended Schema**: Enhanced `items` collection with `ruleSettings` for rule configuration
+- **Real-time Engine**: `RulesEngine` class evaluates conditions and applies transformations in real-time
+- **Admin Configuration**: Complete rule management through admin panel (planned)
+- **Hook Integration**: `useCartWithRules` extends cart functionality with automatic rule evaluation
+- **Visual Feedback**: Components show unavailable items (grayed out) and gift items (green badges, crossed-out prices)
+- **Smart Pricing**: Automatic pricing calculations exclude gift items from subtotals and apply discounts correctly
+
+### Advanced Email Integration with Lead Status Updates
+- **Automatic Status Updates**: When admin sends email via Gmail integration, lead status automatically updates to "Email Inviata"
+- **New Lead Status**: Added "Email Inviata" between "Contattato" and "Preventivato" in workflow
+- **Real Studio Data**: Email templates now use actual studio settings from Firestore instead of placeholders
+- **Timestamp Tracking**: Added `emailSentAt` field to track when emails were sent
+- **Enhanced Filtering**: Admin can filter leads by "Email Inviata" status for follow-up management
+
+## Previous Changes (January 11, 2025)
 
 ### Advanced Color Management System
 - **Gradient Removal**: Eliminated all gradient effects in favor of solid colors for cleaner aesthetic per user preference
@@ -98,6 +120,7 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **WhatsApp Integration**: Direct messaging for customer communication
 - **PDF Generation**: Quote/invoice generation with jsPDF
 - **Dynamic Brand Theming**: Real-time CSS variable-based theming system that applies brand colors from Firebase settings to all UI components
+- **Modular Selection Rules Engine**: Configurable product/service availability and gift transformation rules with real-time evaluation
 
 ## External Dependencies
 

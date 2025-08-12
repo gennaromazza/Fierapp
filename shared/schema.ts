@@ -12,6 +12,12 @@ export const itemSchema = z.object({
   active: z.boolean().default(true),
   category: z.enum(["prodotto", "servizio"]),
   sortOrder: z.number().default(0),
+  ruleSettings: z.object({
+    canBeGift: z.boolean().default(true),
+    canHaveConditions: z.boolean().default(true),
+    priority: z.number().default(1),
+    tags: z.array(z.string()).default([]),
+  }).optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
