@@ -1,7 +1,7 @@
 import { useCart } from './useCart';
 import { useSelectionRules } from './useSelectionRules';
 import { RulesEngine } from '../lib/rulesEngine';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -93,6 +93,34 @@ export function useCartWithRules() {
     
     return evaluation;
   }, [cart.cart.items, rules, allItems, itemsLoading, rulesLoading]);
+
+  // Rimuovi automaticamente gli item non disponibili dal carrello
+  useEffect(() => {
+    if (itemsLoading || rulesLoading) return;
+    
+    // Raccogli gli item da rimuovere
+    const itemsToRemove: string[] = [];
+    
+    cart.cart.items.forEach((cartItem: CartItem) => {
+      const itemState = rulesEvaluation.itemStates[cartItem.id];
+      
+      // Se l'item esiste nelle regole e non è più disponibile
+      if (itemState && !itemState.isAvailable) {
+        itemsToRemove.push(cartItem.id);
+        console.log(`🚮 Rimuovo automaticamente ${cartItem.title} dal carrello (non più disponibile)`);
+      }
+    });
+    
+    // Rimuovi tutti gli item non disponibili in una sola volta
+    if (itemsToRemove.length > 0) {
+      // Usa setTimeout per evitare aggiornamenti durante il rendering
+      setTimeout(() => {
+        itemsToRemove.forEach(itemId => {
+          cart.removeItem(itemId);
+        });
+      }, 0);
+    }
+  }, [rulesEvaluation.itemStates]); // Dipende solo dallo stato delle regole, non dagli item del carrello
 
   // Funzione per verificare se un item è disponibile per la selezione
   const isItemAvailable = (itemId: string): boolean => {

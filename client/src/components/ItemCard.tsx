@@ -141,12 +141,13 @@ export default function ItemCard({ item }: ItemCardProps) {
     }
     
     if (isAdded) {
+      console.log(`🗑️ Rimuovo ${item.title} dal carrello`);
       removeItem(item.id);
     } else {
       // Usa il prezzo finale: 0 se è un regalo, altrimenti il prezzo scontato
       const finalPrice = itemIsGift ? 0 : discountedPrice;
       
-      console.log(`🛒 Adding ${item.title}: isGift=${itemIsGift}, price=${finalPrice}`);
+      console.log(`🛒 Aggiungo ${item.title}: isGift=${itemIsGift}, price=${finalPrice}`);
       
       addItem({
         id: item.id,
