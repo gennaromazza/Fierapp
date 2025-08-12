@@ -381,8 +381,23 @@ export function useCartWithRules() {
         }
         break;
         
+      case 'mutually_exclusive':
+        if (rule.conditions.mutuallyExclusiveWith && rule.conditions.mutuallyExclusiveWith.length > 0) {
+          const exclusiveItemNames = rule.conditions.mutuallyExclusiveWith.map((itemId: string) => {
+            const item = allItems.find(i => i.id === itemId);
+            return item?.title || 'Prodotto sconosciuto';
+          });
+          
+          if (exclusiveItemNames.length === 1) {
+            return `Non disponibile con: ${exclusiveItemNames[0]}`;
+          } else {
+            return `Non disponibile con: ${exclusiveItemNames.join(', ')}`;
+          }
+        }
+        break;
+        
       default:
-        return rule.description || (messageType === 'gift' ? "Regalo speciale" : "Condizioni non soddisfatte");
+        return rule.description || (messageType === 'gift' ? "Regalo speciale" : "Non disponibile");
     }
     
     return rule.description || (messageType === 'gift' ? "Regalo speciale" : "Non disponibile");
