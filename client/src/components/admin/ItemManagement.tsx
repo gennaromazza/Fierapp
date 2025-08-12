@@ -241,16 +241,16 @@ export default function ItemManagement() {
           </div>
 
           <Tabs defaultValue="items" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 glass rounded-xl p-2 shadow-elegant">
+            <TabsList className="grid w-full grid-cols-2 bg-white/20 rounded-xl p-2 shadow-elegant border border-white/30">
               <TabsTrigger
-                className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-brand-accent data-[state=active]:shadow-glow hover:scale-105"
+                className="flex items-center space-x-2 rounded-lg font-bold transition-all duration-300 text-white/80 hover:text-white hover:bg-white/10 data-[state=active]:bg-brand-accent data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105"
                 value="items"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Items</span>
               </TabsTrigger>
               <TabsTrigger
-                className="flex items-center space-x-2 rounded-lg font-semibold transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-brand-accent data-[state=active]:shadow-glow hover:scale-105"
+                className="flex items-center space-x-2 rounded-lg font-bold transition-all duration-300 text-white/80 hover:text-white hover:bg-white/10 data-[state=active]:bg-brand-accent data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105"
                 value="rules"
               >
                 <Settings2 className="w-4 h-4" />
