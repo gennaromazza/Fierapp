@@ -74,6 +74,25 @@ export default function ItemManagement() {
     setImageFile(null);
   }, [editingItem, items.length]);
 
+  // Handler for sort order changes with real-time conflict detection
+  const handleSortOrderChange = (newValue: string) => {
+    const newSortOrder = parseInt(newValue) || 0;
+    setFormData({ ...formData, sortOrder: newSortOrder });
+    
+    // Check for conflicts and show a visual indicator
+    const conflictingItem = items.find(item => 
+      item.sortOrder === newSortOrder && 
+      item.id !== editingItem?.id
+    );
+    
+    if (conflictingItem) {
+      toast({
+        title: "Numero d'ordine già utilizzato",
+        description: `"${conflictingItem.title}" usa già l'ordine ${newSortOrder}. Sarà spostato automaticamente al salvataggio.`,
+      });
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -92,11 +111,40 @@ export default function ItemManagement() {
     setImagePreview(URL.createObjectURL(file));
   };
 
+  // Function to handle dynamic sort order management
+  const handleSortOrderConflict = async (newSortOrder: number, currentItemId?: string) => {
+    // Find if there's already an item with this sort order
+    const conflictingItem = items.find(item => 
+      item.sortOrder === newSortOrder && 
+      item.id !== currentItemId
+    );
+    
+    if (conflictingItem) {
+      // Update the conflicting item to have the next available sort order
+      const nextAvailableOrder = Math.max(...items.map(i => i.sortOrder)) + 1;
+      
+      await updateDoc(doc(db, "items", conflictingItem.id), {
+        sortOrder: nextAvailableOrder,
+        updatedAt: new Date(),
+      });
+      
+      toast({
+        title: "Ordine aggiornato",
+        description: `"${conflictingItem.title}" è stato spostato all'ordine ${nextAvailableOrder}`,
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      // Handle sort order conflicts before saving
+      if (formData.sortOrder !== undefined) {
+        await handleSortOrderConflict(formData.sortOrder, editingItem?.id);
+      }
+
       let imageUrl = editingItem?.imageUrl || "";
 
       // Upload image if file is selected
@@ -367,7 +415,7 @@ export default function ItemManagement() {
                       type="number"
                       min="0"
                       value={formData.sortOrder}
-                      onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => handleSortOrderChange(e.target.value)}
                     />
                   </div>
                 </div>
@@ -436,6 +484,7 @@ export default function ItemManagement() {
                     <Table>
               <TableHeader className="glass">
                 <TableRow>
+                  <TableHead className="font-semibold text-brand-accent">Ordine</TableHead>
                   <TableHead className="font-semibold text-brand-accent">Immagine</TableHead>
                   <TableHead className="font-semibold text-brand-accent">Titolo</TableHead>
                   <TableHead className="font-semibold text-brand-accent">Categoria</TableHead>
@@ -447,6 +496,11 @@ export default function ItemManagement() {
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.id} className="hover:bg-brand-secondary/10 transition-colors">
+                    <TableCell className="text-brand-text-primary">
+                      <Badge variant="outline" className="font-mono">
+                        {item.sortOrder}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-brand-text-primary">
                       {item.imageUrl ? (
                         <img
