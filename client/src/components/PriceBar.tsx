@@ -193,26 +193,35 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Price Details - Tablet */}
             <div className="hidden sm:block lg:hidden">
               <div className="space-y-1">
-                {/* Lista compatta prodotti */}
-                <div className="text-xs text-gray-600">
-                  {cart.cart.items.slice(0, 2).map(item => item.name).join(', ')}
-                  {cart.cart.items.length > 2 && ` +${cart.cart.items.length - 2}`}
+                {/* Lista prodotti tablet */}
+                <div className="text-xs text-gray-700">
+                  {cart.cart.items.map((item, index) => (
+                    <span key={item.id} className="inline-block">
+                      {item.name}
+                      {item.price === 0 && (
+                        <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
+                      )}
+                      {index < cart.cart.items.length - 1 && (
+                        <span className="mx-1 text-gray-400">•</span>
+                      )}
+                    </span>
+                  ))}
                 </div>
                 <div className="text-sm text-gray-700">
-                  Totale: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
+                  Totale servizi/prodotti: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
                 </div>
                 {pricing.totalDiscountValue > 0 && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-wrap">
                     {globalDiscount > 0 && (
                       <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs">
                         <Globe className="w-3 h-3 inline mr-1 text-green-600" />
-                        <span className="text-green-800">-€{Math.round(globalDiscount).toLocaleString('it-IT')}</span>
+                        <span className="text-green-800">Sconto globale: -€{Math.round(globalDiscount).toLocaleString('it-IT')}</span>
                       </div>
                     )}
                     {itemSpecificDiscount > 0 && (
                       <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs">
                         <Tag className="w-3 h-3 inline mr-1 text-green-600" />
-                        <span className="text-green-800">-€{Math.round(itemSpecificDiscount).toLocaleString('it-IT')}</span>
+                        <span className="text-green-800">Sconti prodotti: -€{Math.round(itemSpecificDiscount).toLocaleString('it-IT')}</span>
                       </div>
                     )}
                   </div>
@@ -223,13 +232,22 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Mobile Price Summary */}
             <div className="block sm:hidden">
               <div className="text-center">
-                {/* Lista compatta prodotti mobile */}
-                <div className="text-xs text-gray-500 mb-1">
-                  {cart.cart.items.slice(0, 1).map(item => item.name).join(', ')}
-                  {cart.cart.items.length > 1 && ` +${cart.cart.items.length - 1}`}
+                {/* Lista prodotti mobile */}
+                <div className="text-xs text-gray-600 mb-1">
+                  {cart.cart.items.map((item, index) => (
+                    <span key={item.id} className="inline-block">
+                      {item.name}
+                      {item.price === 0 && (
+                        <span className="text-green-600 font-bold"> (OMAGGIO)</span>
+                      )}
+                      {index < cart.cart.items.length - 1 && (
+                        <span className="mx-1">•</span>
+                      )}
+                    </span>
+                  ))}
                 </div>
                 <div className="text-xs text-gray-600 mb-1">
-                  Subtotale: €{pricing.subtotal.toLocaleString('it-IT')}
+                  Totale: €{pricing.subtotal.toLocaleString('it-IT')}
                 </div>
                 {pricing.totalDiscountValue > 0 && (
                   <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg mb-1">
