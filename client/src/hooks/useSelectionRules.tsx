@@ -5,6 +5,7 @@ import {
   where, 
   orderBy, 
   onSnapshot, 
+  getDocs,
   addDoc, 
   updateDoc, 
   deleteDoc, 
@@ -27,44 +28,57 @@ export function useSelectionRules() {
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
-  // Ascolta le regole attive in tempo reale
+  // Carica le regole attive (accessibile anche agli ospiti)
   useEffect(() => {
-    // Usa query semplice per evitare errori di indice Firebase
-    const rulesQuery = query(
-      collection(db, "selection_rules"),
-      where("active", "==", true)
-    );
-
-    const unsubscribe = onSnapshot(rulesQuery, (snapshot) => {
-      console.log('🔥 Selection Rules snapshot received:', snapshot.docs.length, 'documents');
-      
-      const rulesData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        console.log('📋 Raw rule data:', doc.id, data);
+    async function loadRules() {
+      try {
+        console.log('📡 Loading selection rules...');
         
-        // Converte la regola dal formato semplificato (admin) al formato strutturato (engine)
-        const convertedRule = convertAdminRuleToEngineRule({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
+        // Usa getDocs invece di onSnapshot per evitare problemi di permessi con ospiti
+        const rulesQuery = query(
+          collection(db, "selection_rules"),
+          where("active", "==", true)
+        );
+
+        const snapshot = await getDocs(rulesQuery);
+        console.log('🔥 Selection Rules loaded:', snapshot.docs.length, 'documents');
+        
+        const rulesData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          console.log('📋 Raw rule data:', doc.id, data);
+          
+          // Converte la regola dal formato semplificato (admin) al formato strutturato (engine)
+          const convertedRule = convertAdminRuleToEngineRule({
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date(),
+          });
+          
+          return convertedRule;
         });
         
-        return convertedRule;
-      });
-      
-      // Ordina manualmente per priorità
-      rulesData.sort((a, b) => (a.priority || 1) - (b.priority || 1));
-      
-      console.log('✅ Processed rules:', rulesData);
-      setRules(rulesData);
-      setLoading(false);
-    }, (error) => {
-      console.error('❌ Error loading selection rules:', error);
-      setLoading(false);
-    });
+        // Ordina manualmente per priorità
+        rulesData.sort((a, b) => (a.priority || 1) - (b.priority || 1));
+        
+        console.log('✅ Processed rules:', rulesData);
+        setRules(rulesData);
+        setLoading(false);
+      } catch (error) {
+        console.error('❌ Error loading selection rules:', error);
+        // In caso di errore (es. permessi), continua senza regole
+        console.log('🔄 Continuing without rules (guest mode)');
+        setRules([]);
+        setLoading(false);
+      }
+    }
 
-    return () => unsubscribe();
+    loadRules();
+    
+    // Ricarica ogni 30 secondi per aggiornamenti (per ospiti)
+    const interval = setInterval(loadRules, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Mutation per creare nuova regola
