@@ -37,6 +37,7 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **API Exposure**: Made evaluateCondition method public in RulesEngine to resolve forced private access issues
 - **TypeScript Corrections**: Fixed type mismatches in CheckoutModal pricing calculations and analytics tracking
 - **System Robustness**: Enhanced fail-safe design ensuring application works correctly even with no rules configured
+- **Mutual Exclusion Logic Fix**: ✅ FIXED - Corrected getUnavailableReason logic for mutually exclusive rules to show clear messages like "Non disponibile perchè hai scelto Album 30x40" instead of duplicate "Non disponibile" messages
 
 ### Modular Selection Rules System
 - **New Modular Component**: Implemented `SelectionRulesEngine` - a completely separate system for product/service selection rules

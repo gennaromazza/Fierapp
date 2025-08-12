@@ -348,8 +348,15 @@ export function useCartWithRules() {
         let shouldShowReason = false;
         
         if (rule.type === 'availability') {
-          if (rule.action === 'disable' && !conditionMet) {
-            shouldShowReason = true; // Regola disable attiva quando condizione non soddisfatta
+          if (rule.action === 'disable') {
+            // Per regole disable, controlla il tipo di condizione
+            if (rule.conditions.type === 'mutually_exclusive') {
+              // Per mutua esclusione, mostra il motivo quando la condizione è soddisfatta (prodotto conflittuale presente)
+              shouldShowReason = conditionMet;
+            } else {
+              // Per altre condizioni, mostra il motivo quando NON soddisfatta
+              shouldShowReason = !conditionMet;
+            }
           } else if (rule.action === 'enable' && conditionMet) {
             shouldShowReason = true; // Regola enable attiva quando condizione soddisfatta
           }
