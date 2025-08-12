@@ -168,8 +168,8 @@ export default function SelectionRulesManagement() {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Caricamento regole...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-accent mx-auto mb-4"></div>
+          <p className="text-brand-text-secondary">Caricamento regole...</p>
         </div>
       </div>
     );
@@ -186,17 +186,17 @@ export default function SelectionRulesManagement() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm} className="space-x-2 bg-white text-brand-accent hover:bg-white/90">
+            <Button onClick={resetForm} className="space-x-2 bg-brand-accent text-white hover:bg-brand-accent/90">
               <Plus className="w-4 h-4" />
               <span>Nuova Regola</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-surface border-brand-border">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-brand-text-primary">
                 {editingRule ? "Modifica Regola" : "Nuova Regola di Selezione"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-brand-text-secondary">
                 Configura condizioni e azioni per la regola di selezione
               </DialogDescription>
             </DialogHeader>
@@ -205,63 +205,66 @@ export default function SelectionRulesManagement() {
               {/* Informazioni base */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome Regola</Label>
+                  <Label htmlFor="name" className="text-brand-text-primary">Nome Regola</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Es: Foto Invitati Gratis"
+                    className="bg-brand-primary border-brand-border text-brand-text-primary"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="type">Tipo Regola</Label>
+                  <Label htmlFor="type" className="text-brand-text-primary">Tipo Regola</Label>
                   <Select value={formData.type} onValueChange={(value: "availability" | "gift_transformation") => 
                     setFormData(prev => ({ ...prev, type: value }))
                   }>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-brand-primary border-brand-border text-brand-text-primary">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="availability">Disponibilità Condizionale</SelectItem>
-                      <SelectItem value="gift_transformation">Regalo Automatico</SelectItem>
+                    <SelectContent className="bg-brand-surface border-brand-border">
+                      <SelectItem value="availability" className="text-brand-text-primary">Disponibilità Condizionale</SelectItem>
+                      <SelectItem value="gift_transformation" className="text-brand-text-primary">Regalo Automatico</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Descrizione</Label>
+                <Label htmlFor="description" className="text-brand-text-primary">Descrizione</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Descrizione della regola..."
                   rows={2}
+                  className="bg-brand-primary border-brand-border text-brand-text-primary"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="priority">Priorità</Label>
+                  <Label htmlFor="priority" className="text-brand-text-primary">Priorità</Label>
                   <Input
                     id="priority"
                     type="number"
                     min="1"
                     value={formData.priority}
                     onChange={(e) => setFormData(prev => ({ ...prev, priority: parseInt(e.target.value) || 1 }))}
+                    className="bg-brand-primary border-brand-border text-brand-text-primary"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="action">Azione</Label>
+                  <Label htmlFor="action" className="text-brand-text-primary">Azione</Label>
                   <Select value={formData.action} onValueChange={(value: "disable" | "enable" | "make_gift") => 
                     setFormData(prev => ({ ...prev, action: value }))
                   }>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-brand-primary border-brand-border text-brand-text-primary">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="disable">Disabilita</SelectItem>
-                      <SelectItem value="make_gift">Rendi Gratuito</SelectItem>
+                    <SelectContent className="bg-brand-surface border-brand-border">
+                      <SelectItem value="disable" className="text-brand-text-primary">Disabilita</SelectItem>
+                      <SelectItem value="make_gift" className="text-brand-text-primary">Rendi Gratuito</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -271,14 +274,14 @@ export default function SelectionRulesManagement() {
                     checked={formData.active}
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, active: checked }))}
                   />
-                  <Label htmlFor="active">Regola Attiva</Label>
+                  <Label htmlFor="active" className="text-brand-text-primary">Regola Attiva</Label>
                 </div>
               </div>
 
               {/* Items richiesti */}
               <div className="space-y-2">
-                <Label>Items Richiesti</Label>
-                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                <Label className="text-brand-text-primary">Items Richiesti</Label>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-brand-primary p-4 rounded border-brand-border border">
                   {items.map(item => (
                     <div key={item.id} className="flex items-center space-x-2">
                       <input
@@ -291,10 +294,11 @@ export default function SelectionRulesManagement() {
                             : formData.requiredItems.filter(id => id !== item.id);
                           setFormData(prev => ({ ...prev, requiredItems }));
                         }}
+                        className="accent-brand-accent"
                       />
                       <label
                         htmlFor={`required-${item.id}`}
-                        className="text-sm cursor-pointer"
+                        className="text-sm cursor-pointer text-brand-text-primary"
                       >
                         {item.title}
                       </label>
@@ -305,8 +309,8 @@ export default function SelectionRulesManagement() {
 
               {/* Items target */}
               <div className="space-y-2">
-                <Label>Items Target</Label>
-                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                <Label className="text-brand-text-primary">Items Target</Label>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-brand-primary p-4 rounded border-brand-border border">
                   {items.map(item => (
                     <div key={item.id} className="flex items-center space-x-2">
                       <input
@@ -319,10 +323,11 @@ export default function SelectionRulesManagement() {
                             : formData.targetItems.filter(id => id !== item.id);
                           setFormData(prev => ({ ...prev, targetItems }));
                         }}
+                        className="accent-brand-accent"
                       />
                       <label
                         htmlFor={`target-${item.id}`}
-                        className="text-sm cursor-pointer"
+                        className="text-sm cursor-pointer text-brand-text-primary"
                       >
                         {item.title}
                       </label>
@@ -332,10 +337,19 @@ export default function SelectionRulesManagement() {
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                  className="border-brand-border text-brand-text-secondary hover:bg-brand-surface"
+                >
                   Annulla
                 </Button>
-                <Button type="button" onClick={handleSaveRule}>
+                <Button 
+                  type="button" 
+                  onClick={handleSaveRule}
+                  className="bg-brand-accent text-white hover:bg-brand-accent/90"
+                >
                   {editingRule ? "Aggiorna" : "Crea"} Regola
                 </Button>
               </div>
@@ -347,14 +361,17 @@ export default function SelectionRulesManagement() {
       {/* Lista regole esistenti */}
       <div className="grid gap-4">
         {rules.length === 0 ? (
-          <Card>
+          <Card className="bg-brand-surface border-brand-border">
             <CardContent className="text-center py-8">
-              <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nessuna regola configurata</h3>
-              <p className="text-muted-foreground mb-4">
+              <Settings className="w-12 h-12 text-brand-text-secondary mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-brand-text-primary">Nessuna regola configurata</h3>
+              <p className="text-brand-text-secondary mb-4">
                 Crea la prima regola di selezione per gestire disponibilità condizionale e regali automatici.
               </p>
-              <Button onClick={() => setIsDialogOpen(true)}>
+              <Button 
+                onClick={() => setIsDialogOpen(true)}
+                className="bg-brand-accent text-white hover:bg-brand-accent/90"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Crea Prima Regola
               </Button>
@@ -362,27 +379,33 @@ export default function SelectionRulesManagement() {
           </Card>
         ) : (
           rules.map((rule) => (
-            <Card key={rule.id} className="hover:shadow-md transition-shadow">
+            <Card key={rule.id} className="bg-brand-surface border-brand-border hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-muted">
+                    <div className="p-2 rounded-lg bg-brand-primary">
                       {rule.type === "gift_transformation" ? (
-                        <Gift className="w-4 h-4 text-green-600" />
+                        <Gift className="w-4 h-4 text-green-400" />
                       ) : (
-                        <Ban className="w-4 h-4 text-orange-600" />
+                        <Ban className="w-4 h-4 text-orange-400" />
                       )}
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{rule.name}</CardTitle>
+                      <CardTitle className="text-lg text-brand-text-primary">{rule.name}</CardTitle>
                       <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant={rule.type === "gift_transformation" ? "default" : "secondary"}>
+                        <Badge 
+                          variant={rule.type === "gift_transformation" ? "default" : "secondary"}
+                          className={rule.type === "gift_transformation" ? "bg-green-600 text-white" : "bg-brand-accent text-white"}
+                        >
                           {rule.type === "gift_transformation" ? "Regalo" : "Disponibilità"}
                         </Badge>
-                        <Badge variant={rule.active ? "default" : "secondary"}>
+                        <Badge 
+                          variant={rule.active ? "default" : "secondary"}
+                          className={rule.active ? "bg-brand-accent text-white" : "bg-brand-text-secondary text-brand-surface"}
+                        >
                           {rule.active ? "Attiva" : "Disattivata"}
                         </Badge>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-brand-text-secondary">
                           Priorità: {rule.priority}
                         </span>
                       </div>
@@ -393,28 +416,35 @@ export default function SelectionRulesManagement() {
                       variant="ghost"
                       size="sm"
                       onClick={() => openEditDialog(rule)}
+                      className="text-brand-text-secondary hover:text-brand-text-primary hover:bg-brand-primary"
                     >
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-brand-text-secondary hover:text-red-400 hover:bg-brand-primary"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="bg-brand-surface border-brand-border">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Elimina regola</AlertDialogTitle>
-                          <AlertDialogDescription>
+                          <AlertDialogTitle className="text-brand-text-primary">Elimina regola</AlertDialogTitle>
+                          <AlertDialogDescription className="text-brand-text-secondary">
                             Sei sicuro di voler eliminare la regola "{rule.name}"? 
                             Questa azione non può essere annullata.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Annulla</AlertDialogCancel>
+                          <AlertDialogCancel className="border-brand-border text-brand-text-secondary hover:bg-brand-primary">
+                            Annulla
+                          </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDeleteRule(rule.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            className="bg-red-600 text-white hover:bg-red-700"
                           >
                             Elimina
                           </AlertDialogAction>
@@ -426,7 +456,7 @@ export default function SelectionRulesManagement() {
               </CardHeader>
               {rule.description && (
                 <CardContent className="pt-0">
-                  <CardDescription>{rule.description}</CardDescription>
+                  <CardDescription className="text-brand-text-secondary">{rule.description}</CardDescription>
                 </CardContent>
               )}
             </Card>
