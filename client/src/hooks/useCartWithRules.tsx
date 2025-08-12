@@ -403,6 +403,46 @@ export function useCartWithRules() {
     return rule.description || (messageType === 'gift' ? "Regalo speciale" : "Non disponibile");
   };
 
+  // Ottiene gli ID degli item richiesti per un item non disponibile
+  const getRequiredItemIds = (itemId: string): string[] => {
+    if (rulesLoading || itemsLoading) return [];
+    
+    try {
+      const rulesEngine = new RulesEngine(rules, allItems);
+      const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
+        const fullItem = allItems.find(item => item.id === cartItem.id);
+        return fullItem || {
+          ...cartItem,
+          active: true,
+          sortOrder: 0,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as Item;
+      });
+      
+      // Controlla tutte le regole che influenzano questo item
+      const applicableRules = rules.filter(rule => 
+        rule.active && rule.targetItems.includes(itemId)
+      );
+      
+      for (const rule of applicableRules) {
+        const conditionMet = rulesEngine.evaluateCondition(rule.conditions, cartAsItems, cartAsItems.map(i => i.id));
+        
+        if (rule.type === 'availability' && rule.action === 'disable' && !conditionMet) {
+          // Restituisce gli ID degli item richiesti per questa regola
+          if (rule.conditions.type === 'required_items' && rule.conditions.requiredItems) {
+            return rule.conditions.requiredItems.filter(id => !cartAsItems.map(i => i.id).includes(id));
+          }
+        }
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error in getRequiredItemIds:', error);
+      return [];
+    }
+  };
+
   return {
     // Tutte le funzioni e proprietà del carrello base
     ...cart,
@@ -419,6 +459,7 @@ export function useCartWithRules() {
     getPricingWithRules,
     getItemsWithRuleInfo,
     getAllItemsWithAvailability,
+    getRequiredItemIds,
     
     // Dati delle regole
     rulesEvaluation,

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, collection, query, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { Item, Discounts } from "@shared/schema";
 import { useCartWithRules } from "../hooks/useCartWithRules";
 import { calculateDiscountedPrice } from "../lib/discounts";
-import { Plus, Check, Clock, Gift } from "lucide-react";
+import { Plus, Check, Clock, Gift, ExternalLink } from "lucide-react";
 import { format, isAfter, isBefore } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -13,7 +13,7 @@ interface ItemCardProps {
 }
 
 export default function ItemCard({ item }: ItemCardProps) {
-  const { addItem, removeItem, isInCart, isItemAvailable, isItemGift, getItemGiftSettings, getUnavailableReason } = useCartWithRules();
+  const { addItem, removeItem, isInCart, isItemAvailable, isItemGift, getItemGiftSettings, getUnavailableReason, getRequiredItemIds } = useCartWithRules();
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
   const [discountExpiry, setDiscountExpiry] = useState<Date | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -42,6 +42,57 @@ export default function ItemCard({ item }: ItemCardProps) {
   const displayDescription = shouldTruncate && !showFullDescription 
     ? truncateText(item.description, 15)
     : item.description;
+
+  // Funzione per navigare verso un elemento richiesto
+  const navigateToRequiredItem = (itemId: string) => {
+    const element = document.querySelector(`[data-item-id="${itemId}"]`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Effetto di evidenziazione temporanea
+      element.classList.add('ring-2', 'ring-blue-400');
+      setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-blue-400');
+      }, 2000);
+    }
+  };
+
+  // Crea messaggio cliccabile per le dipendenze
+  const createClickableMessage = (reason: string) => {
+    const requiredIds = getRequiredItemIds(item.id);
+    
+    if (requiredIds.length === 0 || !reason.includes('Richiede:')) {
+      return <span>{reason}</span>;
+    }
+
+    return (
+      <div className="space-y-1">
+        <span>{reason.split('Richiede:')[0]}Richiede:</span>
+        <div className="flex flex-wrap gap-1">
+          {requiredIds.map((requiredId, index) => {
+            // Trova il nome del prodotto richiesto dal messaggio
+            const startIdx = reason.indexOf('Richiede:') + 9;
+            const reqText = reason.substring(startIdx).trim();
+            const itemNames = reqText.includes(',') ? reqText.split(',').map(n => n.trim()) : [reqText];
+            const itemName = itemNames[index] || reqText;
+            
+            return (
+              <button
+                key={requiredId}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToRequiredItem(requiredId);
+                }}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-md text-xs font-medium transition-colors duration-200 border border-blue-300"
+              >
+                <span>{itemName}</span>
+                <ExternalLink className="w-3 h-3" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   useEffect(() => {
     // Use real-time listener for discounts
@@ -161,7 +212,10 @@ export default function ItemCard({ item }: ItemCardProps) {
   };
 
   return (
-    <div className="card-premium rounded-xl overflow-hidden hover-lift group h-[600px] flex flex-col">
+    <div 
+      className="card-premium rounded-xl overflow-hidden hover-lift group h-[600px] flex flex-col"
+      data-item-id={item.id}
+    >
       {/* Image with discount badge */}
       <div className="relative flex-shrink-0">
         {item.imageUrl ? (
@@ -268,7 +322,7 @@ export default function ItemCard({ item }: ItemCardProps) {
           <div className="bg-orange-100 border border-orange-300 text-orange-800 px-4 py-2 rounded-lg text-sm mb-3 text-center">
             <div className="font-semibold">Non Disponibile</div>
             <div className="text-xs mt-1">
-              {getUnavailableReason(item.id)}
+              {createClickableMessage(getUnavailableReason(item.id))}
             </div>
           </div>
         )}
