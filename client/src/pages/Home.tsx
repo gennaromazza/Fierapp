@@ -76,7 +76,7 @@ export default function Home() {
       </main>
 
       {/* Price Bar - shown when cart has items */}
-      {cart.itemCount > 0 && (
+      {cart.cart.itemCount > 0 && (
         <PriceBar onOpenCheckout={() => setIsCheckoutOpen(true)} />
       )}
       

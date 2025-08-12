@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { useCart } from "../hooks/useCart";
+import { useCartWithRules } from "../hooks/useCartWithRules";
 import { Discounts } from "@shared/schema";
 import { calculateDiscountedPrice } from "../lib/discounts";
 import { ShoppingCart, MessageCircle, Tag, Globe } from "lucide-react";
@@ -11,7 +11,7 @@ interface PriceBarProps {
 }
 
 export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
-  const { cart } = useCart();
+  const cart = useCartWithRules();
   const [discounts, setDiscounts] = useState<Discounts>({});
 
   useEffect(() => {
@@ -29,12 +29,15 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
     loadDiscounts();
   }, []);
 
+  // Get pricing with rules applied
+  const pricing = cart.getPricingWithRules();
+
   // Calculate discount breakdown
   const calculateDiscountBreakdown = () => {
     let globalDiscount = 0;
     let itemSpecificDiscount = 0;
 
-    cart.items.forEach(item => {
+    cart.cart.items.forEach(item => {
       const originalPrice = item.originalPrice || item.price;
       const currentPrice = item.price;
       const totalItemDiscount = originalPrice - currentPrice;
@@ -61,7 +64,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
 
   const { globalDiscount, itemSpecificDiscount } = calculateDiscountBreakdown();
 
-  if (cart.itemCount === 0) return null;
+  if (cart.cart.itemCount === 0) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 glass shadow-elegant border-t-2 z-40" style={{ borderColor: 'var(--brand-accent)' }}>
@@ -72,7 +75,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             <div className="relative flex-shrink-0">
               <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7" style={{ color: 'var(--brand-accent)' }} />
               <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-glow">
-                {cart.itemCount}
+                {cart.cart.itemCount}
               </span>
             </div>
 
@@ -82,11 +85,11 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
                 {/* Totale servizi/prodotti senza sconti */}
                 <div className="flex items-center text-sm text-gray-700">
                   <span>Totale servizi/prodotti: </span>
-                  <span className="font-semibold ml-1">€{cart.subtotal.toLocaleString('it-IT')}</span>
+                  <span className="font-semibold ml-1">€{pricing.subtotal.toLocaleString('it-IT')}</span>
                 </div>
 
                 {/* Sconti breakdown */}
-                {cart.discount > 0 && (
+                {pricing.totalDiscountValue > 0 && (
                   <div className="space-y-1">
                     {globalDiscount > 0 && (
                       <div className="flex items-center text-sm bg-green-50 border border-green-200 rounded-lg px-3 py-2 shadow-md">
@@ -130,9 +133,9 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             <div className="hidden sm:block lg:hidden">
               <div className="space-y-1">
                 <div className="text-sm text-gray-700">
-                  Totale: <span className="font-semibold">€{cart.subtotal.toLocaleString('it-IT')}</span>
+                  Totale: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
                 </div>
-                {cart.discount > 0 && (
+                {pricing.totalDiscountValue > 0 && (
                   <div className="flex items-center space-x-2">
                     {globalDiscount > 0 && (
                       <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs">
@@ -155,11 +158,11 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             <div className="block sm:hidden">
               <div className="text-center">
                 <div className="text-xs text-gray-600 mb-1">
-                  Subtotale: €{cart.subtotal.toLocaleString('it-IT')}
+                  Subtotale: €{pricing.subtotal.toLocaleString('it-IT')}
                 </div>
-                {cart.discount > 0 && (
+                {pricing.totalDiscountValue > 0 && (
                   <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg mb-1">
-                    RISPARMIO: €{cart.discount.toLocaleString('it-IT')}
+                    RISPARMIO: €{pricing.totalDiscountValue.toLocaleString('it-IT')}
                   </div>
                 )}
               </div>
@@ -170,7 +173,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
           <div className="text-right">
             <div className="text-xs opacity-70 hidden sm:block" style={{ color: 'var(--brand-accent)' }}>Totale finale</div>
             <div className="text-2xl font-bold text-brand-accent">
-              €{cart.total.toLocaleString('it-IT')}
+              €{pricing.total.toLocaleString('it-IT')}
             </div>
           </div>
 
