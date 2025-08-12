@@ -96,11 +96,11 @@ export default function Header({
       style={{ borderBottom: `2px solid var(--brand-secondary)` }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo Section */}
-          <div className="flex items-center space-x-4 group cursor-pointer">
+          <div className="flex items-center space-x-2 sm:space-x-4 group cursor-pointer flex-1 min-w-0">
             <div
-              className="w-14 h-14 rounded-xl gradient-accent flex items-center justify-center overflow-hidden shadow-glow"
+              className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl gradient-accent flex items-center justify-center overflow-hidden shadow-glow flex-shrink-0"
               style={{ backgroundColor: "var(--brand-accent)" }}
             >
               {logoUrl ? (
@@ -110,15 +110,15 @@ export default function Header({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Camera className="w-8 h-8 text-white" />
+                <Camera className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
               )}
             </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-gradient">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-gradient truncate">
                 {settings?.studioName || "STUDIO DEMO"}
               </h1>
               <p
-                className="text-sm opacity-80"
+                className="text-xs sm:text-sm opacity-80 truncate"
                 style={{ color: "var(--brand-accent)" }}
               >
                 Servizi professionali per eventi
@@ -128,7 +128,7 @@ export default function Header({
 
           {/* Navigation */}
           {onTabChange && (
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-6 flex-shrink-0">
               <button
                 className="font-medium pb-1 transition-colors"
                 style={
@@ -177,11 +177,11 @@ export default function Header({
           )}
 
           {/* Navigation Actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1 sm:space-x-3 flex-shrink-0">
             {/* Special Offers Button */}
             <button
               id="header-offers-button"
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-green-600/10 hover:bg-green-600/20 border border-green-600/30 transition-all duration-200 text-sm"
+              className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-green-600/10 hover:bg-green-600/20 border border-green-600/30 transition-all duration-200 text-xs sm:text-sm"
               style={{ color: "var(--brand-accent)" }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "var(--brand-accent)";
@@ -192,22 +192,21 @@ export default function Header({
                 e.currentTarget.style.color = "var(--brand-accent)";
               }}
             >
-              <span className="text-lg">🎁</span>
+              <span className="text-sm sm:text-lg">🎁</span>
               <span className="hidden sm:inline font-medium">Offerte</span>
-              <span className="sm:hidden font-medium">🎁</span>
             </button>
 
             {/* Admin Link */}
             <Link
               href="/admin"
-              className="text-sm transition-colors p-2 rounded-lg hover:bg-gray-100"
+              className="text-sm transition-colors p-1.5 sm:p-2 rounded-lg hover:bg-gray-100"
               onMouseEnter={(e: any) =>
                 (e.currentTarget.style.color = "var(--brand-accent)")
               }
               onMouseLeave={(e: any) => (e.currentTarget.style.color = "#6B7280")}
               style={{ color: "#6B7280" }}
             >
-              <SettingsIcon className="w-4 h-4" />
+              <SettingsIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Link>
           </div>
         </div>
@@ -243,18 +242,20 @@ export default function Header({
         {/* Global Discount Banner */}
         {discounts?.global?.isActive && discounts.global.value > 0 && (
           <div className="py-2 px-4 bg-brand-accent/10 border-t border-brand-border">
-            <div className="flex items-center justify-center space-x-2 text-sm">
-              <Percent className="w-4 h-4 text-brand-accent" />
-              <span className="font-semibold text-brand-text-accent">
-                Sconto globale attivo:{" "}
-                {discounts.global.type === "percent"
-                  ? `${discounts.global.value}%`
-                  : `€${discounts.global.value}`}
-              </span>
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2 text-xs sm:text-sm">
+              <div className="flex items-center space-x-2">
+                <Percent className="w-3 h-3 sm:w-4 sm:h-4 text-brand-accent" />
+                <span className="font-semibold text-brand-text-accent text-center">
+                  Sconto globale attivo:{" "}
+                  {discounts.global.type === "percent"
+                    ? `${discounts.global.value}%`
+                    : `€${discounts.global.value}`}
+                </span>
+              </div>
               {discounts.global?.endDate && (
                 <div className="flex items-center space-x-1 text-brand-text-secondary">
-                  <Clock className="w-3 h-3" />
-                  <span>
+                  <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                  <span className="text-xs sm:text-sm">
                     {(() => {
                       try {
                         let endDate: Date;
