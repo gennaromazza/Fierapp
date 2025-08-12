@@ -8,11 +8,11 @@ import Carousel from "../components/Carousel";
 import PriceBar from "../components/PriceBar";
 import CheckoutModal from "../components/CheckoutModal";
 import EnhancedSavingsDisplay from "../components/EnhancedSavingsDisplay";
-import { useCart } from "../hooks/useCart";
+import { useCartWithRules } from "../hooks/useCartWithRules";
 import type { Settings } from "../../shared/schema";
 
 export default function Home() {
-  const { cart } = useCart();
+  const cart = useCartWithRules();
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
 
@@ -55,7 +55,7 @@ export default function Home() {
               
               {/* Enhanced Savings Display */}
               <EnhancedSavingsDisplay 
-                discount={cart.discount}
+                discount={cart.cart.discount}
                 className=""
               />
             </div>
@@ -70,6 +70,13 @@ export default function Home() {
         {/* Carousel Section */}
         <section className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Debug Info per sviluppo */}
+            {process.env.NODE_ENV === 'development' && cart.getDebugInfo && (
+              <div className="mb-4 p-4 bg-yellow-100 rounded border">
+                <h3 className="font-bold">Rules Debug Info:</h3>
+                <pre className="text-xs">{JSON.stringify(cart.getDebugInfo(), null, 2)}</pre>
+              </div>
+            )}
             <Carousel />
           </div>
         </section>

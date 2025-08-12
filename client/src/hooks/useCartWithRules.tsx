@@ -172,7 +172,14 @@ export function useCartWithRules() {
 
   // Debug info per sviluppo
   const getDebugInfo = () => {
-    if (itemsLoading || rulesLoading) return null;
+    if (itemsLoading || rulesLoading) {
+      return {
+        loading: true,
+        itemsLoading,
+        rulesLoading,
+        rulesCount: rules.length
+      };
+    }
     
     // Converte CartItem a Item per debug
     const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
@@ -187,7 +194,14 @@ export function useCartWithRules() {
     });
     
     const rulesEngine = new RulesEngine(rules, allItems);
-    return rulesEngine.getDebugInfo(cartAsItems);
+    const engineDebug = rulesEngine.getDebugInfo(cartAsItems);
+    
+    return {
+      ...engineDebug,
+      loadedRules: rules.length,
+      cartItems: cartAsItems.length,
+      selectedItemIds: cartAsItems.map(item => item.id),
+    };
   };
 
   return {

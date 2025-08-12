@@ -29,25 +29,38 @@ export function useSelectionRules() {
 
   // Ascolta le regole attive in tempo reale
   useEffect(() => {
+    // Usa query semplice per evitare errori di indice Firebase
     const rulesQuery = query(
       collection(db, "selection_rules"),
-      where("active", "==", true),
-      orderBy("priority", "asc"),
-      orderBy("createdAt", "desc")
+      where("active", "==", true)
     );
 
     const unsubscribe = onSnapshot(rulesQuery, (snapshot) => {
+      console.log('🔥 Selection Rules snapshot received:', snapshot.docs.length, 'documents');
+      
       const rulesData = snapshot.docs.map(doc => {
         const data = doc.data();
-        return {
+        console.log('📋 Raw rule data:', doc.id, data);
+        
+        // Converte la regola dal formato semplificato (admin) al formato strutturato (engine)
+        const convertedRule = convertAdminRuleToEngineRule({
           id: doc.id,
           ...data,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
-        } as SelectionRule;
+        });
+        
+        return convertedRule;
       });
       
+      // Ordina manualmente per priorità
+      rulesData.sort((a, b) => (a.priority || 1) - (b.priority || 1));
+      
+      console.log('✅ Processed rules:', rulesData);
       setRules(rulesData);
+      setLoading(false);
+    }, (error) => {
+      console.error('❌ Error loading selection rules:', error);
       setLoading(false);
     });
 
@@ -99,6 +112,63 @@ export function useSelectionRules() {
     updateRule,
     deleteRule,
   };
+}
+
+// Funzione per convertire regola dal formato admin al formato engine
+function convertAdminRuleToEngineRule(adminRule: any): SelectionRule {
+  console.log('🔄 Converting admin rule:', adminRule);
+  
+  // Se la regola ha già il formato corretto (con conditions), usala direttamente
+  if (adminRule.conditions && typeof adminRule.conditions === 'object') {
+    console.log('✅ Rule already in engine format');
+    return adminRule as SelectionRule;
+  }
+  
+  // Conversione dal formato semplificato (admin) al formato strutturato (engine)
+  let conditions;
+  
+  // Se ha requiredItems (array di ID), crea condizione required_items
+  if (adminRule.requiredItems && Array.isArray(adminRule.requiredItems) && adminRule.requiredItems.length > 0) {
+    conditions = {
+      type: "required_items" as const,
+      requiredItems: adminRule.requiredItems,
+    };
+    console.log('🔧 Created required_items condition:', conditions);
+  } 
+  // Se ha targetItems ma non requiredItems, usa specific_items  
+  else if (adminRule.targetItems && Array.isArray(adminRule.targetItems) && adminRule.targetItems.length > 0) {
+    conditions = {
+      type: "specific_items" as const,
+      specificItems: adminRule.targetItems,
+    };
+    console.log('🔧 Created specific_items condition:', conditions);
+  }
+  // Fallback - nessuna condizione valida
+  else {
+    conditions = {
+      type: "min_selection_count" as const,
+      value: 1,
+    };
+    console.log('⚠️ Using fallback condition:', conditions);
+  }
+  
+  const convertedRule = {
+    id: adminRule.id,
+    name: adminRule.name || 'Regola senza nome',
+    description: adminRule.description || '',
+    type: adminRule.type || 'availability',
+    active: adminRule.active !== false, // default true
+    priority: adminRule.priority || 1,
+    conditions,
+    targetItems: adminRule.targetItems || [],
+    action: adminRule.action || 'disable',
+    giftSettings: adminRule.giftSettings,
+    createdAt: adminRule.createdAt || new Date(),
+    updatedAt: adminRule.updatedAt || new Date(),
+  } as SelectionRule;
+  
+  console.log('✅ Converted rule:', convertedRule);
+  return convertedRule;
 }
 
 // Hook per valutare le regole su un carrello specifico

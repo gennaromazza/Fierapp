@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { Item, Discounts } from "@shared/schema";
-import { useCart } from "../hooks/useCart";
+import { useCartWithRules } from "../hooks/useCartWithRules";
 import { calculateDiscountedPrice } from "../lib/discounts";
 import { Plus, Check, Clock, Gift } from "lucide-react";
 import { format, isAfter, isBefore } from "date-fns";
@@ -13,11 +13,14 @@ interface ItemCardProps {
 }
 
 export default function ItemCard({ item }: ItemCardProps) {
-  const { addItem, removeItem, isInCart } = useCart();
+  const { addItem, removeItem, isInCart, isItemAvailable, isItemGift, getItemGiftSettings } = useCartWithRules();
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
   const [discountExpiry, setDiscountExpiry] = useState<Date | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const isAdded = isInCart(item.id);
+  const itemAvailable = isItemAvailable(item.id);
+  const itemIsGift = isItemGift(item.id);
+  const giftSettings = getItemGiftSettings(item.id);
 
   // Function to truncate text to a specific word count
   const truncateText = (text: string, wordLimit: number = 15) => {
@@ -124,13 +127,22 @@ export default function ItemCard({ item }: ItemCardProps) {
   const isDiscountActive = !isDiscountExpired && savings > 0;
 
   const handleToggle = () => {
+    // Verifica se l'item è disponibile secondo le regole
+    if (!itemAvailable && !isAdded) {
+      console.warn(`Item ${item.title} non disponibile secondo le regole di selezione`);
+      return;
+    }
+    
     if (isAdded) {
       removeItem(item.id);
     } else {
+      // Usa il prezzo finale: 0 se è un regalo, altrimenti il prezzo scontato
+      const finalPrice = itemIsGift ? 0 : discountedPrice;
+      
       addItem({
         id: item.id,
         title: item.title,
-        price: discountedPrice,
+        price: finalPrice,
         originalPrice: originalPrice,
         imageUrl: item.imageUrl,
         category: item.category,
@@ -161,10 +173,27 @@ export default function ItemCard({ item }: ItemCardProps) {
           </div>
         )}
         
-        {/* Free Badge - positioned above image */}
-        {discountedPrice === 0 && (
+        {/* Gift Badge - positioned above image */}
+        {itemIsGift && (
+          <div className="absolute top-3 left-3 bg-green-600 text-white px-3 py-2 rounded-full text-sm font-bold shadow-2xl border-2 border-white z-20 flex items-center space-x-1" style={{ backdropFilter: 'blur(4px)' }}>
+            <Gift className="w-3 h-3" />
+            <span>{giftSettings?.giftText || "OMAGGIO!"}</span>
+          </div>
+        )}
+        
+        {/* Free Badge - positioned above image (for discounted items) */}
+        {!itemIsGift && discountedPrice === 0 && (
           <div className="absolute top-3 left-3 bg-green-600 text-white px-3 py-2 rounded-full text-sm font-bold shadow-2xl border-2 border-white z-20" style={{ backdropFilter: 'blur(4px)' }}>
             GRATIS
+          </div>
+        )}
+        
+        {/* Unavailable Overlay */}
+        {!itemAvailable && (
+          <div className="absolute inset-0 bg-gray-500/80 flex items-center justify-center z-30">
+            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold">
+              Non Disponibile
+            </div>
           </div>
         )}
         
@@ -251,8 +280,16 @@ export default function ItemCard({ item }: ItemCardProps) {
                 </div>
               </div>
             )}
-            <div className={`text-2xl font-bold price-drop ${discountedPrice === 0 ? 'text-green-600' : 'text-brand-accent'}`}>
-              {discountedPrice === 0 ? 'GRATIS' : `€${discountedPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`}
+            {/* Prezzo con supporto regali */}
+            <div className="space-y-1">
+              {itemIsGift && giftSettings?.showOriginalPrice && (
+                <div className="text-sm text-gray-500 line-through">
+                  €{originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                </div>
+              )}
+              <div className={`text-2xl font-bold price-drop ${itemIsGift || discountedPrice === 0 ? 'text-green-600' : 'text-brand-accent'}`}>
+                {itemIsGift ? 'GRATIS' : discountedPrice === 0 ? 'GRATIS' : `€${discountedPrice.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`}
+              </div>
             </div>
           </div>
         </div>
@@ -260,14 +297,17 @@ export default function ItemCard({ item }: ItemCardProps) {
         {/* Add/Remove Button - Fixed at bottom */}
         <button
           onClick={handleToggle}
+          disabled={!itemAvailable && !isAdded}
           className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center space-x-2 ${
-            isAdded
+            !itemAvailable && !isAdded
+              ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+              : isAdded
               ? "bg-green-600 text-white hover:bg-green-700"
-              : discountedPrice === 0
+              : itemIsGift || discountedPrice === 0
               ? "bg-green-600 text-white hover:bg-green-700"
               : "text-white hover:opacity-90"
           }`}
-          style={!isAdded && discountedPrice !== 0 ? { backgroundColor: 'var(--brand-accent)' } : {}}
+          style={!isAdded && !itemAvailable ? {} : !isAdded && (itemIsGift || discountedPrice === 0) ? {} : !isAdded ? { backgroundColor: 'var(--brand-accent)' } : {}}
         >
           {isAdded ? (
             <>
