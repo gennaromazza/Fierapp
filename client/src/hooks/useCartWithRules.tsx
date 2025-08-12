@@ -178,14 +178,9 @@ export function useCartWithRules() {
       }
     });
 
-    // Calcola gli sconti esistenti sui prezzi non-regalo
-    const existingDiscount = basePricing.subtotal > 0 ? (basePricing.discount / basePricing.subtotal) * adjustedSubtotal : 0;
-    
-    // Applica anche gli sconti globali (come nel PriceBar)
+    // Recupera sconti globali da localStorage come fa il PriceBar (temporaneo per sync)
     let globalDiscount = 0;
     
-    // Recupera sconti globali da localStorage come fa il PriceBar (temporaneo per sync)
-    // Questo è un workaround - idealmente dovremmo condividere lo stato degli sconti
     try {
       const discountsDoc = localStorage.getItem('cachedDiscounts');
       if (discountsDoc) {
@@ -196,7 +191,8 @@ export function useCartWithRules() {
           if (discounts.global.type === 'fixed') {
             globalDiscount = discounts.global.value || 0;
           } else if (discounts.global.type === 'percent') {
-            globalDiscount = Math.round(basePricing.subtotal * ((discounts.global.value || 0) / 100));
+            // Per percentuali, calcola sulla base del subtotale già scontato
+            globalDiscount = Math.round(adjustedSubtotal * ((discounts.global.value || 0) / 100));
           }
         }
       }
@@ -204,25 +200,22 @@ export function useCartWithRules() {
       console.warn("Error loading global discounts for pricing calculation:", error);
     }
 
-    const totalDiscount = existingDiscount + globalDiscount;
-    const finalTotal = Math.max(0, adjustedSubtotal - totalDiscount);
+    // Il totale finale è: subtotale scontato - sconto globale
+    // Non sommare gli sconti esistenti perché sono già stati applicati nel adjustedSubtotal
+    const finalTotal = Math.max(0, adjustedSubtotal - globalDiscount);
     
-    console.log("💰 useCartWithRules - Pricing calculation:", {
-      adjustedSubtotal,
-      existingDiscount,
-      globalDiscount,
-      totalDiscount,
-      giftSavings,
-      finalTotal
-    });
+    // Calcola i risparmi totali: differenza tra originale e finale + regali
+    const totalSavings = (basePricing.subtotal - finalTotal) + giftSavings;
+    
+
     
     return {
       subtotal: adjustedSubtotal,
       originalSubtotal: basePricing.subtotal,
-      discount: totalDiscount,
+      discount: globalDiscount, // Solo lo sconto globale applicato qui
       giftSavings,
       total: finalTotal,
-      totalSavings: totalDiscount + giftSavings,
+      totalSavings,
     };
   };
 

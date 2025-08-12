@@ -19,13 +19,13 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
     const unsubscribe = onSnapshot(doc(db, "settings", "discounts"), (discountsDoc) => {
       if (discountsDoc.exists()) {
         const discountsData = discountsDoc.data() as Discounts;
-        console.log("📊 Sconti caricati in PriceBar:", discountsData);
+
         setDiscounts(discountsData);
         
         // Salva nel localStorage per sync con useCartWithRules
         localStorage.setItem('cachedDiscounts', JSON.stringify(discountsData));
       } else {
-        console.log("❌ Nessun documento sconti trovato");
+
         setDiscounts({});
         localStorage.removeItem('cachedDiscounts');
       }
@@ -44,13 +44,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
     // Controlla se c'è uno sconto globale attivo
     const hasGlobalDiscount = discounts?.global?.isActive;
     
-    console.log("💰 Calcolo sconti:", {
-      hasGlobalDiscount,
-      globalType: discounts?.global?.type,
-      globalValue: discounts?.global?.value,
-      globalPercent: discounts?.global?.percent,
-      cartItems: cart.cart.items.length
-    });
+
 
     // Calcola lo sconto globale se attivo
     if (hasGlobalDiscount && discounts.global) {
@@ -91,7 +85,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
       }
     });
 
-    console.log("📊 Risultato calcolo sconti:", { globalDiscount, itemSpecificDiscount });
+
     return { globalDiscount, itemSpecificDiscount };
   };
 

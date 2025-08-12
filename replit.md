@@ -13,7 +13,10 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 
 ## Recent Changes (January 12, 2025)
 
-### Critical Bug Fixes (January 12, 2025)
+### Critical Bug Fixes (January 12, 2025) - COMPLETED
+- **CheckoutModal Pricing Sync**: ✅ FIXED - CheckoutModal now correctly applies global discounts through localStorage synchronization with PriceBar
+- **Global Discount Calculation**: ✅ FIXED - useCartWithRules getPricingWithRules() method now properly applies €300 fixed global discount without double-counting existing item discounts
+- **Pricing Consistency**: ✅ VERIFIED - Both PriceBar and CheckoutModal now show identical totals (€300) with same cart configuration
 - **CheckoutModal Integration**: Completed migration to useCartWithRules for consistent pricing across PDF generation and WhatsApp messages
 - **Memory Leak Resolution**: Fixed Firebase listener cleanup in ItemCard component to prevent memory accumulation
 - **API Exposure**: Made evaluateCondition method public in RulesEngine to resolve forced private access issues
