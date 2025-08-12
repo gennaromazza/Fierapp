@@ -70,13 +70,7 @@ export default function Home() {
         {/* Carousel Section */}
         <section className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Debug Info per sviluppo */}
-            {cart.getDebugInfo && (
-              <div className="mb-4 p-4 bg-yellow-100 rounded border">
-                <h3 className="font-bold">🔧 Rules Debug Info:</h3>
-                <pre className="text-xs overflow-auto max-h-48">{JSON.stringify(cart.getDebugInfo(), null, 2)}</pre>
-              </div>
-            )}
+
             <Carousel />
           </div>
         </section>

@@ -204,6 +204,70 @@ export function useCartWithRules() {
     };
   };
 
+  // Ottiene il motivo per cui un item non è disponibile
+  const getUnavailableReason = (itemId: string): string => {
+    if (rulesLoading || itemsLoading) return "Caricamento...";
+    
+    const rulesEngine = new RulesEngine(rules, allItems);
+    const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
+      const fullItem = allItems.find(item => item.id === cartItem.id);
+      return fullItem || {
+        ...cartItem,
+        active: true,
+        sortOrder: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as Item;
+    });
+    
+    // Trova le regole che rendono questo item non disponibile
+    const applicableRules = rules.filter(rule => 
+      rule.active && 
+      rule.type === 'availability' && 
+      rule.action === 'disable' && 
+      rule.targetItems.includes(itemId)
+    );
+    
+    for (const rule of applicableRules) {
+      const conditionMet = rulesEngine['evaluateCondition'](rule.conditions, cartAsItems, cartAsItems.map(i => i.id));
+      
+      // Per regole disable, se condizione non è soddisfatta, la regola si applica
+      if (!conditionMet) {
+        // Genera messaggio basato sul tipo di condizione
+        switch (rule.conditions.type) {
+          case 'required_items':
+            if (rule.conditions.requiredItems && rule.conditions.requiredItems.length > 0) {
+              const requiredItemNames = rule.conditions.requiredItems.map(itemId => {
+                const item = allItems.find(i => i.id === itemId);
+                return item?.title || 'Prodotto sconosciuto';
+              });
+              
+              if (requiredItemNames.length === 1) {
+                return `Richiede: ${requiredItemNames[0]}`;
+              } else {
+                return `Richiede: ${requiredItemNames.join(', ')}`;
+              }
+            }
+            break;
+            
+          case 'min_selection_count':
+            return `Seleziona almeno ${rule.conditions.value || 1} prodotti`;
+            
+          case 'category_count':
+            if (rule.conditions.categories && rule.conditions.categories.length > 0) {
+              return `Seleziona ${rule.conditions.value || 1} da: ${rule.conditions.categories.join(', ')}`;
+            }
+            return `Seleziona più prodotti nella categoria`;
+            
+          default:
+            return rule.description || "Condizioni non soddisfatte";
+        }
+      }
+    }
+    
+    return "Non disponibile";
+  };
+
   return {
     // Tutte le funzioni e proprietà del carrello base
     ...cart,
@@ -215,6 +279,7 @@ export function useCartWithRules() {
     isItemAvailable,
     isItemGift,
     getItemGiftSettings,
+    getUnavailableReason,
     getAppliedRules,
     getPricingWithRules,
     getItemsWithRuleInfo,
