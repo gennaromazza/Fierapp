@@ -193,9 +193,18 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Price Details - Large screens (lg to xl) */}
             <div className="hidden lg:block xl:hidden flex-1 min-w-0">
               <div className="space-y-1">
-                {/* Lista prodotti compatta per lg */}
-                <div className="text-xs text-gray-700 line-clamp-2">
-                  <span className="font-medium">{cart.cart.itemCount} prodotti/servizi selezionati</span>
+                {/* Lista prodotti compatta per lg con nomi */}
+                <div className="text-xs text-gray-700 line-clamp-2 max-w-full overflow-hidden">
+                  <span className="font-medium">{cart.cart.itemCount} prodotti: </span>
+                  <span className="text-gray-600">
+                    {cart.cart.items.map((item, index) => (
+                      <span key={item.id}>
+                        {item.title}
+                        {item.price === 0 && <span className="text-green-600 font-bold"> (OMAGGIO)</span>}
+                        {index < cart.cart.items.length - 1 && <span className="mx-1">•</span>}
+                      </span>
+                    ))}
+                  </span>
                 </div>
                 <div className="text-sm text-gray-700">
                   Totale: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
@@ -222,8 +231,24 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Price Details - Tablet */}
             <div className="hidden sm:block lg:hidden flex-1 min-w-0">
               <div className="space-y-1">
-                <div className="text-xs text-gray-700">
-                  <span className="font-medium">{cart.cart.itemCount} elementi selezionati</span>
+                {/* Lista prodotti per tablet con nomi compatti */}
+                <div className="text-xs text-gray-700 max-w-full overflow-hidden">
+                  <span className="font-medium">{cart.cart.itemCount} prodotti: </span>
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {cart.cart.items.map((item, index) => (
+                      <span key={item.id} className="inline-flex items-center">
+                        <span className="text-gray-600 font-medium truncate max-w-20">
+                          {item.title}
+                        </span>
+                        {item.price === 0 && (
+                          <span className="ml-1 text-green-600 font-bold text-xs">(OMAGGIO)</span>
+                        )}
+                        {index < cart.cart.items.length - 1 && (
+                          <span className="mx-1 text-gray-400">•</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="text-sm text-gray-700">
                   Totale: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
