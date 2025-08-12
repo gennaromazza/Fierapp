@@ -5,7 +5,8 @@ import { logEvent } from "firebase/analytics";
 import { Settings, InsertLead } from "@shared/schema";
 import { useCart } from "../hooks/useCart";
 import { generateWhatsAppLink } from "../lib/whatsapp";
-import { MessageCircle } from "lucide-react";
+import { generateClientQuotePDF } from "../lib/pdf";
+import { MessageCircle, Download } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,6 +33,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { toast } = useToast();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Dynamic form schema based on settings
   const [formSchema, setFormSchema] = useState<z.ZodSchema<any>>(z.object({}));
@@ -215,6 +217,50 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    if (!settings) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      const formData = form.getValues();
+      
+      // Prepare data structure similar to lead data
+      const pdfData = {
+        customer: formData,
+        selectedItems: cart.items.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          originalPrice: item.originalPrice
+        })),
+        pricing: {
+          subtotal: cart.subtotal,
+          discount: cart.discount,
+          total: cart.total
+        }
+      };
+
+      const customerName = formData.nome || formData.Nome || 'cliente';
+      const filename = `preventivo-${customerName}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      
+      await generateClientQuotePDF(pdfData, filename);
+      
+      toast({
+        title: "PDF generato",
+        description: "Il preventivo è stato scaricato con successo",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "Errore",
+        description: "Errore durante la generazione del PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   if (cart.itemCount === 0) return null;
 
   return (
@@ -325,8 +371,28 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
               </div>
             )}
             
-            {/* Submit Button */}
-            <div className="pt-4">
+            {/* Action Buttons */}
+            <div className="pt-4 space-y-3">
+              {/* Download PDF Button */}
+              <Button
+                type="button"
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF || !form.watch('gdpr_consent')}
+                className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <span>Generando PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5" />
+                    <span>SCARICA PREVENTIVO PDF</span>
+                  </>
+                )}
+              </Button>
+              
+              {/* Submit Button */}
               <Button
                 type="submit"
                 disabled={isSubmitting || !form.watch('gdpr_consent')}
