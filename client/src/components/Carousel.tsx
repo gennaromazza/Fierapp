@@ -92,6 +92,16 @@ export default function Carousel() {
           
           setItems(filteredItems);
           console.info("✅ Caricati " + filteredItems.length + " items dal database");
+          console.log("📋 Items per categoria:", {
+            activeTab,
+            totalItems: allItems.length,
+            filteredItems: filteredItems.length,
+            itemsByCategory: allItems.reduce((acc, item) => {
+              acc[item.category] = (acc[item.category] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>),
+            items: filteredItems.map(item => ({ title: item.title, category: item.category }))
+          });
           
         } catch (fallbackError) {
           console.error("Fallback query failed:", fallbackError);
