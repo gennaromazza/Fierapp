@@ -13,6 +13,13 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 
 ## Recent Changes (January 12, 2025)
 
+### Mobile PriceBar Enhancement (January 12, 2025) - COMPLETED
+- **Responsive Product Names**: ✅ FIXED - Restored product names display across all screen sizes in PriceBar
+- **Mobile Optimization**: ✅ ENHANCED - Product names now displayed in pill-style badges with background to prevent truncation
+- **Cross-Device Compatibility**: ✅ VERIFIED - Responsive design works seamlessly from mobile to desktop
+- **Scroll Functionality**: Enhanced horizontal scrolling on mobile for complete product name visibility
+- **Visual Hierarchy**: Clear labeling with "X prodotti selezionati:" header for better UX
+
 ### Critical Bug Fixes (January 12, 2025) - COMPLETED
 - **CheckoutModal Pricing Sync**: ✅ FIXED - CheckoutModal now correctly applies global discounts through localStorage synchronization with PriceBar
 - **Global Discount Calculation**: ✅ FIXED - useCartWithRules getPricingWithRules() method now properly applies €300 fixed global discount without double-counting existing item discounts

@@ -264,22 +264,24 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Mobile Price Summary */}
             <div className="block sm:hidden flex-1 min-w-0">
               <div className="text-left">
-                {/* Lista prodotti mobile con scroll */}
-                <div className="max-w-full overflow-x-auto scrollbar-hide mb-1">
-                  <div className="flex items-center gap-1 whitespace-nowrap">
-                    {cart.cart.items.map((item, index) => (
-                      <span key={item.id} className="flex items-center flex-shrink-0">
-                        <span className="text-xs text-gray-700 font-medium">
-                          {item.title}
-                          {item.price === 0 && (
-                            <span className="ml-1 text-green-600 font-bold text-xs">(OMAGGIO)</span>
-                          )}
+                {/* Lista prodotti mobile ottimizzata per spazio */}
+                <div className="mb-1">
+                  <div className="text-xs text-gray-700 font-medium mb-0.5">
+                    {cart.cart.itemCount} prodotti selezionati:
+                  </div>
+                  <div className="max-w-full overflow-x-auto scrollbar-hide">
+                    <div className="flex items-center gap-2 whitespace-nowrap pb-1">
+                      {cart.cart.items.map((item, index) => (
+                        <span key={item.id} className="flex items-center flex-shrink-0 bg-gray-100 rounded-md px-2 py-1">
+                          <span className="text-xs text-gray-800 font-medium">
+                            {item.title}
+                            {item.price === 0 && (
+                              <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
+                            )}
+                          </span>
                         </span>
-                        {index < cart.cart.items.length - 1 && (
-                          <span className="mx-1 text-gray-400">•</span>
-                        )}
-                      </span>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <div className="text-xs text-gray-600 mb-1">
