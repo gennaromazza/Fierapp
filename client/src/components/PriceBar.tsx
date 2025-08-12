@@ -32,9 +32,6 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
     return () => unsubscribe();
   }, []);
 
-  // Get pricing with rules applied
-  const pricing = cart.getPricingWithRules();
-
   // Calculate discount breakdown
   const calculateDiscountBreakdown = () => {
     let globalDiscount = 0;
@@ -89,6 +86,15 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
   };
 
   const { globalDiscount, itemSpecificDiscount } = calculateDiscountBreakdown();
+
+  // Get pricing with rules applied e calcola il totale finale
+  const basePricing = cart.getPricingWithRules();
+  
+  const pricing = {
+    subtotal: basePricing.subtotal,
+    totalDiscountValue: globalDiscount + itemSpecificDiscount,
+    total: Math.max(0, basePricing.total - globalDiscount) // Il totale non può essere negativo
+  };
 
   if (cart.cart.itemCount === 0) return null;
 
