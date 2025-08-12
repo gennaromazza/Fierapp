@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Item, CartItem } from '../../../shared/schema';
-import type { RulesEvaluationResult, ItemState } from '../../../shared/rulesSchema';
+import type { RulesEvaluationResult, ItemState, SelectionRule } from '../../../shared/rulesSchema';
 
 /**
  * Hook esteso del carrello che integra le regole di selezione
@@ -283,7 +283,7 @@ export function useCartWithRules() {
     switch (rule.conditions.type) {
       case 'required_items':
         if (rule.conditions.requiredItems && rule.conditions.requiredItems.length > 0) {
-          const requiredItemNames = rule.conditions.requiredItems.map(itemId => {
+          const requiredItemNames = rule.conditions.requiredItems.map((itemId: string) => {
             const item = allItems.find(i => i.id === itemId);
             return item?.title || 'Prodotto sconosciuto';
           });
@@ -316,7 +316,7 @@ export function useCartWithRules() {
         
       case 'specific_items':
         if (rule.conditions.specificItems && rule.conditions.specificItems.length > 0) {
-          const itemNames = rule.conditions.specificItems.map(itemId => {
+          const itemNames = rule.conditions.specificItems.map((itemId: string) => {
             const item = allItems.find(i => i.id === itemId);
             return item?.title || 'Prodotto sconosciuto';
           });

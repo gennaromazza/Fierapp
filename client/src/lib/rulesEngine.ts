@@ -69,7 +69,9 @@ export class RulesEngine {
     this.rules
       .filter(rule => rule.type === 'gift_transformation')
       .forEach(rule => {
-        if (this.evaluateCondition(rule.conditions, selectedItems, selectedItemIds)) {
+        const conditionMet = this.evaluateCondition(rule.conditions, selectedItems, selectedItemIds);
+        console.log(`🎁 Gift rule "${rule.name}": condition=${conditionMet}`);
+        if (conditionMet) {
           appliedRules.push(rule.id);
           this.applyRule(rule, itemStates, selectedItemIds);
         }
@@ -226,11 +228,15 @@ export class RulesEngine {
           break;
           
         case 'make_gift':
-          // Solo se l'item è nel carrello
-          if (selectedItemIds.includes(targetItemId)) {
-            currentState.isGift = true;
-            currentState.giftSettings = rule.giftSettings;
-          }
+          // Rende SEMPRE regalo quando la condizione è soddisfatta
+          // Non serve che sia già nel carrello
+          currentState.isGift = true;
+          currentState.giftSettings = rule.giftSettings || {
+            showOriginalPrice: true,
+            giftText: 'OMAGGIO!',
+            giftBadgeColor: 'bg-green-600'
+          };
+          console.log(`🎁 Applied gift to ${targetItemId}:`, rule.name);
           break;
           
         default:

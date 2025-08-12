@@ -21,6 +21,13 @@ export default function ItemCard({ item }: ItemCardProps) {
   const itemAvailable = isItemAvailable(item.id);
   const itemIsGift = isItemGift(item.id);
   const giftSettings = getItemGiftSettings(item.id);
+  
+  // Log per debug quando un item diventa regalo
+  useEffect(() => {
+    if (itemIsGift) {
+      console.log(`✨ ${item.title} è ora un OMAGGIO!`, giftSettings);
+    }
+  }, [itemIsGift, item.title, giftSettings]);
 
   // Function to truncate text to a specific word count
   const truncateText = (text: string, wordLimit: number = 15) => {
@@ -139,6 +146,8 @@ export default function ItemCard({ item }: ItemCardProps) {
       // Usa il prezzo finale: 0 se è un regalo, altrimenti il prezzo scontato
       const finalPrice = itemIsGift ? 0 : discountedPrice;
       
+      console.log(`🛒 Adding ${item.title}: isGift=${itemIsGift}, price=${finalPrice}`);
+      
       addItem({
         id: item.id,
         title: item.title,
@@ -173,11 +182,11 @@ export default function ItemCard({ item }: ItemCardProps) {
           </div>
         )}
         
-        {/* Gift Badge - positioned above image */}
-        {itemIsGift && isAdded && (
-          <div className="absolute top-3 left-3 bg-green-600 text-white px-3 py-2 rounded-full text-sm font-bold shadow-2xl border-2 border-white z-20 flex items-center space-x-1" style={{ backdropFilter: 'blur(4px)' }}>
-            <Gift className="w-3 h-3" />
-            <span>{giftSettings?.giftText || "OMAGGIO!"}</span>
+        {/* Gift Badge - positioned above image - Mostra sempre se è un regalo */}
+        {itemIsGift && (
+          <div className="absolute top-3 left-3 bg-green-600 text-white px-4 py-2 rounded-full text-base font-bold shadow-2xl border-2 border-white z-20 flex items-center space-x-2 transform scale-110" style={{ backdropFilter: 'blur(4px)' }}>
+            <Gift className="w-5 h-5" />
+            <span>OMAGGIO!</span>
           </div>
         )}
         

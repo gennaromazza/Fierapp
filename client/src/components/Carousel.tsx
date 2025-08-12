@@ -137,7 +137,7 @@ export default function Carousel() {
       slidesPerView,
       totalSlides,
       currentSlide,
-      items: items.map(item => item.title)
+      currentSlideItems: items.slice(currentSlide * slidesPerView, (currentSlide + 1) * slidesPerView).map(item => item.title)
     });
   }, [items, activeTab, currentSlide, slidesPerView, totalSlides]);
 
@@ -271,19 +271,37 @@ export default function Carousel() {
       {items.length > 0 ? (
         <div>
           <div className="relative overflow-hidden">
-            <div className="flex w-full">
-              {/* Render solo gli items della slide corrente */}
-              {items
-                .slice(currentSlide * slidesPerView, (currentSlide + 1) * slidesPerView)
-                .map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="px-1 sm:px-2"
-                    style={{ width: `${100 / slidesPerView}%` }}
-                  >
-                    <ItemCard item={item} />
-                  </div>
-                ))}
+            <div 
+              className="flex transition-transform duration-300 ease-in-out"
+              style={{
+                transform: `translateX(-${currentSlide * 100}%)`,
+              }}
+            >
+              {Array.from({ length: totalSlides }, (_, slideIndex) => (
+                <div
+                  key={slideIndex}
+                  className="flex min-w-full"
+                >
+                  {items
+                    .slice(slideIndex * slidesPerView, (slideIndex + 1) * slidesPerView)
+                    .map((item) => (
+                      <div 
+                        key={item.id} 
+                        className="px-1 sm:px-2"
+                        style={{ width: `${100 / slidesPerView}%` }}
+                      >
+                        <ItemCard item={item} />
+                      </div>
+                    ))}
+                  {/* Fill empty slots on last slide */}
+                  {slideIndex === totalSlides - 1 &&
+                    Array.from({ 
+                      length: Math.max(0, slidesPerView - (items.length % slidesPerView || slidesPerView))
+                    }, (_, i) => (
+                      <div key={`empty-${i}`} style={{ width: `${100 / slidesPerView}%` }} />
+                    ))}
+                </div>
+              ))}
             </div>
           </div>
 
