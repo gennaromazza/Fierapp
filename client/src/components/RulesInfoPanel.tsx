@@ -52,6 +52,9 @@ export default function RulesInfoPanel() {
     });
   };
 
+  // Ref per tracciare se è la prima valutazione (caricamento iniziale)
+  const isInitialLoadRef = useRef(true);
+
   // Monitora i cambiamenti nelle regole e mostra toast
   useEffect(() => {
     if (rulesLoading || !items.length) return;
@@ -72,42 +75,52 @@ export default function RulesInfoPanel() {
     });
 
     const previousState = previousRulesStateRef.current;
+    
+    // Se è il primo caricamento, inizializza lo stato e esci senza mostrare toast
+    if (isInitialLoadRef.current) {
+      previousRulesStateRef.current = currentState;
+      isInitialLoadRef.current = false;
+      return;
+    }
 
-    // Trova nuovi item sbloccati
-    const newlyAvailableItems = [...currentState.availableItems].filter(
-      itemId => !previousState.availableItems.has(itemId) && 
-      // Solo se l'item non è nel carrello (altrimenti è stato aggiunto manualmente)
-      !cart.items.some(cartItem => cartItem.id === itemId)
-    );
+    // Mostra toast solo se ci sono item nel carrello (indica un'azione dell'utente)
+    if (cart.items.length > 0) {
+      // Trova nuovi item sbloccati
+      const newlyAvailableItems = [...currentState.availableItems].filter(
+        itemId => !previousState.availableItems.has(itemId) && 
+        // Solo se l'item non è nel carrello (altrimenti è stato aggiunto manualmente)
+        !cart.items.some(cartItem => cartItem.id === itemId)
+      );
 
-    // Trova nuovi item omaggio
-    const newlyGiftItems = [...currentState.giftItems].filter(
-      itemId => !previousState.giftItems.has(itemId)
-    );
+      // Trova nuovi item omaggio
+      const newlyGiftItems = [...currentState.giftItems].filter(
+        itemId => !previousState.giftItems.has(itemId)
+      );
 
-    // Mostra toast per item sbloccati
-    newlyAvailableItems.forEach(itemId => {
-      const item = items.find(i => i.id === itemId);
-      if (item) {
-        toast({
-          title: "🎉 Prodotto Sbloccato!",
-          description: `Hai sbloccato: ${item.title}`,
-          duration: 4000,
-        });
-      }
-    });
+      // Mostra toast per item sbloccati solo se c'è stata una vera modifica del carrello
+      newlyAvailableItems.forEach(itemId => {
+        const item = items.find(i => i.id === itemId);
+        if (item) {
+          toast({
+            title: "🎉 Prodotto Sbloccato!",
+            description: `Hai sbloccato: ${item.title}`,
+            duration: 4000,
+          });
+        }
+      });
 
-    // Mostra toast per item omaggio
-    newlyGiftItems.forEach(itemId => {
-      const item = items.find(i => i.id === itemId);
-      if (item) {
-        toast({
-          title: "🎁 Omaggio Attivato!",
-          description: `${item.title} è ora gratuito!`,
-          duration: 4000,
-        });
-      }
-    });
+      // Mostra toast per item omaggio
+      newlyGiftItems.forEach(itemId => {
+        const item = items.find(i => i.id === itemId);
+        if (item) {
+          toast({
+            title: "🎁 Omaggio Attivato!",
+            description: `${item.title} è ora gratuito!`,
+            duration: 4000,
+          });
+        }
+      });
+    }
 
     // Aggiorna il riferimento allo stato precedente
     previousRulesStateRef.current = currentState;
