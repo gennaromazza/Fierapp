@@ -41,9 +41,9 @@ export class RulesEngine {
 
     const selectedItemIds = selectedItems.map(item => item.id);
 
-    // Prima passa: regole di disponibilità
+    // Prima passa: regole di disponibilità (escluso esclusione mutua)
     this.rules
-      .filter(rule => rule.type === 'availability')
+      .filter(rule => rule.type === 'availability' && rule.conditions.type !== 'mutually_exclusive')
       .forEach(rule => {
         const conditionMet = this.evaluateCondition(rule.conditions, selectedItems, selectedItemIds);
         
