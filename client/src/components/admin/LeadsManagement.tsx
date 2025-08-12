@@ -294,15 +294,15 @@ export default function LeadsManagement() {
 
     const body = bodyLines.join('\n');
     
-    // Crea link mailto
-    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // Crea link Gmail web compose
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
-    // Apri client email
-    window.location.href = mailtoLink;
+    // Apri Gmail web in nuova tab
+    window.open(gmailUrl, '_blank');
     
     toast({
-      title: "Email aperta",
-      description: "Il tuo client email è stato aperto con il preventivo precompilato",
+      title: "Gmail aperto",
+      description: "Gmail web è stato aperto con il preventivo precompilato",
     });
   };
 
