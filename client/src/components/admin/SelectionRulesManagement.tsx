@@ -216,7 +216,7 @@ export default function SelectionRulesManagement() {
               <span>Nuova Regola</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto bg-brand-surface border-brand-border">
+          <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto bg-brand-primary border-brand-border">
             <DialogHeader>
               <DialogTitle className="text-brand-text-primary">
                 {editingRule ? "Modifica Regola" : "Nuova Regola di Selezione"}
@@ -561,7 +561,7 @@ export default function SelectionRulesManagement() {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-brand-surface border-brand-border">
+                      <AlertDialogContent className="bg-brand-primary border-brand-border">
                         <AlertDialogHeader>
                           <AlertDialogTitle className="text-brand-text-primary">Elimina regola</AlertDialogTitle>
                           <AlertDialogDescription className="text-brand-text-secondary">
