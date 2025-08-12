@@ -46,6 +46,17 @@ export default function Carousel() {
         setItems(itemsData);
         setCurrentSlide(0);
         
+        // Debug: log items loaded in first query
+        console.log("🔍 QUERY PRINCIPALE - Items caricati:", {
+          activeTab,
+          count: itemsData.length,
+          items: itemsData.map(item => ({ 
+            title: item.title, 
+            category: item.category,
+            active: item.active 
+          }))
+        });
+        
         // If we got data successfully, log that we need indices for optimization
         if (itemsData.length > 0) {
           console.info(
@@ -92,7 +103,7 @@ export default function Carousel() {
           
           setItems(filteredItems);
           console.info("✅ Caricati " + filteredItems.length + " items dal database");
-          console.log("📋 Items per categoria:", {
+          console.log("🔍 QUERY FALLBACK - Items per categoria:", {
             activeTab,
             totalItems: allItems.length,
             filteredItems: filteredItems.length,
@@ -100,7 +111,15 @@ export default function Carousel() {
               acc[item.category] = (acc[item.category] || 0) + 1;
               return acc;
             }, {} as Record<string, number>),
-            items: filteredItems.map(item => ({ title: item.title, category: item.category }))
+            allItems: allItems.map(item => ({ 
+              title: item.title, 
+              category: item.category,
+              active: item.active 
+            })),
+            filtered: filteredItems.map(item => ({ 
+              title: item.title, 
+              category: item.category 
+            }))
           });
           
         } catch (fallbackError) {
