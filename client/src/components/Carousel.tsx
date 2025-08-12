@@ -11,6 +11,7 @@ export default function Carousel() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
 
   useEffect(() => {
     async function loadItems() {
@@ -105,25 +106,33 @@ export default function Carousel() {
     loadItems();
   }, [activeTab]);
 
+  // Handle window resize for responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      setCurrentSlide(0); // Reset to first slide on resize
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
   const slidesPerView = getSlidesPerView();
   const totalSlides = Math.ceil(items.length / slidesPerView);
   
-  // Debug per vedere i calcoli del carousel
-  console.log("🔍 Carousel Debug:", {
-    activeTab,
-    itemsCount: items.length,
-    slidesPerView,
-    totalSlides,
-    currentSlide,
-    items: items.map(item => item.title)
-  });
+  // Ensure currentSlide doesn't exceed available slides
+  useEffect(() => {
+    if (currentSlide >= totalSlides && totalSlides > 0) {
+      setCurrentSlide(0);
+    }
+  }, [currentSlide, totalSlides]);
 
   function getSlidesPerView() {
-    if (typeof window !== "undefined") {
-      if (window.innerWidth >= 1024) return 3;
-      if (window.innerWidth >= 768) return 2;
-    }
-    return 1;
+    if (windowWidth >= 1024) return 3; // Desktop: 3 items per slide
+    if (windowWidth >= 768) return 2;  // Tablet: 2 items per slide
+    return 1; // Mobile: 1 item per slide
   }
 
   const nextSlide = () => {
@@ -253,20 +262,39 @@ export default function Carousel() {
             <div 
               className="flex transition-transform duration-300 ease-in-out"
               style={{
-                transform: `translateX(-${currentSlide * (100 / getSlidesPerView())}%)`,
-                width: `${Math.ceil(items.length / getSlidesPerView()) * 100}%`
+                transform: `translateX(-${currentSlide * 100}%)`,
+                width: `${totalSlides * 100}%`
               }}
             >
-              {items.map((item) => (
+              {Array.from({ length: totalSlides }, (_, slideIndex) => (
                 <div 
-                  key={item.id} 
-                  className="px-2"
-                  style={{
-                    width: `${100 / getSlidesPerView()}%`,
-                    flexShrink: 0
-                  }}
+                  key={slideIndex}
+                  className="flex w-full"
+                  style={{ width: `${100 / totalSlides}%` }}
                 >
-                  <ItemCard item={item} />
+                  {items
+                    .slice(slideIndex * slidesPerView, (slideIndex + 1) * slidesPerView)
+                    .map((item) => (
+                      <div 
+                        key={item.id} 
+                        className="px-1 sm:px-2"
+                        style={{ width: `${100 / slidesPerView}%` }}
+                      >
+                        <ItemCard item={item} />
+                      </div>
+                    ))}
+                  {/* Fill empty slots if last slide has fewer items */}
+                  {slideIndex === totalSlides - 1 && 
+                   items.slice(slideIndex * slidesPerView, (slideIndex + 1) * slidesPerView).length < slidesPerView &&
+                   Array.from({ 
+                     length: slidesPerView - items.slice(slideIndex * slidesPerView, (slideIndex + 1) * slidesPerView).length 
+                   }, (_, emptyIndex) => (
+                     <div 
+                       key={`empty-${emptyIndex}`}
+                       className="px-1 sm:px-2"
+                       style={{ width: `${100 / slidesPerView}%` }}
+                     />
+                   ))}
                 </div>
               ))}
             </div>
@@ -318,6 +346,11 @@ export default function Carousel() {
                 <span style={{ color: 'var(--brand-text-secondary)' }}>
                   Pagina {currentSlide + 1} di {totalSlides} • {items.length} {activeTab === "tutti" ? "elementi" : activeTab}
                 </span>
+                <div className="text-xs mt-1 hidden sm:block">
+                  <span style={{ color: 'var(--brand-text-secondary)' }}>
+                    {windowWidth >= 1024 ? "3 elementi per pagina" : windowWidth >= 768 ? "2 elementi per pagina" : "1 elemento per pagina"}
+                  </span>
+                </div>
               </div>
             </>
           )}
