@@ -11,6 +11,25 @@ import type { Item } from '@shared/schema';
 export default function RulesInfoPanel() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+
+  // Listener per il pulsante nell'header
+  useEffect(() => {
+    const handleHeaderButtonClick = () => {
+      setIsMinimized(false);
+      setIsExpanded(true);
+    };
+
+    const headerButton = document.getElementById('header-offers-button');
+    if (headerButton) {
+      headerButton.addEventListener('click', handleHeaderButtonClick);
+    }
+
+    return () => {
+      if (headerButton) {
+        headerButton.removeEventListener('click', handleHeaderButtonClick);
+      }
+    };
+  }, []);
   const { rules, loading: rulesLoading } = useSelectionRules();
   const { cart, rulesEvaluation, getAllItemsWithAvailability } = useCartWithRules();
   const { toast } = useToast();
@@ -135,55 +154,19 @@ export default function RulesInfoPanel() {
   }
 
   return (
-    <div className="fixed bottom-20 right-2 md:right-4 z-40 w-[calc(100vw-1rem)] max-w-sm">
-      {/* Bottone di apertura - versione minimizzata o normale */}
-      {isMinimized ? (
-        <button
-          onClick={() => {
-            setIsMinimized(false);
-            setIsExpanded(true);
-          }}
-          className="bg-green-600/80 backdrop-blur-sm text-white rounded-full p-2 shadow-lg hover:bg-green-600 transition-all duration-300 hover:scale-110 ml-auto block"
-          title="Visualizza offerte speciali"
-        >
-          <Gift className="w-4 h-4" />
-        </button>
-      ) : (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="bg-green-600/90 backdrop-blur-sm text-white rounded-lg px-3 py-2 shadow-lg flex items-center gap-2 hover:bg-green-600 transition-all duration-300 hover:scale-102 w-full md:w-auto justify-center text-sm relative"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span className="font-medium">Offerte Speciali</span>
-          <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-          {/* Badge numero regole attive */}
-          {(giftRules.length + availabilityRules.length) > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-              {giftRules.length + availabilityRules.length}
-            </span>
-          )}
-          {/* Bottone X per minimizzare */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMinimized(true);
-              setIsExpanded(false);
-            }}
-            className="absolute -top-2 -right-2 bg-gray-400 hover:bg-gray-500 text-white rounded-full w-5 h-5 flex items-center justify-center transition-colors"
-            title="Minimizza"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </button>
-      )}
-
+    <div className="fixed top-20 right-2 md:right-4 z-40 w-[calc(100vw-1rem)] max-w-sm">
       {/* Pannello espandibile */}
       {isExpanded && (
-        <div className="mt-2 bg-white rounded-xl shadow-2xl border-2 border-green-400 overflow-hidden animate-fade-in">
+        <div className="bg-white rounded-xl shadow-2xl border-2 border-green-400 overflow-hidden animate-fade-in">
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 md:p-4 border-b relative">
             <h3 className="font-bold text-base md:text-lg text-green-800 flex items-center gap-2 pr-8">
               <Info className="w-4 h-4 md:w-5 md:h-5" />
               Offerte e Regole Attive
+              {(giftRules.length + availabilityRules.length) > 0 && (
+                <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold ml-2">
+                  {giftRules.length + availabilityRules.length}
+                </span>
+              )}
             </h3>
             {/* Bottone X di chiusura */}
             <button

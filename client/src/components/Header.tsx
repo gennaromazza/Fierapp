@@ -176,18 +176,40 @@ export default function Header({
             </nav>
           )}
 
-          {/* Admin Link */}
-          <Link
-            href="/admin"
-            className="text-sm transition-colors"
-            onMouseEnter={(e: any) =>
-              (e.currentTarget.style.color = "var(--brand-accent)")
-            }
-            onMouseLeave={(e: any) => (e.currentTarget.style.color = "#6B7280")}
-            style={{ color: "#6B7280" }}
-          >
-            <SettingsIcon className="w-4 h-4" />
-          </Link>
+          {/* Navigation Actions */}
+          <div className="flex items-center space-x-3">
+            {/* Special Offers Button */}
+            <button
+              id="header-offers-button"
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-green-600/10 hover:bg-green-600/20 border border-green-600/30 transition-all duration-200 text-sm"
+              style={{ color: "var(--brand-accent)" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "var(--brand-accent)";
+                e.currentTarget.style.color = "white";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(34, 197, 94, 0.1)";
+                e.currentTarget.style.color = "var(--brand-accent)";
+              }}
+            >
+              <span className="text-lg">🎁</span>
+              <span className="hidden sm:inline font-medium">Offerte</span>
+              <span className="sm:hidden font-medium">🎁</span>
+            </button>
+
+            {/* Admin Link */}
+            <Link
+              href="/admin"
+              className="text-sm transition-colors p-2 rounded-lg hover:bg-gray-100"
+              onMouseEnter={(e: any) =>
+                (e.currentTarget.style.color = "var(--brand-accent)")
+              }
+              onMouseLeave={(e: any) => (e.currentTarget.style.color = "#6B7280")}
+              style={{ color: "#6B7280" }}
+            >
+              <SettingsIcon className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
