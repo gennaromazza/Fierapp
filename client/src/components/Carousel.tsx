@@ -148,15 +148,21 @@ export default function Carousel() {
   }
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+    if (currentSlide < totalSlides - 1) {
+      setCurrentSlide((prev) => prev + 1);
+    }
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+    if (currentSlide > 0) {
+      setCurrentSlide((prev) => prev - 1);
+    }
   };
 
   const goToSlide = (index: number) => {
-    setCurrentSlide(index);
+    if (index >= 0 && index < totalSlides) {
+      setCurrentSlide(index);
+    }
   };
 
   if (loading) {
@@ -270,11 +276,30 @@ export default function Carousel() {
       {/* Carousel Content */}
       {items.length > 0 ? (
         <div>
-          <div className="relative overflow-hidden">
+          <div className="relative overflow-hidden touch-pan-y">
             <div 
-              className="flex transition-transform duration-300 ease-in-out"
+              className="flex transition-transform duration-500 ease-out"
               style={{
                 transform: `translateX(-${currentSlide * 100}%)`,
+                willChange: 'transform'
+              }}
+              onTouchStart={(e) => {
+                const touch = e.touches[0];
+                e.currentTarget.dataset.startX = touch.clientX.toString();
+              }}
+              onTouchEnd={(e) => {
+                const startX = parseFloat(e.currentTarget.dataset.startX || '0');
+                const touch = e.changedTouches[0];
+                const diffX = startX - touch.clientX;
+                const threshold = 50;
+                
+                if (Math.abs(diffX) > threshold) {
+                  if (diffX > 0 && currentSlide < totalSlides - 1) {
+                    nextSlide();
+                  } else if (diffX < 0 && currentSlide > 0) {
+                    prevSlide();
+                  }
+                }
               }}
             >
               {Array.from({ length: totalSlides }, (_, slideIndex) => (
@@ -312,8 +337,13 @@ export default function Carousel() {
               <div className="flex justify-between items-center mt-6">
                 <button
                   onClick={prevSlide}
-                  className="p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-                  style={{ color: 'var(--brand-accent)' }}
+                  disabled={currentSlide === 0}
+                  className={`p-3 rounded-full shadow-lg transition-all duration-200 ${
+                    currentSlide === 0 
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      : 'bg-white hover:shadow-xl hover:scale-110'
+                  }`}
+                  style={currentSlide === 0 ? {} : { color: 'var(--brand-accent)' }}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -337,8 +367,13 @@ export default function Carousel() {
                 
                 <button
                   onClick={nextSlide}
-                  className="p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-                  style={{ color: 'var(--brand-accent)' }}
+                  disabled={currentSlide === totalSlides - 1}
+                  className={`p-3 rounded-full shadow-lg transition-all duration-200 ${
+                    currentSlide === totalSlides - 1 
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      : 'bg-white hover:shadow-xl hover:scale-110'
+                  }`}
+                  style={currentSlide === totalSlides - 1 ? {} : { color: 'var(--brand-accent)' }}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
