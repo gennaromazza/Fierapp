@@ -360,13 +360,13 @@ export default function LeadsManagement() {
   const getStatusBadge = (status: Lead["status"]) => {
     switch (status) {
       case "new":
-        return <Badge className="bg-blue-100 text-blue-800">Nuovo</Badge>;
+        return <Badge className="bg-blue-100 text-white">Nuovo</Badge>;
       case "contacted":
-        return <Badge className="bg-yellow-100 text-yellow-800">Contattato</Badge>;
+        return <Badge className="bg-yellow-100 text-white">Contattato</Badge>;
       case "quoted":
-        return <Badge className="bg-purple-100 text-purple-800">Preventivato</Badge>;
+        return <Badge className="bg-purple-100 text-white">Preventivato</Badge>;
       case "closed":
-        return <Badge className="bg-green-100 text-green-800">Chiuso</Badge>;
+        return <Badge className="bg-green-100 text-white">Chiuso</Badge>;
       default:
         return <Badge variant="secondary">Sconosciuto</Badge>;
     }

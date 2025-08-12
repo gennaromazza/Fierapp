@@ -246,11 +246,11 @@ export default function DiscountManagement() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
-        return <Badge className="bg-green-100 text-green-800">Attivo</Badge>;
+        return <Badge className="bg-green-100 text-white">Attivo</Badge>;
       case "expired":
-        return <Badge className="bg-red-100 text-red-800">Scaduto</Badge>;
+        return <Badge className="bg-red-100 text-white">Scaduto</Badge>;
       case "scheduled":
-        return <Badge className="bg-blue-100 text-blue-800">Programmato</Badge>;
+        return <Badge className="bg-blue-100 text-white">Programmato</Badge>;
       default:
         return <Badge variant="secondary">Inattivo</Badge>;
     }
