@@ -239,8 +239,23 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Mobile Price Summary */}
             <div className="block sm:hidden flex-1 min-w-0">
               <div className="text-left">
-                <div className="text-xs text-gray-600 mb-1 font-medium">
-                  {cart.cart.itemCount} elementi
+                {/* Lista prodotti mobile con scroll */}
+                <div className="max-w-full overflow-x-auto scrollbar-hide mb-1">
+                  <div className="flex items-center gap-1 whitespace-nowrap">
+                    {cart.cart.items.map((item, index) => (
+                      <span key={item.id} className="flex items-center flex-shrink-0">
+                        <span className="text-xs text-gray-700 font-medium">
+                          {item.title}
+                          {item.price === 0 && (
+                            <span className="ml-1 text-green-600 font-bold text-xs">(OMAGGIO)</span>
+                          )}
+                        </span>
+                        {index < cart.cart.items.length - 1 && (
+                          <span className="mx-1 text-gray-400">•</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="text-xs text-gray-600 mb-1">
                   Totale: €{pricing.subtotal.toLocaleString('it-IT')}
