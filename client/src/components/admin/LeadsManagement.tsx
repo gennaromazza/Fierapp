@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, updateDoc, doc, deleteDoc, where, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, updateDoc, doc, deleteDoc, where, Timestamp, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import { Lead } from "@shared/schema";
+import { Lead, Settings } from "@shared/schema";
 import { useCollection } from "../../hooks/useFirestore";
 import { exportLeadsToExcel } from "../../lib/exportExcel";
 import { generateQuotePDF } from "../../lib/pdf";
@@ -211,7 +211,7 @@ export default function LeadsManagement() {
     }));
   };
 
-  const openEmailCompose = (lead: Lead) => {
+  const openEmailCompose = async (lead: Lead) => {
     const customer = lead.customer;
     const email = customer.email || customer.Email;
     
@@ -222,6 +222,17 @@ export default function LeadsManagement() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Carica le impostazioni dello studio da Firestore
+    let studioSettings: Settings | null = null;
+    try {
+      const settingsDoc = await getDoc(doc(db, "settings", "app"));
+      if (settingsDoc.exists()) {
+        studioSettings = settingsDoc.data() as Settings;
+      }
+    } catch (error) {
+      console.error("Error loading studio settings:", error);
     }
 
     // Crea oggetto email
@@ -239,10 +250,10 @@ export default function LeadsManagement() {
       '═══════════════════════════════════════════════',
       '',
       '📍 STUDIO INFORMAZIONI:',
-      '   Nome: [Il tuo studio]',
-      '   Indirizzo: [Il tuo indirizzo]',
-      '   Telefono: [Il tuo telefono]',
-      '   Email: [La tua email]',
+      `   Nome: ${studioSettings?.studioName || 'Studio Non Configurato'}`,
+      `   Indirizzo: ${studioSettings?.studioAddress || 'Indirizzo non configurato'}`,
+      `   Telefono: ${studioSettings?.phoneNumber || 'Telefono non configurato'}`,
+      `   Email: ${studioSettings?.email || 'Email non configurata'}`,
       '',
       '👤 CLIENTE:',
       `   Nome: ${customer.nome || customer.Nome || 'N/A'}`,
@@ -289,8 +300,7 @@ export default function LeadsManagement() {
     bodyLines.push('Restiamo a disposizione per qualsiasi informazione.');
     bodyLines.push('');
     bodyLines.push('Cordiali saluti,');
-    bodyLines.push('[Il tuo nome]');
-    bodyLines.push('[Il tuo studio]');
+    bodyLines.push(`${studioSettings?.studioName || 'Il tuo studio'}`);
 
     const body = bodyLines.join('\n');
     
