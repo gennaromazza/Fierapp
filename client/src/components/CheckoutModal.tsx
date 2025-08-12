@@ -297,6 +297,18 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             
             {(() => {
               const pricing = cartWithRules.getPricingWithRules();
+              
+              // Calcola sconti specifici per item (differenza tra prezzo originale e attuale)
+              let itemSpecificDiscounts = 0;
+              cartWithRules.cart.items.forEach(item => {
+                if (item.originalPrice && item.originalPrice > item.price) {
+                  itemSpecificDiscounts += (item.originalPrice - item.price);
+                }
+              });
+              
+              // Calcola sconto globale (differenza tra discount totale e sconti specifici)
+              const globalDiscount = pricing.discount - itemSpecificDiscounts;
+              
               return (
                 <>
                   <hr className="border-brand-secondary" />
@@ -307,19 +319,32 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                   
                   {pricing.totalSavings > 0 && (
                     <>
-                      {pricing.discount > 0 && (
-                        <div className="flex justify-between text-green-600 font-semibold">
-                          <span>Sconti applicati:</span>
-                          <span>-€{Math.round(pricing.discount).toLocaleString('it-IT')}</span>
+                      {/* Sconti specifici per item */}
+                      {itemSpecificDiscounts > 0 && (
+                        <div className="flex justify-between text-orange-600 font-semibold">
+                          <span>Sconti prodotto/servizio:</span>
+                          <span>-€{Math.round(itemSpecificDiscounts).toLocaleString('it-IT')}</span>
                         </div>
                       )}
+                      
+                      {/* Sconto globale fiera */}
+                      {globalDiscount > 0 && (
+                        <div className="flex justify-between text-blue-600 font-semibold">
+                          <span>Sconto speciale fiera:</span>
+                          <span>-€{Math.round(globalDiscount).toLocaleString('it-IT')}</span>
+                        </div>
+                      )}
+                      
+                      {/* Omaggi */}
                       {pricing.giftSavings > 0 && (
                         <div className="flex justify-between text-green-600 font-semibold">
-                          <span>Omaggi:</span>
+                          <span>Servizi in omaggio:</span>
                           <span>-€{Math.round(pricing.giftSavings).toLocaleString('it-IT')}</span>
                         </div>
                       )}
-                      <div className="flex justify-between text-green-600 font-bold text-base">
+                      
+                      {/* Risparmio totale */}
+                      <div className="flex justify-between text-green-600 font-bold text-base border-t border-gray-200 pt-2 mt-2">
                         <span>RISPARMIO TOTALE:</span>
                         <span>-€{Math.round(pricing.totalSavings).toLocaleString('it-IT')}</span>
                       </div>
