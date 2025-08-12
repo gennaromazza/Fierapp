@@ -222,16 +222,14 @@ export default function SelectionRulesManagement() {
                 {editingRule ? "Modifica Regola" : "Nuova Regola di Selezione"}
               </DialogTitle>
               <DialogDescription className="text-brand-text-secondary">
-                <div className="space-y-2">
-                  <p>Configura condizioni e azioni per la regola di selezione</p>
-                  <div className="bg-brand-primary p-3 rounded border-brand-border border">
-                    <p className="text-sm text-brand-text-primary">
-                      <strong>Come funziona:</strong> Se il cliente seleziona gli "Items Richiesti", 
-                      allora gli "Items Target" verranno modificati secondo l'azione scelta.
-                    </p>
-                  </div>
-                </div>
+                Configura condizioni e azioni per la regola di selezione
               </DialogDescription>
+              <div className="bg-brand-primary p-3 rounded border-brand-border border mb-6">
+                <span className="text-sm text-brand-text-primary">
+                  <strong>Come funziona:</strong> Se il cliente seleziona gli "Items Richiesti", 
+                  allora gli "Items Target" verranno modificati secondo l'azione scelta.
+                </span>
+              </div>
             </DialogHeader>
 
             <div className="space-y-6">
