@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { useCartWithRules } from "../hooks/useCartWithRules";
 import { Discounts } from "@shared/schema";
@@ -15,18 +15,21 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
   const [discounts, setDiscounts] = useState<Discounts>({});
 
   useEffect(() => {
-    const loadDiscounts = async () => {
-      try {
-        const discountsDoc = await getDoc(doc(db, "settings", "discounts"));
-        if (discountsDoc.exists()) {
-          setDiscounts(discountsDoc.data() as Discounts);
-        }
-      } catch (error) {
-        console.error("Error loading discounts:", error);
+    // Usa onSnapshot per aggiornamenti in tempo reale
+    const unsubscribe = onSnapshot(doc(db, "settings", "discounts"), (discountsDoc) => {
+      if (discountsDoc.exists()) {
+        const discountsData = discountsDoc.data() as Discounts;
+        console.log("📊 Sconti caricati in PriceBar:", discountsData);
+        setDiscounts(discountsData);
+      } else {
+        console.log("❌ Nessun documento sconti trovato");
+        setDiscounts({});
       }
-    };
+    }, (error) => {
+      console.error("Error loading discounts:", error);
+    });
 
-    loadDiscounts();
+    return () => unsubscribe();
   }, []);
 
   // Get pricing with rules applied
@@ -37,28 +40,51 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
     let globalDiscount = 0;
     let itemSpecificDiscount = 0;
 
+    // Controlla se c'è uno sconto globale attivo
+    const hasGlobalDiscount = discounts?.global?.isActive;
+    
+    console.log("💰 Calcolo sconti:", {
+      hasGlobalDiscount,
+      globalType: discounts?.global?.type,
+      globalValue: discounts?.global?.value,
+      globalPercentage: discounts?.global?.percentage,
+      cartItems: cart.cart.items.length
+    });
+
+    // Calcola lo sconto globale se attivo
+    if (hasGlobalDiscount) {
+      if (discounts.global.type === 'fixed') {
+        // Sconto fisso
+        globalDiscount = discounts.global.value || 0;
+      } else if (discounts.global.type === 'percentage') {
+        // Sconto percentuale sul totale
+        const subtotal = cart.cart.items.reduce((sum, item) => {
+          if (item.price === 0) return sum; // Salta gli omaggi
+          return sum + (item.originalPrice || item.price);
+        }, 0);
+        globalDiscount = Math.round(subtotal * ((discounts.global.percentage || 0) / 100));
+      }
+    }
+
+    // Calcola gli sconti specifici per item
     cart.cart.items.forEach(item => {
       const originalPrice = item.originalPrice || item.price;
-      const currentPrice = item.price;
-      const totalItemDiscount = originalPrice - currentPrice;
+      
+      // Se è un regalo (price = 0), salta
+      if (item.price === 0) return;
 
-      // Check if this item has a specific discount
-      const hasItemDiscount = discounts.perItemOverrides?.[item.id];
-
-      if (hasItemDiscount && totalItemDiscount > 0) {
-        // Calculate what portion is from item-specific vs global
-        const itemOnlyPrice = calculateDiscountedPrice(originalPrice, item.id, { perItemOverrides: { [item.id]: hasItemDiscount } });
-        const itemSpecificAmount = originalPrice - itemOnlyPrice;
-        const globalAmount = totalItemDiscount - itemSpecificAmount;
-
-        itemSpecificDiscount += itemSpecificAmount;
-        globalDiscount += globalAmount;
-      } else if (discounts.global && totalItemDiscount > 0) {
-        // All discount is from global
-        globalDiscount += totalItemDiscount;
+      const hasItemDiscount = discounts?.perItemOverrides?.[item.id];
+      if (hasItemDiscount) {
+        if (hasItemDiscount.type === 'fixed') {
+          itemSpecificDiscount += (hasItemDiscount.value || 0);
+        } else if (hasItemDiscount.type === 'percentage') {
+          const itemDiscountAmount = Math.round(originalPrice * ((hasItemDiscount.percentage || 0) / 100));
+          itemSpecificDiscount += itemDiscountAmount;
+        }
       }
     });
 
+    console.log("📊 Risultato calcolo sconti:", { globalDiscount, itemSpecificDiscount });
     return { globalDiscount, itemSpecificDiscount };
   };
 
