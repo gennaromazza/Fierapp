@@ -87,13 +87,19 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
 
   const { globalDiscount, itemSpecificDiscount } = calculateDiscountBreakdown();
 
-  // Get pricing with rules applied e calcola il totale finale
+  // Get pricing with rules applied
   const basePricing = cart.getPricingWithRules();
   
+  // Calcola il subtotale originale (senza sconti globali)
+  const originalSubtotal = cart.cart.items.reduce((sum, item) => {
+    if (item.price === 0) return sum; // Salta gli omaggi
+    return sum + (item.originalPrice || item.price);
+  }, 0);
+  
   const pricing = {
-    subtotal: basePricing.subtotal,
+    subtotal: originalSubtotal,
     totalDiscountValue: globalDiscount + itemSpecificDiscount,
-    total: Math.max(0, basePricing.total - globalDiscount) // Il totale non può essere negativo
+    total: Math.max(0, originalSubtotal - globalDiscount - itemSpecificDiscount)
   };
 
   if (cart.cart.itemCount === 0) return null;
