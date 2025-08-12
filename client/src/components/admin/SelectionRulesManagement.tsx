@@ -187,11 +187,15 @@ export default function SelectionRulesManagement() {
                 <TooltipTrigger>
                   <HelpCircle className="w-5 h-5 text-white/60 hover:text-white" />
                 </TooltipTrigger>
-                <TooltipContent className="max-w-sm bg-brand-surface border-brand-border">
+                <TooltipContent 
+                  className="max-w-xs bg-brand-surface border-brand-border z-50" 
+                  side="bottom" 
+                  align="start"
+                >
                   <div className="text-brand-text-primary">
                     <p className="font-semibold mb-2">Sistema Regole di Selezione</p>
-                    <p className="text-sm">Permette di creare logiche automatiche per:</p>
-                    <ul className="text-sm mt-1 space-y-1">
+                    <p className="text-xs">Permette di creare logiche automatiche per:</p>
+                    <ul className="text-xs mt-1 space-y-1">
                       <li>• Rendere prodotti disponibili solo se altri sono selezionati</li>
                       <li>• Trasformare automaticamente prodotti in regali gratuiti</li>
                       <li>• Gestire dipendenze tra servizi e prodotti</li>
@@ -212,7 +216,7 @@ export default function SelectionRulesManagement() {
               <span>Nuova Regola</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-surface border-brand-border">
+          <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto bg-brand-surface border-brand-border">
             <DialogHeader>
               <DialogTitle className="text-brand-text-primary">
                 {editingRule ? "Modifica Regola" : "Nuova Regola di Selezione"}
@@ -251,17 +255,21 @@ export default function SelectionRulesManagement() {
                         <TooltipTrigger>
                           <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-sm bg-brand-surface border-brand-border">
-                          <div className="text-brand-text-primary text-sm">
+                        <TooltipContent 
+                          className="max-w-64 bg-brand-surface border-brand-border z-50" 
+                          side="right" 
+                          align="start"
+                        >
+                          <div className="text-brand-text-primary text-xs">
                             <p className="font-semibold mb-2">Tipi di Regola:</p>
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                               <div>
                                 <p className="font-medium">Disponibilità Condizionale</p>
-                                <p className="text-brand-text-secondary">Rende disponibili/non disponibili prodotti basandosi su altre selezioni</p>
+                                <p className="text-brand-text-secondary">Rende disponibili/non disponibili prodotti</p>
                               </div>
                               <div>
                                 <p className="font-medium">Regalo Automatico</p>
-                                <p className="text-brand-text-secondary">Trasforma automaticamente prodotti in regali gratuiti</p>
+                                <p className="text-brand-text-secondary">Trasforma prodotti in regali gratuiti</p>
                               </div>
                             </div>
                           </div>
@@ -315,17 +323,21 @@ export default function SelectionRulesManagement() {
                         <TooltipTrigger>
                           <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-xs bg-brand-surface border-brand-border">
-                          <div className="text-brand-text-primary text-sm">
+                        <TooltipContent 
+                          className="max-w-60 bg-brand-surface border-brand-border z-50" 
+                          side="right" 
+                          align="start"
+                        >
+                          <div className="text-brand-text-primary text-xs">
                             <p className="font-semibold">Azioni Disponibili:</p>
                             <div className="mt-1 space-y-1">
                               <div>
                                 <p className="font-medium">Disabilita</p>
-                                <p className="text-brand-text-secondary">Rende non selezionabili gli items target</p>
+                                <p className="text-brand-text-secondary">Rende non selezionabili gli items</p>
                               </div>
                               <div>
                                 <p className="font-medium">Rendi Gratuito</p>
-                                <p className="text-brand-text-secondary">Trasforma gli items target in regali (prezzo = 0€)</p>
+                                <p className="text-brand-text-secondary">Prezzo = 0€ automaticamente</p>
                               </div>
                             </div>
                           </div>
@@ -364,13 +376,16 @@ export default function SelectionRulesManagement() {
                       <TooltipTrigger>
                         <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-xs bg-brand-surface border-brand-border">
-                        <div className="text-brand-text-primary text-sm">
+                      <TooltipContent 
+                        className="max-w-72 bg-brand-surface border-brand-border z-50" 
+                        side="top" 
+                        align="start"
+                      >
+                        <div className="text-brand-text-primary text-xs">
                           <p className="font-semibold">Items Richiesti (Condizioni)</p>
-                          <p className="mt-1">Seleziona i prodotti/servizi che il cliente DEVE aver scelto perché la regola si attivi.</p>
+                          <p className="mt-1">Prodotti/servizi che il cliente DEVE aver scelto.</p>
                           <p className="mt-2 text-brand-text-secondary">
-                            Esempio: Se voglio che "Foto Invitati" diventi gratis quando si sceglie "Videomaker", 
-                            metto "Videomaker" qui come item richiesto.
+                            Es: "Videomaker" come condizione per rendere "Foto Invitati" gratis.
                           </p>
                         </div>
                       </TooltipContent>
@@ -412,13 +427,16 @@ export default function SelectionRulesManagement() {
                       <TooltipTrigger>
                         <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-xs bg-brand-surface border-brand-border">
-                        <div className="text-brand-text-primary text-sm">
+                      <TooltipContent 
+                        className="max-w-72 bg-brand-surface border-brand-border z-50" 
+                        side="top" 
+                        align="start"
+                      >
+                        <div className="text-brand-text-primary text-xs">
                           <p className="font-semibold">Items Target (Destinazione)</p>
-                          <p className="mt-1">Seleziona i prodotti/servizi che verranno MODIFICATI quando si verifica la condizione.</p>
+                          <p className="mt-1">Prodotti/servizi che verranno MODIFICATI.</p>
                           <p className="mt-2 text-brand-text-secondary">
-                            Esempio: Se voglio che "Foto Invitati" diventi gratis quando si sceglie "Videomaker", 
-                            metto "Foto Invitati" qui come item target.
+                            Es: "Foto Invitati" come target per diventare gratis.
                           </p>
                         </div>
                       </TooltipContent>
