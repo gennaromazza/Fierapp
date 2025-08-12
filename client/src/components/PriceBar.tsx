@@ -21,9 +21,13 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
         const discountsData = discountsDoc.data() as Discounts;
         console.log("📊 Sconti caricati in PriceBar:", discountsData);
         setDiscounts(discountsData);
+        
+        // Salva nel localStorage per sync con useCartWithRules
+        localStorage.setItem('cachedDiscounts', JSON.stringify(discountsData));
       } else {
         console.log("❌ Nessun documento sconti trovato");
         setDiscounts({});
+        localStorage.removeItem('cachedDiscounts');
       }
     }, (error) => {
       console.error("Error loading discounts:", error);

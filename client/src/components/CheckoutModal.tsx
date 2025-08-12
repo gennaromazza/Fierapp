@@ -297,6 +297,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             
             {(() => {
               const pricing = cartWithRules.getPricingWithRules();
+              console.log("💰 CheckoutModal - Pricing calcolato:", pricing);
               return (
                 <>
                   <hr className="border-brand-secondary" />

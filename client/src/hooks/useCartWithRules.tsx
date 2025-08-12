@@ -158,7 +158,7 @@ export function useCartWithRules() {
     return true;
   };
 
-  // Calcola il pricing con le regole di regalo applicate
+  // Calcola il pricing con le regole di regalo e sconti globali applicati
   const getPricingWithRules = () => {
     const basePricing = {
       subtotal: cart.cart.subtotal,
@@ -178,16 +178,51 @@ export function useCartWithRules() {
       }
     });
 
-    // Applica sconti solo sui prezzi non-regalo
-    const discountAmount = basePricing.subtotal > 0 ? (basePricing.discount / basePricing.subtotal) * adjustedSubtotal : 0;
+    // Calcola gli sconti esistenti sui prezzi non-regalo
+    const existingDiscount = basePricing.subtotal > 0 ? (basePricing.discount / basePricing.subtotal) * adjustedSubtotal : 0;
+    
+    // Applica anche gli sconti globali (come nel PriceBar)
+    let globalDiscount = 0;
+    
+    // Recupera sconti globali da localStorage come fa il PriceBar (temporaneo per sync)
+    // Questo è un workaround - idealmente dovremmo condividere lo stato degli sconti
+    try {
+      const discountsDoc = localStorage.getItem('cachedDiscounts');
+      if (discountsDoc) {
+        const discounts = JSON.parse(discountsDoc);
+        const hasGlobalDiscount = discounts?.global?.isActive;
+        
+        if (hasGlobalDiscount && discounts.global) {
+          if (discounts.global.type === 'fixed') {
+            globalDiscount = discounts.global.value || 0;
+          } else if (discounts.global.type === 'percent') {
+            globalDiscount = Math.round(basePricing.subtotal * ((discounts.global.value || 0) / 100));
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("Error loading global discounts for pricing calculation:", error);
+    }
+
+    const totalDiscount = existingDiscount + globalDiscount;
+    const finalTotal = Math.max(0, adjustedSubtotal - totalDiscount);
+    
+    console.log("💰 useCartWithRules - Pricing calculation:", {
+      adjustedSubtotal,
+      existingDiscount,
+      globalDiscount,
+      totalDiscount,
+      giftSavings,
+      finalTotal
+    });
     
     return {
       subtotal: adjustedSubtotal,
       originalSubtotal: basePricing.subtotal,
-      discount: discountAmount,
+      discount: totalDiscount,
       giftSavings,
-      total: adjustedSubtotal - discountAmount,
-      totalSavings: discountAmount + giftSavings,
+      total: finalTotal,
+      totalSavings: totalDiscount + giftSavings,
     };
   };
 
