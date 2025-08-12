@@ -329,10 +329,10 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
     y += 5;
   }
 
-  // Separatore più visibile
+  // Separatore più visibile - posizionato correttamente
   doc.setDrawColor(120, 120, 120);
   doc.setLineWidth(0.5);
-  doc.line(tableX + 8, y - 3, tableX + tableW - 8, y - 3);
+  doc.line(tableX + 8, y - 6, tableX + tableW - 8, y - 6);
   doc.setLineWidth(0.2);
 
   // Totale finale con font più grande
@@ -444,10 +444,10 @@ export async function generateQuotePDF(lead: Lead): Promise<void> {
     y += 5;
   }
 
-  // Separatore più visibile
+  // Separatore più visibile - posizionato correttamente
   doc.setDrawColor(120, 120, 120);
   doc.setLineWidth(0.5);
-  doc.line(tableX + 8, y - 3, tableX + tableW - 8, y - 3);
+  doc.line(tableX + 8, y - 6, tableX + tableW - 8, y - 6);
   doc.setLineWidth(0.2);
 
   // Totale finale con font più grande
