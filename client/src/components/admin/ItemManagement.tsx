@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Upload, Image as ImageIcon, ShoppingBag, Settings2, ArrowLeft } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, Image as ImageIcon, ShoppingBag, Settings2, ArrowLeft, GripVertical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SelectionRulesManagement from "./SelectionRulesManagement";
 
@@ -44,6 +44,8 @@ export default function ItemManagement() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<Item | null>(null);
+  const [dragOverItem, setDragOverItem] = useState<Item | null>(null);
 
   useEffect(() => {
     if (editingItem) {
@@ -91,6 +93,81 @@ export default function ItemManagement() {
         description: `"${conflictingItem.title}" usa già l'ordine ${newSortOrder}. Sarà spostato automaticamente al salvataggio.`,
       });
     }
+  };
+
+  // Drag and Drop functions for reordering
+  const handleDragStart = (e: React.DragEvent, item: Item) => {
+    setDraggedItem(item);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.currentTarget.outerHTML);
+    e.currentTarget.classList.add('opacity-50');
+  };
+
+  const handleDragOver = (e: React.DragEvent, item: Item) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverItem(item);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverItem(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetItem: Item) => {
+    e.preventDefault();
+    
+    if (!draggedItem || draggedItem.id === targetItem.id) {
+      setDraggedItem(null);
+      setDragOverItem(null);
+      return;
+    }
+
+    try {
+      const draggedIndex = items.findIndex(item => item.id === draggedItem.id);
+      const targetIndex = items.findIndex(item => item.id === targetItem.id);
+      
+      if (draggedIndex === -1 || targetIndex === -1) return;
+
+      // Create a new array with items reordered
+      const sortedItems = [...items].sort((a, b) => a.sortOrder - b.sortOrder);
+      
+      // Remove dragged item and insert at target position
+      const [removed] = sortedItems.splice(draggedIndex, 1);
+      sortedItems.splice(targetIndex, 0, removed);
+      
+      // Update all affected items with their new sort order
+      const updatePromises = sortedItems.map((item, index) => 
+        updateDoc(doc(db, "items", item.id), {
+          sortOrder: index,
+          updatedAt: new Date(),
+        })
+      );
+      
+      await Promise.all(updatePromises);
+
+      toast({
+        title: "Ordinamento aggiornato",
+        description: `"${draggedItem.title}" è stato riposizionato`,
+      });
+
+    } catch (error) {
+      console.error("Error reordering items:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile riordinare gli elementi",
+        variant: "destructive",
+      });
+    }
+
+    setDraggedItem(null);
+    setDragOverItem(null);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove('opacity-50');
+    setDraggedItem(null);
+    setDragOverItem(null);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -478,12 +555,16 @@ export default function ItemManagement() {
               <Card className="card-premium shadow-elegant">
                 <CardHeader className="glass rounded-t-xl border-b-2" style={{ borderColor: 'var(--brand-accent)' }}>
                   <CardTitle className="text-xl font-bold text-brand-accent">Items ({items.length})</CardTitle>
+                  <p className="text-sm text-brand-text-secondary mt-2">
+                    Trascina le righe per riordinare gli elementi rapidamente
+                  </p>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <Table>
               <TableHeader className="glass">
                 <TableRow>
+                  <TableHead className="font-semibold text-brand-accent w-10"></TableHead>
                   <TableHead className="font-semibold text-brand-accent">Ordine</TableHead>
                   <TableHead className="font-semibold text-brand-accent">Immagine</TableHead>
                   <TableHead className="font-semibold text-brand-accent">Titolo</TableHead>
@@ -495,7 +576,21 @@ export default function ItemManagement() {
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-brand-secondary/10 transition-colors">
+                  <TableRow 
+                    key={item.id} 
+                    className={`hover:bg-brand-secondary/10 transition-colors cursor-move ${
+                      dragOverItem?.id === item.id ? 'bg-brand-accent/20 border-l-4 border-brand-accent' : ''
+                    }`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    onDragOver={(e) => handleDragOver(e, item)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, item)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <TableCell className="text-brand-text-primary">
+                      <GripVertical className="w-4 h-4 text-gray-400 hover:text-brand-accent cursor-grab active:cursor-grabbing" />
+                    </TableCell>
                     <TableCell className="text-brand-text-primary">
                       <Badge variant="outline" className="font-mono">
                         {item.sortOrder}
