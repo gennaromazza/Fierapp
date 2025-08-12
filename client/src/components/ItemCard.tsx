@@ -252,44 +252,7 @@ export default function ItemCard({ item }: ItemCardProps) {
                   <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
                     -€{savings.toLocaleString('it-IT')}
                   </span>
-                  <div className="text-xs text-gray-500 mt-1 text-right">
-                    <div>include sconto globale</div>
-                    {discounts?.global?.endDate && (
-                      <div className="text-orange-600 font-medium">
-                        scade: {(() => {
-                          try {
-                            let endDate: Date;
-                            const rawDate = discounts.global.endDate;
-                            
-                            // Handle Firebase Timestamp
-                            if (rawDate && typeof rawDate === 'object' && 'toDate' in rawDate && typeof rawDate.toDate === 'function') {
-                              endDate = rawDate.toDate();
-                            } 
-                            // Handle Date object
-                            else if (rawDate instanceof Date) {
-                              endDate = rawDate;
-                            } 
-                            // Handle string or number
-                            else if (rawDate) {
-                              endDate = new Date(rawDate);
-                            } else {
-                              return 'data non valida';
-                            }
-                            
-                            // Check if date is valid
-                            if (isNaN(endDate.getTime())) {
-                              return 'data non valida';
-                            }
-                            
-                            return format(endDate, "d MMM", { locale: it });
-                          } catch (error) {
-                            console.error('Error formatting discount end date:', error);
-                            return 'data non valida';
-                          }
-                        })()}
-                      </div>
-                    )}
-                  </div>
+                  
                 </div>
               </div>
             )}
