@@ -110,35 +110,37 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 glass shadow-elegant border-t-2 z-40" style={{ borderColor: 'var(--brand-accent)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between space-x-2">
-          <div className="flex items-center space-x-3 flex-1 min-w-0">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-4">
+        <div className="flex items-start sm:items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
             {/* Cart Icon with Count */}
-            <div className="relative flex-shrink-0">
-              <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7" style={{ color: 'var(--brand-accent)' }} />
-              <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-glow">
+            <div className="relative flex-shrink-0 mt-1 sm:mt-0">
+              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" style={{ color: 'var(--brand-accent)' }} />
+              <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-glow text-[10px] sm:text-xs">
                 {cart.cart.itemCount}
               </span>
             </div>
 
             {/* Price Details - Desktop */}
-            <div className="hidden lg:block">
+            <div className="hidden xl:block flex-1 min-w-0">
               <div className="space-y-1">
-                {/* Lista prodotti nel carrello */}
-                <div className="flex items-center gap-2 text-sm">
-                  {cart.cart.items.map((item, index) => (
-                    <span key={item.id} className="flex items-center">
-                      <span className="text-gray-700">
-                        {item.title}
-                        {item.price === 0 && (
-                          <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
+                {/* Lista prodotti nel carrello - Desktop with scroll if needed */}
+                <div className="flex items-center gap-1 text-sm max-w-full overflow-x-auto scrollbar-hide">
+                  <div className="flex items-center gap-1 whitespace-nowrap">
+                    {cart.cart.items.map((item, index) => (
+                      <span key={item.id} className="flex items-center flex-shrink-0">
+                        <span className="text-gray-700 text-sm">
+                          {item.title}
+                          {item.price === 0 && (
+                            <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
+                          )}
+                        </span>
+                        {index < cart.cart.items.length - 1 && (
+                          <span className="mx-1 text-gray-400">•</span>
                         )}
                       </span>
-                      {index < cart.cart.items.length - 1 && (
-                        <span className="mx-2 text-gray-400">•</span>
-                      )}
-                    </span>
-                  ))}
+                    ))}
+                  </div>
                 </div>
                 
                 {/* Totale servizi/prodotti senza sconti */}
@@ -188,38 +190,28 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
               </div>
             </div>
 
-            {/* Price Details - Tablet */}
-            <div className="hidden sm:block lg:hidden">
+            {/* Price Details - Large screens (lg to xl) */}
+            <div className="hidden lg:block xl:hidden flex-1 min-w-0">
               <div className="space-y-1">
-                {/* Lista prodotti tablet */}
-                <div className="text-xs text-gray-700">
-                  {cart.cart.items.map((item, index) => (
-                    <span key={item.id} className="inline-block">
-                      {item.title}
-                      {item.price === 0 && (
-                        <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
-                      )}
-                      {index < cart.cart.items.length - 1 && (
-                        <span className="mx-1 text-gray-400">•</span>
-                      )}
-                    </span>
-                  ))}
+                {/* Lista prodotti compatta per lg */}
+                <div className="text-xs text-gray-700 line-clamp-2">
+                  <span className="font-medium">{cart.cart.itemCount} prodotti/servizi selezionati</span>
                 </div>
                 <div className="text-sm text-gray-700">
-                  Totale servizi/prodotti: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
+                  Totale: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
                 </div>
                 {pricing.totalDiscountValue > 0 && (
-                  <div className="flex items-center space-x-2 flex-wrap">
+                  <div className="flex items-center gap-1 flex-wrap">
                     {globalDiscount > 0 && (
-                      <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs">
-                        <Globe className="w-3 h-3 inline mr-1 text-green-600" />
-                        <span className="text-green-800">Sconto globale: -€{Math.round(globalDiscount).toLocaleString('it-IT')}</span>
+                      <div className="bg-green-100 text-green-800 rounded px-2 py-1 text-xs font-medium">
+                        <Globe className="w-3 h-3 inline mr-1" />
+                        -€{Math.round(globalDiscount).toLocaleString('it-IT')}
                       </div>
                     )}
                     {itemSpecificDiscount > 0 && (
-                      <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs">
-                        <Tag className="w-3 h-3 inline mr-1 text-green-600" />
-                        <span className="text-green-800">Sconti prodotti: -€{Math.round(itemSpecificDiscount).toLocaleString('it-IT')}</span>
+                      <div className="bg-green-100 text-green-800 rounded px-2 py-1 text-xs font-medium">
+                        <Tag className="w-3 h-3 inline mr-1" />
+                        -€{Math.round(itemSpecificDiscount).toLocaleString('it-IT')}
                       </div>
                     )}
                   </div>
@@ -227,29 +219,35 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
               </div>
             </div>
 
+            {/* Price Details - Tablet */}
+            <div className="hidden sm:block lg:hidden flex-1 min-w-0">
+              <div className="space-y-1">
+                <div className="text-xs text-gray-700">
+                  <span className="font-medium">{cart.cart.itemCount} elementi selezionati</span>
+                </div>
+                <div className="text-sm text-gray-700">
+                  Totale: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
+                </div>
+                {pricing.totalDiscountValue > 0 && (
+                  <div className="bg-green-100 text-green-800 rounded px-2 py-1 text-xs text-center font-bold">
+                    RISPARMIO: €{pricing.totalDiscountValue.toLocaleString('it-IT')}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Mobile Price Summary */}
-            <div className="block sm:hidden">
-              <div className="text-center">
-                {/* Lista prodotti mobile */}
-                <div className="text-xs text-gray-600 mb-1">
-                  {cart.cart.items.map((item, index) => (
-                    <span key={item.id} className="inline-block">
-                      {item.title}
-                      {item.price === 0 && (
-                        <span className="text-green-600 font-bold"> (OMAGGIO)</span>
-                      )}
-                      {index < cart.cart.items.length - 1 && (
-                        <span className="mx-1">•</span>
-                      )}
-                    </span>
-                  ))}
+            <div className="block sm:hidden flex-1 min-w-0">
+              <div className="text-left">
+                <div className="text-xs text-gray-600 mb-1 font-medium">
+                  {cart.cart.itemCount} elementi
                 </div>
                 <div className="text-xs text-gray-600 mb-1">
                   Totale: €{pricing.subtotal.toLocaleString('it-IT')}
                 </div>
                 {pricing.totalDiscountValue > 0 && (
-                  <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg mb-1">
-                    RISPARMIO: €{pricing.totalDiscountValue.toLocaleString('it-IT')}
+                  <div className="bg-green-500 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow-lg">
+                    -€{pricing.totalDiscountValue.toLocaleString('it-IT')}
                   </div>
                 )}
               </div>
@@ -257,9 +255,9 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
           </div>
 
           {/* Total Price */}
-          <div className="text-right">
+          <div className="text-right flex-shrink-0">
             <div className="text-xs opacity-70 hidden sm:block" style={{ color: 'var(--brand-accent)' }}>Totale finale</div>
-            <div className="text-2xl font-bold text-brand-accent">
+            <div className="text-xl sm:text-2xl font-bold text-brand-accent">
               €{pricing.total.toLocaleString('it-IT')}
             </div>
           </div>
@@ -267,11 +265,11 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
           {/* CTA Button */}
           <button
             onClick={onOpenCheckout}
-            className="ml-4 btn-premium px-6 py-3 rounded-lg font-bold flex items-center space-x-2 min-w-fit"
+            className="ml-2 sm:ml-4 btn-premium px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-bold flex items-center space-x-1 sm:space-x-2 min-w-fit flex-shrink-0"
           >
-            <MessageCircle className="w-5 h-5" />
-            <span className="hidden sm:inline">RICHIEDI INFO</span>
-            <span className="sm:hidden">INFO</span>
+            <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden md:inline text-sm sm:text-base">RICHIEDI INFO</span>
+            <span className="md:hidden text-xs sm:text-sm">INFO</span>
           </button>
         </div>
       </div>
