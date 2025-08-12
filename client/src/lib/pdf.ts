@@ -26,7 +26,7 @@ const mm = {
   pageH: 297,
   left: 20,
   right: 20,
-  headerH: 32, // leggermente più alto per i contatti
+  headerH: 40, // più spazio per i contatti
   footerH: 12,
 };
 
@@ -129,30 +129,40 @@ function drawHeader(doc: jsPDF, title: string, brand: PdfBrand) {
 
   doc.setTextColor(tc[0], tc[1], tc[2]);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
+  doc.setFontSize(14);
   doc.text(brand.studioName, brand.logoDataUrl ? mm.left + 24 : mm.left, 12);
-  doc.setFontSize(20);
-  doc.text(title, brand.logoDataUrl ? mm.left + 24 : mm.left, 20);
+  doc.setFontSize(18);
+  doc.text(title, brand.logoDataUrl ? mm.left + 24 : mm.left, 22);
 
-  // Contatti - Visualizzazione migliorata
+  // Contatti - Layout migliorato senza emoji
   if (brand.contacts) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    let cx = mm.left;
-    const contactInfo = [];
+    let contactY = 28;
+    const contactItems = [];
     
-    if (brand.contacts.address) contactInfo.push(`📍 ${brand.contacts.address}`);
-    if (brand.contacts.phone) contactInfo.push(`📞 ${brand.contacts.phone}`);
-    if (brand.contacts.email) contactInfo.push(`✉️ ${brand.contacts.email}`);
-    if (brand.contacts.whatsapp) contactInfo.push(`💬 ${brand.contacts.whatsapp}`);
+    if (brand.contacts.address) contactItems.push(`Indirizzo: ${brand.contacts.address}`);
+    if (brand.contacts.phone) contactItems.push(`Tel: ${brand.contacts.phone}`);
+    if (brand.contacts.email) contactItems.push(`Email: ${brand.contacts.email}`);
+    if (brand.contacts.whatsapp) contactItems.push(`WhatsApp: ${brand.contacts.whatsapp}`);
     
-    contactInfo.forEach((info, i) => {
-      if (cx + doc.getTextWidth(info) > mm.pageW - mm.right) {
-        cx = mm.left;
-      }
-      doc.text(info, cx, 28);
-      cx += doc.getTextWidth(info) + 12;
+    // Dividi i contatti in due colonne
+    const midPoint = Math.ceil(contactItems.length / 2);
+    const leftColumn = contactItems.slice(0, midPoint);
+    const rightColumn = contactItems.slice(midPoint);
+    
+    // Colonna sinistra
+    leftColumn.forEach((contact, i) => {
+      doc.text(contact, mm.left, contactY + (i * 4));
     });
+    
+    // Colonna destra (se ci sono elementi)
+    if (rightColumn.length > 0) {
+      const rightX = mm.left + (mm.pageW - mm.left - mm.right) / 2;
+      rightColumn.forEach((contact, i) => {
+        doc.text(contact, rightX, contactY + (i * 4));
+      });
+    }
   }
   doc.setTextColor(33);
 }
@@ -238,49 +248,93 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
   y = sectionTitle(doc, "SERVIZI/PRODOTTI SELEZIONATI", y, brand.accent);
   y = ensureNextLine(doc, y);
 
-  leadData.selectedItems?.forEach((item: any) => {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(item.title, mm.left, y);
-    doc.text(`€${item.price.toLocaleString('it-IT')}`, mm.pageW - mm.right, y, { align: "right" });
+  const tableX = mm.left;
+  const tableW = mm.pageW - mm.left - mm.right;
+  const colTitleW = tableW * 0.70;
+
+  // Header tabella prodotti
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setDrawColor(220, 220, 220);
+  doc.setFillColor(245, 245, 245);
+  doc.rect(tableX, y, tableW, 8, "FD");
+  doc.text("Descrizione", tableX + 2, y + 5);
+  doc.text("Prezzo", tableX + colTitleW + 2, y + 5);
+  y += 10;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+
+  leadData.selectedItems?.forEach((item: any, index: number) => {
+    const rowHeight = 12;
     
-    if (item.originalPrice && item.originalPrice !== item.price) {
-      y += 5;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(100);
-      doc.text(`Prezzo originale: €${item.originalPrice.toLocaleString('it-IT')}`, mm.left + 4, y);
-      doc.setTextColor(33);
+    // Alternating row colors
+    if (index % 2 === 0) {
+      doc.setFillColor(252, 252, 252);
+      doc.rect(tableX, y, tableW, rowHeight, "F");
     }
-    y += 12;
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`${index + 1}. ${item.title}`, tableX + 2, y + 7);
+    
+    doc.setFont("helvetica", "bold");
+    doc.text(`€${item.price.toLocaleString('it-IT')}`, tableX + colTitleW + 2, y + 7);
+    
+    // Original price if different
+    if (item.originalPrice && item.originalPrice !== item.price) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`(Orig: €${item.originalPrice.toLocaleString('it-IT')})`, tableX + colTitleW + 2, y + 10);
+      doc.setTextColor(33, 33, 33);
+      doc.setFontSize(10);
+    }
+    
+    // Bottom border
+    doc.setDrawColor(235, 235, 235);
+    doc.line(tableX, y + rowHeight, tableX + tableW, y + rowHeight);
+    
+    y += rowHeight;
     y = ensureNextLine(doc, y);
   });
 
-  // Totale
-  y += 6;
-  doc.setDrawColor(200);
-  doc.line(mm.left, y, mm.pageW - mm.right, y);
-  y += 8;
-
+  // Sezione Totali
+  y += 10;
   const pricing = leadData.pricing || {};
+  const totalBoxY = y;
+  const totalBoxH = pricing.discount > 0 ? 30 : 20;
+  
+  // Box per i totali
+  doc.setFillColor(248, 249, 250);
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(tableX, totalBoxY, tableW, totalBoxH, "FD");
+  
+  y = totalBoxY + 8;
   if (pricing.discount > 0) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
-    doc.text("Subtotale:", mm.left, y);
-    doc.text(`€${pricing.subtotal?.toLocaleString('it-IT') || '0'}`, mm.pageW - mm.right, y, { align: "right" });
-    y += 8;
+    doc.text("Subtotale:", tableX + 4, y);
+    doc.text(`€${pricing.subtotal?.toLocaleString('it-IT') || '0'}`, tableX + tableW - 4, y, { align: "right" });
+    y += 7;
     
-    doc.setTextColor(0, 150, 0);
-    doc.text("Sconto:", mm.left, y);
-    doc.text(`-€${pricing.discount.toLocaleString('it-IT')}`, mm.pageW - mm.right, y, { align: "right" });
-    doc.setTextColor(33);
-    y += 8;
+    doc.setTextColor(220, 53, 69); // Bootstrap danger color
+    doc.text("Sconto:", tableX + 4, y);
+    doc.text(`-€${pricing.discount.toLocaleString('it-IT')}`, tableX + tableW - 4, y, { align: "right" });
+    doc.setTextColor(33, 33, 33);
+    y += 7;
   }
 
+  // Separatore
+  doc.setDrawColor(160, 160, 160);
+  doc.line(tableX + 4, y, tableX + tableW - 4, y);
+  y += 5;
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("TOTALE:", mm.left, y);
-  doc.text(`€${pricing.total?.toLocaleString('it-IT') || '0'}`, mm.pageW - mm.right, y, { align: "right" });
+  doc.setFontSize(13);
+  doc.text("TOTALE:", tableX + 4, y);
+  doc.text(`€${pricing.total?.toLocaleString('it-IT') || '0'}`, tableX + tableW - 4, y, { align: "right" });
+  
+  y = totalBoxY + totalBoxH + 5;
 
   drawFooter(doc);
   doc.save(filename || `preventivo-${new Date().toISOString().slice(0, 10)}.pdf`);
