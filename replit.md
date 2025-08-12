@@ -33,6 +33,12 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **Timestamp Tracking**: Added `emailSentAt` field to track when emails were sent
 - **Enhanced Filtering**: Admin can filter leads by "Email Inviata" status for follow-up management
 
+### Modular Selection Rules Integration (January 12, 2025)
+- **Integrated Component**: SelectionRulesManagement component integrated as tabbed submenu in ItemManagement
+- **Firebase Security Rules**: Added selection_rules collection with authenticated read/write access
+- **Simplified Interface**: Streamlined form for creating availability and gift transformation rules
+- **Real-time CRUD**: Full Firebase integration for rules management with toast notifications
+
 ## Previous Changes (January 11, 2025)
 
 ### Advanced Color Management System
