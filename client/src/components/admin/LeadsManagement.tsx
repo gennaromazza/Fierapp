@@ -920,7 +920,7 @@ export default function LeadsManagement() {
 
       {/* Edit Lead Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary">
           <DialogHeader>
             <DialogTitle>
               Modifica Lead - {editingLead?.customer.nome} {editingLead?.customer.cognome}
