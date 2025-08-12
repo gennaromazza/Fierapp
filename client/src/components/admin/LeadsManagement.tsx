@@ -46,6 +46,11 @@ export default function LeadsManagement() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Stato per editing lead
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
   const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
@@ -157,6 +162,52 @@ export default function LeadsManagement() {
   const openLeadDetail = (lead: Lead) => {
     setSelectedLead(lead);
     setIsDetailModalOpen(true);
+  };
+
+  const openEditModal = (lead: Lead) => {
+    setEditingLead(lead);
+    setEditForm({ ...lead.customer });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingLead) return;
+    
+    try {
+      const updatedLead = {
+        ...editingLead,
+        customer: editForm
+      };
+      
+      await updateDoc(doc(db, "leads", editingLead.id), {
+        customer: editForm,
+        updatedAt: Timestamp.now()
+      });
+      
+      toast({
+        title: "Lead aggiornato",
+        description: "I dati del lead sono stati aggiornati con successo",
+      });
+      
+      setIsEditModalOpen(false);
+      setEditingLead(null);
+      setEditForm({});
+      
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      toast({
+        title: "Errore",
+        description: "Errore durante l'aggiornamento del lead",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditFormChange = (field: string, value: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   // Calculate pagination
@@ -517,13 +568,23 @@ export default function LeadsManagement() {
                             size="sm"
                             variant="outline"
                             onClick={() => openLeadDetail(lead)}
+                            title="Visualizza dettagli"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
+                            onClick={() => openEditModal(lead)}
+                            title="Modifica lead"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             onClick={() => handleGeneratePDF(lead)}
+                            title="Genera PDF"
                           >
                             <FileText className="w-4 h-4" />
                           </Button>
@@ -531,6 +592,7 @@ export default function LeadsManagement() {
                             size="sm"
                             variant="outline"
                             onClick={() => deleteLead(lead.id)}
+                            title="Elimina lead"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -719,6 +781,59 @@ export default function LeadsManagement() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Lead Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Modifica Lead - {editingLead?.customer.nome} {editingLead?.customer.cognome}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {editingLead && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(editingLead.customer)
+                  .filter(([key]) => key !== 'gdpr_consent')
+                  .map(([key, value]) => (
+                    <div key={key}>
+                      <Label htmlFor={`edit-${key}`} className="text-sm font-medium">
+                        {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Label>
+                      <Input
+                        id={`edit-${key}`}
+                        value={editForm[key] || ''}
+                        onChange={(e) => handleEditFormChange(key, e.target.value)}
+                        className="mt-1"
+                        placeholder={`Inserisci ${key.replace(/_/g, ' ')}`}
+                      />
+                    </div>
+                  ))}
+              </div>
+              
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingLead(null);
+                    setEditForm({});
+                  }}
+                >
+                  Annulla
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  className="bg-brand-accent hover:bg-brand-accent/90"
+                >
+                  Salva Modifiche
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
