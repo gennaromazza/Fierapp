@@ -1,10 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { Item } from "@shared/schema";
 import ItemCard from "./ItemCard";
 
 type TabType = "servizi" | "prodotti" | "tutti";
+
+// Context per condividere le funzioni di navigazione del carousel
+interface CarouselContextType {
+  items: Item[];
+  currentSlide: number;
+  totalSlides: number;
+  slidesPerView: number;
+  goToSlide: (index: number) => void;
+  nextSlide: () => void;
+  prevSlide: () => void;
+  findItemSlide: (itemId: string) => number | null;
+}
+
+const CarouselContext = createContext<CarouselContextType | null>(null);
+
+export const useCarouselNavigation = () => {
+  const context = useContext(CarouselContext);
+  if (!context) {
+    throw new Error("useCarouselNavigation must be used within a Carousel");
+  }
+  return context;
+};
 
 export default function Carousel() {
   const [activeTab, setActiveTab] = useState<TabType>("tutti");
@@ -165,6 +187,26 @@ export default function Carousel() {
     }
   };
 
+  // Funzione per trovare in quale slide si trova un item
+  const findItemSlide = (itemId: string): number | null => {
+    const itemIndex = items.findIndex(item => item.id === itemId);
+    if (itemIndex === -1) return null;
+    
+    return Math.floor(itemIndex / slidesPerView);
+  };
+
+  // Valore del context per condividere con i componenti figli
+  const carouselValue: CarouselContextType = {
+    items,
+    currentSlide,
+    totalSlides,
+    slidesPerView,
+    goToSlide,
+    nextSlide,
+    prevSlide,
+    findItemSlide,
+  };
+
   if (loading) {
     return (
       <div className="animate-pulse">
@@ -187,7 +229,8 @@ export default function Carousel() {
   }
 
   return (
-    <div>
+    <CarouselContext.Provider value={carouselValue}>
+      <div>
       {/* Mobile Tab Navigation */}
       <div className="md:hidden pb-3">
         <div className="flex space-x-1 glass rounded-xl p-2">
@@ -405,6 +448,7 @@ export default function Carousel() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </CarouselContext.Provider>
   );
 }

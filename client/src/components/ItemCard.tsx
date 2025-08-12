@@ -4,6 +4,7 @@ import { db } from "../firebase";
 import { Item, Discounts } from "@shared/schema";
 import { useCartWithRules } from "../hooks/useCartWithRules";
 import { calculateDiscountedPrice } from "../lib/discounts";
+import { useCarouselNavigation } from "./Carousel";
 import { Plus, Check, Clock, Gift, ExternalLink } from "lucide-react";
 import { format, isAfter, isBefore } from "date-fns";
 import { it } from "date-fns/locale";
@@ -14,6 +15,15 @@ interface ItemCardProps {
 
 export default function ItemCard({ item }: ItemCardProps) {
   const { addItem, removeItem, isInCart, isItemAvailable, isItemGift, getItemGiftSettings, getUnavailableReason, getRequiredItemIds } = useCartWithRules();
+  
+  // Accesso al context del carousel per la navigazione  
+  let carouselContext = null;
+  try {
+    carouselContext = useCarouselNavigation();
+  } catch (error) {
+    // ItemCard può essere usato fuori dal context del carousel
+    console.log("ItemCard usato fuori dal context del carousel");
+  }
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
   const [discountExpiry, setDiscountExpiry] = useState<Date | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -45,6 +55,30 @@ export default function ItemCard({ item }: ItemCardProps) {
 
   // Funzione per navigare verso un elemento richiesto
   const navigateToRequiredItem = (itemId: string) => {
+    // Prima prova la navigazione tramite carousel context
+    if (carouselContext) {
+      const targetSlide = carouselContext.findItemSlide(itemId);
+      if (targetSlide !== null && targetSlide !== carouselContext.currentSlide) {
+        // Naviga alla slide corretta
+        carouselContext.goToSlide(targetSlide);
+        
+        // Aspetta un momento per far caricare la slide, poi scrolla e evidenzia
+        setTimeout(() => {
+          const element = document.querySelector(`[data-item-id="${itemId}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Effetto di evidenziazione temporanea
+            element.classList.add('ring-2', 'ring-blue-400');
+            setTimeout(() => {
+              element.classList.remove('ring-2', 'ring-blue-400');
+            }, 2000);
+          }
+        }, 300);
+        return;
+      }
+    }
+    
+    // Fallback: navigazione tradizionale con scroll
     const element = document.querySelector(`[data-item-id="${itemId}"]`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
