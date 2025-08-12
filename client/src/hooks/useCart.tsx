@@ -21,23 +21,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
     itemCount: 0,
   });
 
-  // Load cart from localStorage on mount
+  // Clear cart on every page load to ensure fresh start for each visitor
   useEffect(() => {
-    const savedCart = localStorage.getItem("fiera-cart");
-    if (savedCart) {
-      try {
-        const parsedCart = JSON.parse(savedCart);
-        setCart(parsedCart);
-      } catch (error) {
-        console.error("Error parsing saved cart:", error);
-      }
-    }
+    // Always start with empty cart
+    setCart({
+      items: [],
+      subtotal: 0,
+      discount: 0,
+      total: 0,
+      itemCount: 0,
+    });
+    // Clear any existing cart data from storage
+    localStorage.removeItem("fiera-cart");
+    sessionStorage.removeItem("fiera-cart");
+    
+    // Log cart reset for debugging
+    console.log("🧹 Cart cleared for new session");
   }, []);
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("fiera-cart", JSON.stringify(cart));
-  }, [cart]);
+  // Note: Cart persistence disabled for trade show - each session starts fresh
+  // Optionally save cart to localStorage during session (commented out for fresh starts)
+  // useEffect(() => {
+  //   localStorage.setItem("fiera-cart", JSON.stringify(cart));
+  // }, [cart]);
 
   const calculateCartTotals = (items: CartItem[]) => {
     const subtotal = items.reduce((sum, item) => sum + (item.originalPrice || item.price), 0);
