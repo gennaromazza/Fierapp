@@ -108,6 +108,23 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Price Details - Desktop */}
             <div className="hidden lg:block">
               <div className="space-y-1">
+                {/* Lista prodotti nel carrello */}
+                <div className="flex items-center gap-2 text-sm">
+                  {cart.cart.items.map((item, index) => (
+                    <span key={item.id} className="flex items-center">
+                      <span className="text-gray-700">
+                        {item.name}
+                        {item.price === 0 && (
+                          <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
+                        )}
+                      </span>
+                      {index < cart.cart.items.length - 1 && (
+                        <span className="mx-2 text-gray-400">•</span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+                
                 {/* Totale servizi/prodotti senza sconti */}
                 <div className="flex items-center text-sm text-gray-700">
                   <span>Totale servizi/prodotti: </span>
@@ -158,6 +175,11 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Price Details - Tablet */}
             <div className="hidden sm:block lg:hidden">
               <div className="space-y-1">
+                {/* Lista compatta prodotti */}
+                <div className="text-xs text-gray-600">
+                  {cart.cart.items.slice(0, 2).map(item => item.name).join(', ')}
+                  {cart.cart.items.length > 2 && ` +${cart.cart.items.length - 2}`}
+                </div>
                 <div className="text-sm text-gray-700">
                   Totale: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
                 </div>
@@ -183,6 +205,11 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Mobile Price Summary */}
             <div className="block sm:hidden">
               <div className="text-center">
+                {/* Lista compatta prodotti mobile */}
+                <div className="text-xs text-gray-500 mb-1">
+                  {cart.cart.items.slice(0, 1).map(item => item.name).join(', ')}
+                  {cart.cart.items.length > 1 && ` +${cart.cart.items.length - 1}`}
+                </div>
                 <div className="text-xs text-gray-600 mb-1">
                   Subtotale: €{pricing.subtotal.toLocaleString('it-IT')}
                 </div>
