@@ -310,10 +310,25 @@ export default function LeadsManagement() {
     // Apri Gmail web in nuova tab
     window.open(gmailUrl, '_blank');
     
-    toast({
-      title: "Gmail aperto",
-      description: "Gmail web è stato aperto con il preventivo precompilato",
-    });
+    // Aggiorna lo stato del lead a "Email Inviata"
+    try {
+      await updateDoc(doc(db, "leads", lead.id), { 
+        status: "email_sent",
+        emailSentAt: Timestamp.now()
+      });
+      
+      toast({
+        title: "Gmail aperto",
+        description: "Gmail web è stato aperto e lo stato del lead è stato aggiornato",
+      });
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      toast({
+        title: "Gmail aperto",
+        description: "Gmail web è stato aperto ma errore nell'aggiornamento stato",
+        variant: "destructive",
+      });
+    }
   };
 
   // Calculate pagination
@@ -495,6 +510,7 @@ export default function LeadsManagement() {
                   <SelectItem value="all">Tutti</SelectItem>
                   <SelectItem value="new">Nuovo</SelectItem>
                   <SelectItem value="contacted">Contattato</SelectItem>
+                  <SelectItem value="email_sent">Email Inviata</SelectItem>
                   <SelectItem value="quoted">Preventivato</SelectItem>
                   <SelectItem value="closed">Chiuso</SelectItem>
                 </SelectContent>
@@ -655,6 +671,7 @@ export default function LeadsManagement() {
                           <SelectContent>
                             <SelectItem value="new">Nuovo</SelectItem>
                             <SelectItem value="contacted">Contattato</SelectItem>
+                            <SelectItem value="email_sent">Email Inviata</SelectItem>
                             <SelectItem value="quoted">Preventivato</SelectItem>
                             <SelectItem value="closed">Chiuso</SelectItem>
                           </SelectContent>

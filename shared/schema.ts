@@ -139,7 +139,7 @@ export const leadSchema = z.object({
   }),
   reCAPTCHAToken: z.string().optional(),
   createdAt: z.date(),
-  status: z.enum(["new", "contacted", "quoted", "closed"]).default("new"),
+  status: z.enum(["new", "contacted", "email_sent", "quoted", "closed"]).default("new"),
 });
 
 export const insertLeadSchema = leadSchema.omit({
