@@ -1,14 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Gift, Lock, Info, ChevronRight, Sparkles, X } from 'lucide-react';
 import { useSelectionRules } from '../hooks/useSelectionRules';
+import { useCartWithRules } from '../hooks/useCartWithRules';
 import { useQuery } from '@tanstack/react-query';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useToast } from '../hooks/use-toast';
 import type { Item } from '@shared/schema';
 
 export default function RulesInfoPanel() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { rules, loading: rulesLoading } = useSelectionRules();
+  const { cart, rulesEvaluation, getAllItemsWithAvailability } = useCartWithRules();
+  const { toast } = useToast();
+  
+  // Ref per tracciare lo stato precedente delle regole
+  const previousRulesStateRef = useRef<{
+    availableItems: Set<string>;
+    giftItems: Set<string>;
+  }>({
+    availableItems: new Set(),
+    giftItems: new Set(),
+  });
   
   // Carica gli items per mostrare i nomi
   const { data: items = [] } = useQuery({
@@ -26,6 +39,68 @@ export default function RulesInfoPanel() {
       return item?.title || 'Prodotto';
     });
   };
+
+  // Monitora i cambiamenti nelle regole e mostra toast
+  useEffect(() => {
+    if (rulesLoading || !items.length) return;
+
+    const currentState = {
+      availableItems: new Set<string>(),
+      giftItems: new Set<string>(),
+    };
+
+    // Costruisci lo stato corrente
+    Object.entries(rulesEvaluation.itemStates).forEach(([itemId, state]) => {
+      if (state.isAvailable) {
+        currentState.availableItems.add(itemId);
+      }
+      if (state.isGift) {
+        currentState.giftItems.add(itemId);
+      }
+    });
+
+    const previousState = previousRulesStateRef.current;
+
+    // Trova nuovi item sbloccati
+    const newlyAvailableItems = [...currentState.availableItems].filter(
+      itemId => !previousState.availableItems.has(itemId) && 
+      // Solo se l'item non è nel carrello (altrimenti è stato aggiunto manualmente)
+      !cart.items.some(cartItem => cartItem.id === itemId)
+    );
+
+    // Trova nuovi item omaggio
+    const newlyGiftItems = [...currentState.giftItems].filter(
+      itemId => !previousState.giftItems.has(itemId)
+    );
+
+    // Mostra toast per item sbloccati
+    newlyAvailableItems.forEach(itemId => {
+      const item = items.find(i => i.id === itemId);
+      if (item) {
+        toast({
+          title: "🎉 Prodotto Sbloccato!",
+          description: `Hai sbloccato: ${item.title}`,
+          duration: 4000,
+        });
+      }
+    });
+
+    // Mostra toast per item omaggio
+    newlyGiftItems.forEach(itemId => {
+      const item = items.find(i => i.id === itemId);
+      if (item) {
+        toast({
+          title: "🎁 Omaggio Attivato!",
+          description: `${item.title} è ora gratuito!`,
+          duration: 4000,
+        });
+      }
+    });
+
+    // Aggiorna il riferimento allo stato precedente
+    previousRulesStateRef.current = currentState;
+
+  }, [rulesEvaluation, cart.items, items, rulesLoading, toast]);
 
   const giftRules = rules.filter(r => r.type === 'gift_transformation' && r.active);
   const availabilityRules = rules.filter(r => r.type === 'availability' && r.active);
