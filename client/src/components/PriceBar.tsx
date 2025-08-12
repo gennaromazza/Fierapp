@@ -264,28 +264,27 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
             {/* Mobile Price Summary */}
             <div className="block sm:hidden flex-1 min-w-0">
               <div className="text-left">
-                {/* Lista prodotti mobile ottimizzata per spazio */}
+                {/* Lista prodotti mobile compatta */}
                 <div className="mb-1">
-                  <div className="text-xs text-gray-700 font-medium mb-0.5">
-                    {cart.cart.itemCount} prodotti selezionati:
+                  <div className="text-xs text-gray-700 font-medium">
+                    {cart.cart.itemCount} prodotti • Totale: €{pricing.subtotal.toLocaleString('it-IT')}
                   </div>
-                  <div className="max-w-full overflow-x-auto scrollbar-hide">
-                    <div className="flex items-center gap-2 whitespace-nowrap pb-1">
-                      {cart.cart.items.map((item, index) => (
-                        <span key={item.id} className="flex items-center flex-shrink-0 bg-gray-100 rounded-md px-2 py-1">
-                          <span className="text-xs text-gray-800 font-medium">
-                            {item.title}
-                            {item.price === 0 && (
-                              <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
-                            )}
-                          </span>
+                  {/* Mostra solo i primi 2 prodotti + contatore */}
+                  <div className="text-xs text-gray-600 mt-0.5 flex items-center gap-1 flex-wrap">
+                    {cart.cart.items.slice(0, 2).map((item, index) => (
+                      <span key={item.id} className="inline-flex items-center bg-gray-100 rounded px-1.5 py-0.5">
+                        <span className="font-medium">
+                          {item.title.length > 12 ? `${item.title.substring(0, 12)}...` : item.title}
+                          {item.price === 0 && <span className="ml-1 text-green-600 font-bold">🎁</span>}
                         </span>
-                      ))}
-                    </div>
+                      </span>
+                    ))}
+                    {cart.cart.items.length > 2 && (
+                      <span className="bg-brand-accent text-white rounded px-1.5 py-0.5 text-xs font-bold">
+                        +{cart.cart.items.length - 2}
+                      </span>
+                    )}
                   </div>
-                </div>
-                <div className="text-xs text-gray-600 mb-1">
-                  Totale: €{pricing.subtotal.toLocaleString('it-IT')}
                 </div>
                 {pricing.totalDiscountValue > 0 && (
                   <div className="bg-green-500 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow-lg">
