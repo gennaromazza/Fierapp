@@ -10,11 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Edit2, Trash2, Settings, Gift, Ban } from "lucide-react";
+import { Plus, Edit2, Trash2, Settings, Gift, Ban, HelpCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { SelectionRule } from "../../../shared/rulesSchema";
-import type { Item } from "../../../shared/schema";
+import type { SelectionRule } from "../../../../shared/rulesSchema";
+import type { Item } from "../../../../shared/schema";
 
 export default function SelectionRulesManagement() {
   const [rules, setRules] = useState<SelectionRule[]>([]);
@@ -179,7 +180,27 @@ export default function SelectionRulesManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Regole di Selezione</h2>
+          <div className="flex items-center space-x-2">
+            <h2 className="text-2xl font-bold tracking-tight text-white">Regole di Selezione</h2>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <HelpCircle className="w-5 h-5 text-white/60 hover:text-white" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-sm bg-brand-surface border-brand-border">
+                  <div className="text-brand-text-primary">
+                    <p className="font-semibold mb-2">Sistema Regole di Selezione</p>
+                    <p className="text-sm">Permette di creare logiche automatiche per:</p>
+                    <ul className="text-sm mt-1 space-y-1">
+                      <li>• Rendere prodotti disponibili solo se altri sono selezionati</li>
+                      <li>• Trasformare automaticamente prodotti in regali gratuiti</li>
+                      <li>• Gestire dipendenze tra servizi e prodotti</li>
+                    </ul>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <p className="text-white/80">
             Configura regole per disponibilità condizionale e regali automatici
           </p>
@@ -197,7 +218,15 @@ export default function SelectionRulesManagement() {
                 {editingRule ? "Modifica Regola" : "Nuova Regola di Selezione"}
               </DialogTitle>
               <DialogDescription className="text-brand-text-secondary">
-                Configura condizioni e azioni per la regola di selezione
+                <div className="space-y-2">
+                  <p>Configura condizioni e azioni per la regola di selezione</p>
+                  <div className="bg-brand-primary p-3 rounded border-brand-border border">
+                    <p className="text-sm text-brand-text-primary">
+                      <strong>Come funziona:</strong> Se il cliente seleziona gli "Items Richiesti", 
+                      allora gli "Items Target" verranno modificati secondo l'azione scelta.
+                    </p>
+                  </div>
+                </div>
               </DialogDescription>
             </DialogHeader>
 
@@ -215,7 +244,31 @@ export default function SelectionRulesManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="type" className="text-brand-text-primary">Tipo Regola</Label>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="type" className="text-brand-text-primary">Tipo Regola</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm bg-brand-surface border-brand-border">
+                          <div className="text-brand-text-primary text-sm">
+                            <p className="font-semibold mb-2">Tipi di Regola:</p>
+                            <div className="space-y-2">
+                              <div>
+                                <p className="font-medium">Disponibilità Condizionale</p>
+                                <p className="text-brand-text-secondary">Rende disponibili/non disponibili prodotti basandosi su altre selezioni</p>
+                              </div>
+                              <div>
+                                <p className="font-medium">Regalo Automatico</p>
+                                <p className="text-brand-text-secondary">Trasforma automaticamente prodotti in regali gratuiti</p>
+                              </div>
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Select value={formData.type} onValueChange={(value: "availability" | "gift_transformation") => 
                     setFormData(prev => ({ ...prev, type: value }))
                   }>
@@ -255,7 +308,31 @@ export default function SelectionRulesManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="action" className="text-brand-text-primary">Azione</Label>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="action" className="text-brand-text-primary">Azione</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs bg-brand-surface border-brand-border">
+                          <div className="text-brand-text-primary text-sm">
+                            <p className="font-semibold">Azioni Disponibili:</p>
+                            <div className="mt-1 space-y-1">
+                              <div>
+                                <p className="font-medium">Disabilita</p>
+                                <p className="text-brand-text-secondary">Rende non selezionabili gli items target</p>
+                              </div>
+                              <div>
+                                <p className="font-medium">Rendi Gratuito</p>
+                                <p className="text-brand-text-secondary">Trasforma gli items target in regali (prezzo = 0€)</p>
+                              </div>
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Select value={formData.action} onValueChange={(value: "disable" | "enable" | "make_gift") => 
                     setFormData(prev => ({ ...prev, action: value }))
                   }>
@@ -280,7 +357,26 @@ export default function SelectionRulesManagement() {
 
               {/* Items richiesti */}
               <div className="space-y-2">
-                <Label className="text-brand-text-primary">Items Richiesti</Label>
+                <div className="flex items-center space-x-2">
+                  <Label className="text-brand-text-primary">Items Richiesti</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs bg-brand-surface border-brand-border">
+                        <div className="text-brand-text-primary text-sm">
+                          <p className="font-semibold">Items Richiesti (Condizioni)</p>
+                          <p className="mt-1">Seleziona i prodotti/servizi che il cliente DEVE aver scelto perché la regola si attivi.</p>
+                          <p className="mt-2 text-brand-text-secondary">
+                            Esempio: Se voglio che "Foto Invitati" diventi gratis quando si sceglie "Videomaker", 
+                            metto "Videomaker" qui come item richiesto.
+                          </p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-brand-primary p-4 rounded border-brand-border border">
                   {items.map(item => (
                     <div key={item.id} className="flex items-center space-x-2">
@@ -309,7 +405,26 @@ export default function SelectionRulesManagement() {
 
               {/* Items target */}
               <div className="space-y-2">
-                <Label className="text-brand-text-primary">Items Target</Label>
+                <div className="flex items-center space-x-2">
+                  <Label className="text-brand-text-primary">Items Target</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="w-4 h-4 text-brand-text-secondary hover:text-brand-text-primary" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs bg-brand-surface border-brand-border">
+                        <div className="text-brand-text-primary text-sm">
+                          <p className="font-semibold">Items Target (Destinazione)</p>
+                          <p className="mt-1">Seleziona i prodotti/servizi che verranno MODIFICATI quando si verifica la condizione.</p>
+                          <p className="mt-2 text-brand-text-secondary">
+                            Esempio: Se voglio che "Foto Invitati" diventi gratis quando si sceglie "Videomaker", 
+                            metto "Foto Invitati" qui come item target.
+                          </p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-brand-primary p-4 rounded border-brand-border border">
                   {items.map(item => (
                     <div key={item.id} className="flex items-center space-x-2">
