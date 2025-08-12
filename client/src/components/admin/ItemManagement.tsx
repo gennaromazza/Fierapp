@@ -562,104 +562,105 @@ export default function ItemManagement() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
-                    <Table>
-              <TableHeader className="glass">
-                <TableRow>
-                  <TableHead className="font-semibold text-brand-accent w-10"></TableHead>
-                  <TableHead className="font-semibold text-brand-accent">Ordine</TableHead>
-                  <TableHead className="font-semibold text-brand-accent">Immagine</TableHead>
-                  <TableHead className="font-semibold text-brand-accent">Titolo</TableHead>
-                  <TableHead className="font-semibold text-brand-accent">Categoria</TableHead>
-                  <TableHead className="font-semibold text-brand-accent">Prezzo</TableHead>
-                  <TableHead className="font-semibold text-brand-accent">Stato</TableHead>
-                  <TableHead className="font-semibold text-brand-accent">Azioni</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((item) => (
-                  <TableRow 
-                    key={item.id} 
-                    className={`hover:bg-brand-secondary/10 transition-colors cursor-move ${
-                      dragOverItem?.id === item.id ? 'bg-brand-accent/20 border-l-4 border-brand-accent' : ''
-                    }`}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, item)}
-                    onDragOver={(e) => handleDragOver(e, item)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, item)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <TableCell className="text-brand-text-primary">
-                      <GripVertical className="w-4 h-4 text-gray-400 hover:text-brand-accent cursor-grab active:cursor-grabbing" />
-                    </TableCell>
-                    <TableCell className="text-brand-text-primary">
-                      <Badge variant="outline" className="font-mono">
-                        {item.sortOrder}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-brand-text-primary">
-                      {item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                          <ImageIcon className="w-6 h-6 text-gray-400" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-brand-text-primary">
-                      <div>
-                        <div className="font-medium text-brand-text-primary">{item.title}</div>
-                        {item.subtitle && (
-                          <div className="text-sm text-brand-text-secondary">{item.subtitle}</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-brand-text-primary">
-                      <Badge variant={item.category === "servizio" ? "default" : "secondary"}>
-                        {item.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-brand-text-primary">
-                      <div>
-                        <div className="font-medium text-brand-text-primary">€{item.price.toFixed(2)}</div>
-                        {item.originalPrice && item.originalPrice !== item.price && (
-                          <div className="text-sm text-brand-text-secondary line-through">
-                            €{item.originalPrice.toFixed(2)}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-brand-text-primary">
-                      <Badge variant={item.active ? "default" : "secondary"}>
-                        {item.active ? "Attivo" : "Inattivo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-brand-text-primary">
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEditDialog(item)}
-                          className="hover:scale-105 transition-transform"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(item)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+                    <Table className="min-w-[800px]">
+                      <TableHeader className="glass">
+                        <TableRow>
+                          <TableHead className="font-semibold text-brand-accent w-10 sticky left-0 bg-white/95 backdrop-blur"></TableHead>
+                          <TableHead className="font-semibold text-brand-accent min-w-[80px]">Ordine</TableHead>
+                          <TableHead className="font-semibold text-brand-accent min-w-[80px]">Immagine</TableHead>
+                          <TableHead className="font-semibold text-brand-accent min-w-[200px]">Titolo</TableHead>
+                          <TableHead className="font-semibold text-brand-accent min-w-[100px]">Categoria</TableHead>
+                          <TableHead className="font-semibold text-brand-accent min-w-[120px]">Prezzo</TableHead>
+                          <TableHead className="font-semibold text-brand-accent min-w-[80px]">Stato</TableHead>
+                          <TableHead className="font-semibold text-brand-accent min-w-[120px] sticky right-0 bg-white/95 backdrop-blur">Azioni</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {items.map((item) => (
+                          <TableRow 
+                            key={item.id} 
+                            className={`hover:bg-brand-secondary/10 transition-colors cursor-move ${
+                              dragOverItem?.id === item.id ? 'bg-brand-accent/20 border-l-4 border-brand-accent' : ''
+                            }`}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, item)}
+                            onDragOver={(e) => handleDragOver(e, item)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, item)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <TableCell className="text-brand-text-primary sticky left-0 bg-white/95 backdrop-blur">
+                              <GripVertical className="w-4 h-4 text-gray-400 hover:text-brand-accent cursor-grab active:cursor-grabbing" />
+                            </TableCell>
+                            <TableCell className="text-brand-text-primary">
+                              <Badge variant="outline" className="font-mono text-xs">
+                                {item.sortOrder}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-brand-text-primary">
+                              {item.imageUrl ? (
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.title}
+                                  className="w-10 h-10 object-cover rounded"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+                                  <ImageIcon className="w-5 h-5 text-gray-400" />
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-brand-text-primary">
+                              <div>
+                                <div className="font-medium text-brand-text-primary text-sm">{item.title}</div>
+                                {item.subtitle && (
+                                  <div className="text-xs text-brand-text-secondary">{item.subtitle}</div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-brand-text-primary">
+                              <Badge variant={item.category === "servizio" ? "default" : "secondary"} className="text-xs">
+                                {item.category}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-brand-text-primary">
+                              <div>
+                                <div className="font-medium text-brand-text-primary text-sm">€{item.price.toFixed(2)}</div>
+                                {item.originalPrice && item.originalPrice !== item.price && (
+                                  <div className="text-xs text-brand-text-secondary line-through">
+                                    €{item.originalPrice.toFixed(2)}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-brand-text-primary">
+                              <Badge variant={item.active ? "default" : "secondary"} className="text-xs">
+                                {item.active ? "Attivo" : "Inattivo"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-brand-text-primary sticky right-0 bg-white/95 backdrop-blur">
+                              <div className="flex space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openEditDialog(item)}
+                                  className="p-1.5"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDelete(item)}
+                                  className="p-1.5"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
                     </Table>
                   </div>
                 </CardContent>
