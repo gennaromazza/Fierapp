@@ -50,8 +50,8 @@ export default function ItemCard({ item }: ItemCardProps) {
 
   const shouldTruncate = item.description && item.description.split(' ').length > 15;
   const displayDescription = shouldTruncate && !showFullDescription 
-    ? truncateText(item.description, 15)
-    : item.description;
+    ? truncateText(item.description || '', 15)
+    : item.description || '';
 
   // Funzione per navigare verso un elemento richiesto
   const navigateToRequiredItem = (itemId: string) => {
