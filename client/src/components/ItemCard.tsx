@@ -139,8 +139,8 @@ export default function ItemCard({ item }: ItemCardProps) {
         
         // Process global discount dates
         if (processedDiscounts.global?.startDate) {
-          if (processedDiscounts.global.startDate.toDate && typeof processedDiscounts.global.startDate.toDate === 'function') {
-            processedDiscounts.global.startDate = processedDiscounts.global.startDate.toDate();
+          if (processedDiscounts.global.startDate && typeof processedDiscounts.global.startDate === 'object' && 'toDate' in processedDiscounts.global.startDate) {
+            processedDiscounts.global.startDate = (processedDiscounts.global.startDate as any).toDate();
           } else if (typeof processedDiscounts.global.startDate === 'string' || typeof processedDiscounts.global.startDate === 'number') {
             const date = new Date(processedDiscounts.global.startDate);
             processedDiscounts.global.startDate = isNaN(date.getTime()) ? undefined : date;
@@ -148,8 +148,8 @@ export default function ItemCard({ item }: ItemCardProps) {
         }
         
         if (processedDiscounts.global?.endDate) {
-          if (processedDiscounts.global.endDate.toDate && typeof processedDiscounts.global.endDate.toDate === 'function') {
-            processedDiscounts.global.endDate = processedDiscounts.global.endDate.toDate();
+          if (processedDiscounts.global.endDate && typeof processedDiscounts.global.endDate === 'object' && 'toDate' in processedDiscounts.global.endDate) {
+            processedDiscounts.global.endDate = (processedDiscounts.global.endDate as any).toDate();
           } else if (typeof processedDiscounts.global.endDate === 'string' || typeof processedDiscounts.global.endDate === 'number') {
             const date = new Date(processedDiscounts.global.endDate);
             processedDiscounts.global.endDate = isNaN(date.getTime()) ? undefined : date;
@@ -162,8 +162,8 @@ export default function ItemCard({ item }: ItemCardProps) {
             const itemDiscount = processedDiscounts.perItemOverrides![key];
             
             if (itemDiscount.startDate) {
-              if (itemDiscount.startDate.toDate && typeof itemDiscount.startDate.toDate === 'function') {
-                itemDiscount.startDate = itemDiscount.startDate.toDate();
+              if (itemDiscount.startDate && typeof itemDiscount.startDate === 'object' && 'toDate' in itemDiscount.startDate) {
+                itemDiscount.startDate = (itemDiscount.startDate as any).toDate();
               } else if (typeof itemDiscount.startDate === 'string' || typeof itemDiscount.startDate === 'number') {
                 const date = new Date(itemDiscount.startDate);
                 itemDiscount.startDate = isNaN(date.getTime()) ? undefined : date;
@@ -171,8 +171,8 @@ export default function ItemCard({ item }: ItemCardProps) {
             }
             
             if (itemDiscount.endDate) {
-              if (itemDiscount.endDate.toDate && typeof itemDiscount.endDate.toDate === 'function') {
-                itemDiscount.endDate = itemDiscount.endDate.toDate();
+              if (itemDiscount.endDate && typeof itemDiscount.endDate === 'object' && 'toDate' in itemDiscount.endDate) {
+                itemDiscount.endDate = (itemDiscount.endDate as any).toDate();
               } else if (typeof itemDiscount.endDate === 'string' || typeof itemDiscount.endDate === 'number') {
                 const date = new Date(itemDiscount.endDate);
                 itemDiscount.endDate = isNaN(date.getTime()) ? undefined : date;

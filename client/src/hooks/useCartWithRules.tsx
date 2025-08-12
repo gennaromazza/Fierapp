@@ -8,6 +8,7 @@ import { db } from '../firebase';
 import type { Item, CartItem } from '../../../shared/schema';
 import type { RulesEvaluationResult, ItemState, SelectionRule } from '../../../shared/rulesSchema';
 import type { NotificationItem } from '../components/GiftNotification';
+import { toast } from '../hooks/use-toast';
 
 /**
  * Hook esteso del carrello che integra le regole di selezione
@@ -122,6 +123,49 @@ export function useCartWithRules() {
       }, 0);
     }
   }, [rulesEvaluation.itemStates]); // Dipende solo dallo stato delle regole, non dagli item del carrello
+
+  // Tracking per prodotti sbloccati
+  const previousAvailabilityRef = useRef<Record<string, boolean>>({});
+
+  // Monitora i cambiamenti di disponibilità per mostrare toast di prodotti sbloccati
+  useEffect(() => {
+    if (itemsLoading || rulesLoading || !allItems.length) return;
+
+    const newlyUnlockedItems: Item[] = [];
+    const currentAvailability: Record<string, boolean> = {};
+
+    // Controlla ogni item per vedere se è appena diventato disponibile
+    allItems.forEach(item => {
+      const isCurrentlyAvailable = rulesEvaluation.itemStates[item.id]?.isAvailable ?? true;
+      const wasPreviouslyAvailable = previousAvailabilityRef.current[item.id] ?? true;
+      
+      currentAvailability[item.id] = isCurrentlyAvailable;
+
+      // Se l'item ora è disponibile ma prima non lo era
+      if (isCurrentlyAvailable && !wasPreviouslyAvailable) {
+        newlyUnlockedItems.push(item);
+      }
+    });
+
+    // Mostra toast se ci sono prodotti appena sbloccati
+    if (newlyUnlockedItems.length > 0) {
+      const productNames = newlyUnlockedItems.map(item => item.title).join(', ');
+      const message = newlyUnlockedItems.length === 1 
+        ? `Ora puoi selezionare: ${productNames}`
+        : `Ora puoi selezionare: ${productNames}`;
+
+      toast({
+        title: "🔓 Prodotti Sbloccati!",
+        description: message,
+        duration: 5000,
+      });
+
+      console.log("🔓 Prodotti sbloccati:", newlyUnlockedItems.map(item => item.title));
+    }
+
+    // Aggiorna il riferimento per il prossimo confronto
+    previousAvailabilityRef.current = currentAvailability;
+  }, [rulesEvaluation.itemStates, allItems, itemsLoading, rulesLoading]);
 
   // Funzione per verificare se un item è disponibile per la selezione
   const isItemAvailable = (itemId: string): boolean => {
