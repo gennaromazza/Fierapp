@@ -1,9 +1,10 @@
+
 {
   "name": "Promo Fiera - Studio Demo",
   "short_name": "Promo Fiera",
   "description": "App per la gestione delle promozioni e preventivi in fiera",
-  "start_url": "/fiera/",
-  "scope": "/fiera/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#123458",
@@ -12,13 +13,13 @@
   "lang": "it",
   "icons": [
     {
-      "src": "/fiera/icon-192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/fiera/icon-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -26,14 +27,14 @@
   ],
   "screenshots": [
     {
-      "src": "/fiera/screenshot-mobile.png",
+      "src": "/screenshot-mobile.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Vista mobile dell'app"
     },
     {
-      "src": "/fiera/screenshot-desktop.png",
+      "src": "/screenshot-desktop.png",
       "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide",
