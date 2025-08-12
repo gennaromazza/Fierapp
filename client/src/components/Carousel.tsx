@@ -105,7 +105,18 @@ export default function Carousel() {
     loadItems();
   }, [activeTab]);
 
-  const totalSlides = Math.ceil(items.length / getSlidesPerView());
+  const slidesPerView = getSlidesPerView();
+  const totalSlides = Math.ceil(items.length / slidesPerView);
+  
+  // Debug per vedere i calcoli del carousel
+  console.log("🔍 Carousel Debug:", {
+    activeTab,
+    itemsCount: items.length,
+    slidesPerView,
+    totalSlides,
+    currentSlide,
+    items: items.map(item => item.title)
+  });
 
   function getSlidesPerView() {
     if (typeof window !== "undefined") {
@@ -238,15 +249,23 @@ export default function Carousel() {
       {/* Carousel Content */}
       {items.length > 0 ? (
         <div>
-          <div className="swiper-container">
+          <div className="relative overflow-hidden">
             <div 
-              className="swiper-wrapper"
+              className="flex transition-transform duration-300 ease-in-out"
               style={{
                 transform: `translateX(-${currentSlide * (100 / getSlidesPerView())}%)`,
+                width: `${Math.ceil(items.length / getSlidesPerView()) * 100}%`
               }}
             >
               {items.map((item) => (
-                <div key={item.id} className="swiper-slide px-2">
+                <div 
+                  key={item.id} 
+                  className="px-2"
+                  style={{
+                    width: `${100 / getSlidesPerView()}%`,
+                    flexShrink: 0
+                  }}
+                >
                   <ItemCard item={item} />
                 </div>
               ))}
