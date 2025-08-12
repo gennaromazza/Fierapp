@@ -65,13 +65,19 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
 
     // Calcola gli sconti specifici per item
     cart.cart.items.forEach(item => {
-      const originalPrice = item.originalPrice || item.price;
-      
       // Se è un regalo (price = 0), salta
       if (item.price === 0) return;
 
+      const originalPrice = item.originalPrice || item.price;
+      
+      // Se l'item ha già uno sconto applicato (originalPrice > price), aggiungilo al totale sconti
+      if (item.originalPrice && item.originalPrice > item.price) {
+        itemSpecificDiscount += (item.originalPrice - item.price);
+      }
+      
+      // Controlla anche se ci sono sconti configurati in discounts.perItemOverrides
       const hasItemDiscount = discounts?.perItemOverrides?.[item.id];
-      if (hasItemDiscount) {
+      if (hasItemDiscount && hasItemDiscount.isActive) {
         if (hasItemDiscount.type === 'fixed') {
           itemSpecificDiscount += (hasItemDiscount.value || 0);
         } else if (hasItemDiscount.type === 'percentage') {
