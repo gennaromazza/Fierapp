@@ -204,68 +204,117 @@ export function useCartWithRules() {
     };
   };
 
-  // Ottiene il motivo per cui un item non è disponibile
+  // Ottiene il motivo per cui un item non è disponibile o ha comportamenti speciali
   const getUnavailableReason = (itemId: string): string => {
     if (rulesLoading || itemsLoading) return "Caricamento...";
     
-    const rulesEngine = new RulesEngine(rules, allItems);
-    const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
-      const fullItem = allItems.find(item => item.id === cartItem.id);
-      return fullItem || {
-        ...cartItem,
-        active: true,
-        sortOrder: 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as Item;
-    });
-    
-    // Trova le regole che rendono questo item non disponibile
-    const applicableRules = rules.filter(rule => 
-      rule.active && 
-      rule.type === 'availability' && 
-      rule.action === 'disable' && 
-      rule.targetItems.includes(itemId)
-    );
-    
-    for (const rule of applicableRules) {
-      const conditionMet = rulesEngine['evaluateCondition'](rule.conditions, cartAsItems, cartAsItems.map(i => i.id));
+    try {
+      const rulesEngine = new RulesEngine(rules, allItems);
+      const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
+        const fullItem = allItems.find(item => item.id === cartItem.id);
+        return fullItem || {
+          ...cartItem,
+          active: true,
+          sortOrder: 0,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as Item;
+      });
       
-      // Per regole disable, se condizione non è soddisfatta, la regola si applica
-      if (!conditionMet) {
-        // Genera messaggio basato sul tipo di condizione
-        switch (rule.conditions.type) {
-          case 'required_items':
-            if (rule.conditions.requiredItems && rule.conditions.requiredItems.length > 0) {
-              const requiredItemNames = rule.conditions.requiredItems.map(itemId => {
-                const item = allItems.find(i => i.id === itemId);
-                return item?.title || 'Prodotto sconosciuto';
-              });
-              
-              if (requiredItemNames.length === 1) {
-                return `Richiede: ${requiredItemNames[0]}`;
-              } else {
-                return `Richiede: ${requiredItemNames.join(', ')}`;
-              }
-            }
-            break;
-            
-          case 'min_selection_count':
-            return `Seleziona almeno ${rule.conditions.value || 1} prodotti`;
-            
-          case 'category_count':
-            if (rule.conditions.categories && rule.conditions.categories.length > 0) {
-              return `Seleziona ${rule.conditions.value || 1} da: ${rule.conditions.categories.join(', ')}`;
-            }
-            return `Seleziona più prodotti nella categoria`;
-            
-          default:
-            return rule.description || "Condizioni non soddisfatte";
+      // Controlla tutte le regole che influenzano questo item
+      const applicableRules = rules.filter(rule => 
+        rule.active && rule.targetItems.includes(itemId)
+      );
+      
+      for (const rule of applicableRules) {
+        const conditionMet = rulesEngine['evaluateCondition']?.(rule.conditions, cartAsItems, cartAsItems.map(i => i.id));
+        
+        // Logica specifica per tipo di regola e azione
+        let shouldShowReason = false;
+        
+        if (rule.type === 'availability') {
+          if (rule.action === 'disable' && !conditionMet) {
+            shouldShowReason = true; // Regola disable attiva quando condizione non soddisfatta
+          } else if (rule.action === 'enable' && conditionMet) {
+            shouldShowReason = true; // Regola enable attiva quando condizione soddisfatta
+          }
+        } else if (rule.type === 'gift_transformation') {
+          if (rule.action === 'make_gift' && conditionMet) {
+            // Per regali, potremmo voler mostrare un messaggio informativo
+            return generateConditionMessage(rule, allItems, false, 'gift');
+          }
+        }
+        
+        if (shouldShowReason) {
+          return generateConditionMessage(rule, allItems, !conditionMet);
         }
       }
+      
+      return "Non disponibile";
+    } catch (error) {
+      console.error('Error in getUnavailableReason:', error);
+      return "Non disponibile";
+    }
+  };
+
+  // Genera messaggio basato sulla condizione della regola
+  const generateConditionMessage = (
+    rule: SelectionRule, 
+    allItems: Item[], 
+    isNegated: boolean = false,
+    messageType: 'unavailable' | 'gift' = 'unavailable'
+  ): string => {
+    const prefix = messageType === 'gift' ? 'Regalo per:' : 'Richiede:';
+    
+    switch (rule.conditions.type) {
+      case 'required_items':
+        if (rule.conditions.requiredItems && rule.conditions.requiredItems.length > 0) {
+          const requiredItemNames = rule.conditions.requiredItems.map(itemId => {
+            const item = allItems.find(i => i.id === itemId);
+            return item?.title || 'Prodotto sconosciuto';
+          });
+          
+          if (requiredItemNames.length === 1) {
+            return `${prefix} ${requiredItemNames[0]}`;
+          } else {
+            return `${prefix} ${requiredItemNames.join(', ')}`;
+          }
+        }
+        break;
+        
+      case 'min_selection_count':
+        const count = rule.conditions.value || 1;
+        if (messageType === 'gift') {
+          return `Regalo per ${count}+ selezioni`;
+        }
+        return `Seleziona almeno ${count} prodotti`;
+        
+      case 'category_count':
+        if (rule.conditions.categories && rule.conditions.categories.length > 0) {
+          const count = rule.conditions.value || 1;
+          const categories = rule.conditions.categories.join(', ');
+          if (messageType === 'gift') {
+            return `Regalo per ${count} da: ${categories}`;
+          }
+          return `Seleziona ${count} da: ${categories}`;
+        }
+        return messageType === 'gift' ? 'Regalo per categoria' : 'Seleziona più prodotti nella categoria';
+        
+      case 'specific_items':
+        if (rule.conditions.specificItems && rule.conditions.specificItems.length > 0) {
+          const itemNames = rule.conditions.specificItems.map(itemId => {
+            const item = allItems.find(i => i.id === itemId);
+            return item?.title || 'Prodotto sconosciuto';
+          });
+          return `${prefix} ${itemNames.join(' o ')}`;
+        }
+        break;
+        
+      default:
+        return rule.description || (messageType === 'gift' ? "Regalo speciale" : "Condizioni non soddisfatte");
     }
     
-    return "Non disponibile";
+    return rule.description || (messageType === 'gift' ? "Regalo speciale" : "Non disponibile");
   };
 
   return {
