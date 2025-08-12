@@ -128,6 +128,18 @@ export default function Carousel() {
       setCurrentSlide(0);
     }
   }, [currentSlide, totalSlides]);
+  
+  // Debug per verificare il rendering
+  useEffect(() => {
+    console.log("🎠 Carousel State:", {
+      activeTab,
+      itemsCount: items.length,
+      slidesPerView,
+      totalSlides,
+      currentSlide,
+      items: items.map(item => item.title)
+    });
+  }, [items, activeTab, currentSlide, slidesPerView, totalSlides]);
 
   function getSlidesPerView() {
     if (windowWidth >= 1024) return 3; // Desktop: 3 items per slide
@@ -259,44 +271,19 @@ export default function Carousel() {
       {items.length > 0 ? (
         <div>
           <div className="relative overflow-hidden">
-            <div 
-              className="flex transition-transform duration-300 ease-in-out"
-              style={{
-                transform: `translateX(-${currentSlide * 100}%)`,
-                width: `${totalSlides * 100}%`
-              }}
-            >
-              {Array.from({ length: totalSlides }, (_, slideIndex) => (
-                <div 
-                  key={slideIndex}
-                  className="flex w-full"
-                  style={{ width: `${100 / totalSlides}%` }}
-                >
-                  {items
-                    .slice(slideIndex * slidesPerView, (slideIndex + 1) * slidesPerView)
-                    .map((item) => (
-                      <div 
-                        key={item.id} 
-                        className="px-1 sm:px-2"
-                        style={{ width: `${100 / slidesPerView}%` }}
-                      >
-                        <ItemCard item={item} />
-                      </div>
-                    ))}
-                  {/* Fill empty slots if last slide has fewer items */}
-                  {slideIndex === totalSlides - 1 && 
-                   items.slice(slideIndex * slidesPerView, (slideIndex + 1) * slidesPerView).length < slidesPerView &&
-                   Array.from({ 
-                     length: slidesPerView - items.slice(slideIndex * slidesPerView, (slideIndex + 1) * slidesPerView).length 
-                   }, (_, emptyIndex) => (
-                     <div 
-                       key={`empty-${emptyIndex}`}
-                       className="px-1 sm:px-2"
-                       style={{ width: `${100 / slidesPerView}%` }}
-                     />
-                   ))}
-                </div>
-              ))}
+            <div className="flex w-full">
+              {/* Render solo gli items della slide corrente */}
+              {items
+                .slice(currentSlide * slidesPerView, (currentSlide + 1) * slidesPerView)
+                .map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="px-1 sm:px-2"
+                    style={{ width: `${100 / slidesPerView}%` }}
+                  >
+                    <ItemCard item={item} />
+                  </div>
+                ))}
             </div>
           </div>
 

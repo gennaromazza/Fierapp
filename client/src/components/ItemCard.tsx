@@ -174,7 +174,7 @@ export default function ItemCard({ item }: ItemCardProps) {
         )}
         
         {/* Gift Badge - positioned above image */}
-        {itemIsGift && (
+        {itemIsGift && isAdded && (
           <div className="absolute top-3 left-3 bg-green-600 text-white px-3 py-2 rounded-full text-sm font-bold shadow-2xl border-2 border-white z-20 flex items-center space-x-1" style={{ backdropFilter: 'blur(4px)' }}>
             <Gift className="w-3 h-3" />
             <span>{giftSettings?.giftText || "OMAGGIO!"}</span>

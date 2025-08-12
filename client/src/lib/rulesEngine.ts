@@ -166,6 +166,14 @@ export class RulesEngine {
       selectedItemIds.includes(itemId)
     );
     
+    console.log("📊 Required Items Check:", {
+      required: condition.requiredItems.length,
+      selected: selectedRequiredItems.length,
+      requiredIds: condition.requiredItems,
+      selectedIds: selectedItemIds,
+      minimumCount: condition.minimumCount
+    });
+    
     if (condition.minimumCount && condition.minimumCount > 0) {
       // Almeno N degli item richiesti devono essere selezionati
       return selectedRequiredItems.length >= condition.minimumCount;

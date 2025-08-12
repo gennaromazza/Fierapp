@@ -77,7 +77,21 @@ export function useCartWithRules() {
     });
     
     const rulesEngine = new RulesEngine(rules, allItems);
-    return rulesEngine.evaluate(cartAsItems);
+    const evaluation = rulesEngine.evaluate(cartAsItems);
+    
+    // Debug per vedere quando le regole regalo si attivano
+    console.log("🎁 Rules Evaluation:", {
+      cartItems: cartAsItems.map(item => item.title),
+      appliedRules: evaluation.appliedRules,
+      giftItems: Object.entries(evaluation.itemStates)
+        .filter(([_, state]) => state.isGift)
+        .map(([id, state]) => {
+          const item = allItems.find(i => i.id === id);
+          return { id, title: item?.title, state };
+        })
+    });
+    
+    return evaluation;
   }, [cart.cart.items, rules, allItems, itemsLoading, rulesLoading]);
 
   // Funzione per verificare se un item è disponibile per la selezione
