@@ -436,18 +436,18 @@ export default function ItemManagement() {
                     <Table>
               <TableHeader className="glass">
                 <TableRow>
-                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Immagine</TableHead>
-                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Titolo</TableHead>
-                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Categoria</TableHead>
-                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Prezzo</TableHead>
-                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Stato</TableHead>
-                  <TableHead className="font-semibold" style={{ color: 'var(--brand-accent)' }}>Azioni</TableHead>
+                  <TableHead className="font-semibold text-brand-accent">Immagine</TableHead>
+                  <TableHead className="font-semibold text-brand-accent">Titolo</TableHead>
+                  <TableHead className="font-semibold text-brand-accent">Categoria</TableHead>
+                  <TableHead className="font-semibold text-brand-accent">Prezzo</TableHead>
+                  <TableHead className="font-semibold text-brand-accent">Stato</TableHead>
+                  <TableHead className="font-semibold text-brand-accent">Azioni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                    <TableCell>
+                  <TableRow key={item.id} className="hover:bg-brand-secondary/10 transition-colors">
+                    <TableCell className="text-brand-text-primary">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
@@ -460,35 +460,35 @@ export default function ItemManagement() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-brand-text-primary">
                       <div>
-                        <div className="font-medium">{item.title}</div>
+                        <div className="font-medium text-brand-text-primary">{item.title}</div>
                         {item.subtitle && (
-                          <div className="text-sm text-gray-500">{item.subtitle}</div>
+                          <div className="text-sm text-brand-text-secondary">{item.subtitle}</div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-brand-text-primary">
                       <Badge variant={item.category === "servizio" ? "default" : "secondary"}>
                         {item.category}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-brand-text-primary">
                       <div>
-                        <div className="font-medium">€{item.price.toFixed(2)}</div>
+                        <div className="font-medium text-brand-text-primary">€{item.price.toFixed(2)}</div>
                         {item.originalPrice && item.originalPrice !== item.price && (
-                          <div className="text-sm text-gray-500 line-through">
+                          <div className="text-sm text-brand-text-secondary line-through">
                             €{item.originalPrice.toFixed(2)}
                           </div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-brand-text-primary">
                       <Badge variant={item.active ? "default" : "secondary"}>
                         {item.active ? "Attivo" : "Inattivo"}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-brand-text-primary">
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
