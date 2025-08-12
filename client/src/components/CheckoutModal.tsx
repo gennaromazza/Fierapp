@@ -274,23 +274,66 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         <div className="bg-brand-primary rounded-lg p-4 mb-6">
           <h4 className="font-semibold text-brand-accent mb-3">RIEPILOGO SELEZIONE</h4>
           <div className="space-y-2 text-sm">
-            {cart.items.map((item, index) => (
+            {cart.cart.items.map((item, index) => (
               <div key={index} className="flex justify-between">
-                <span>{item.title}</span>
-                <span>€{item.price.toLocaleString('it-IT')}</span>
+                <span>
+                  {item.title}
+                  {cart.isItemGift && cart.isItemGift(item.id) && (
+                    <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
+                  )}
+                </span>
+                <span>
+                  {cart.isItemGift && cart.isItemGift(item.id) ? (
+                    <>
+                      <span className="line-through text-gray-400 mr-2">€{item.price.toLocaleString('it-IT')}</span>
+                      <span className="text-green-600 font-bold">GRATIS</span>
+                    </>
+                  ) : (
+                    `€${item.price.toLocaleString('it-IT')}`
+                  )}
+                </span>
               </div>
             ))}
-            {cart.discount > 0 && (
-              <div className="flex justify-between text-green-600 font-semibold">
-                <span>Sconto totale</span>
-                <span>-€{cart.discount.toLocaleString('it-IT')}</span>
-              </div>
-            )}
-            <hr className="border-brand-secondary" />
-            <div className="flex justify-between font-bold text-lg text-brand-accent">
-              <span>TOTALE</span>
-              <span>€{cart.total.toLocaleString('it-IT')}</span>
-            </div>
+            
+            {(() => {
+              const pricing = getPricingWithRules();
+              return (
+                <>
+                  <hr className="border-brand-secondary" />
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Subtotale servizi/prodotti:</span>
+                    <span>€{pricing.subtotal.toLocaleString('it-IT')}</span>
+                  </div>
+                  
+                  {pricing.totalSavings > 0 && (
+                    <>
+                      {pricing.discount > 0 && (
+                        <div className="flex justify-between text-green-600 font-semibold">
+                          <span>Sconti applicati:</span>
+                          <span>-€{Math.round(pricing.discount).toLocaleString('it-IT')}</span>
+                        </div>
+                      )}
+                      {pricing.giftSavings > 0 && (
+                        <div className="flex justify-between text-green-600 font-semibold">
+                          <span>Omaggi:</span>
+                          <span>-€{Math.round(pricing.giftSavings).toLocaleString('it-IT')}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-green-600 font-bold text-base">
+                        <span>RISPARMIO TOTALE:</span>
+                        <span>-€{Math.round(pricing.totalSavings).toLocaleString('it-IT')}</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  <hr className="border-brand-secondary" />
+                  <div className="flex justify-between font-bold text-lg text-brand-accent">
+                    <span>TOTALE</span>
+                    <span>€{Math.round(pricing.total).toLocaleString('it-IT')}</span>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
         
