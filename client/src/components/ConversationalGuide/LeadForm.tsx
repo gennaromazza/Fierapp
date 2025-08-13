@@ -164,6 +164,9 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     if (!validateForm()) return;
 
     try {
+      // Get pricing for PDF
+      const pdfPricing = cart.getPricingWithRules();
+      
       // Create PDF data structure like the old system
       const pdfData = {
         customer: {
@@ -177,10 +180,10 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         selectedItems: cart.cart.items.map(item => ({
           id: item.id,
           title: item.title,
-          price: item.price, // This should be the final price after discounts
+          price: item.price,
           originalPrice: item.originalPrice
         })),
-        pricing: cart.getPricingWithRules() // This should use the unified pricing
+        pricing: pdfPricing
       };
 
       const customerName = formData.name || 'cliente';
@@ -199,6 +202,9 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     if (!validateForm()) return;
 
     try {
+      // Get pricing first
+      const leadPricing = cart.getPricingWithRules();
+      
       // Save lead to Firebase using EXACT same format as CheckoutModal
       const leadData = {
         customer: {
@@ -216,7 +222,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
           price: item.price, // This should be the final price after discounts
           originalPrice: item.originalPrice
         })),
-        pricing: cart.getPricingWithRules(), // This should use the unified pricing
+        pricing: leadPricing, // This should use the unified pricing
         gdprConsent: {
           accepted: formData.gdprAccepted,
           text: "Accetto il trattamento dei dati personali",
@@ -236,10 +242,6 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       ).join('\n');
 
       // This pricing summary should reflect the unified pricing
-      const pricing = cart.getPricingWithRules(); // This is now using the new unified pricing logic
-      const totalText = pricing.totalSavings > 0 
-        ? `Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.totalSavings.toLocaleString('it-IT')}\nTotale: €${pricing.total.toLocaleString('it-IT')}`
-        : `Totale: €${pricing.total.toLocaleString('it-IT')}`;
 
       const formDataText = [
         `Nome: ${formData.name}`,
@@ -251,7 +253,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       ].filter(Boolean).join('\n');
 
       // Use the unified system for the message
-      const unifiedPricingDetails = pricing.detailed || pricing;
+      const unifiedPricingDetails = leadPricing.detailed || leadPricing;
       const marketingMessages = generateMarketingMessages(unifiedPricingDetails);
       const pricingSummary = formatPricingSummary(unifiedPricingDetails);
 
@@ -269,22 +271,18 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     }
   };
 
-  // Calcola pricing unificato con sconti e regali
-  const giftItemIds = cart.cart.items
-    .filter(item => cart.isItemGift(item.id))
-    .map(item => item.id);
-
-  // Assuming 'discounts' are fetched or defined elsewhere and available in scope
-  // For demonstration, using a dummy 'discounts' array defined above.
-  const unifiedPricing = calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds);
-  const pricing = {
-    subtotal: unifiedPricing.finalTotal, // This should be the final total after all discounts
-    originalSubtotal: unifiedPricing.originalSubtotal,
-    discount: unifiedPricing.totalDiscountSavings, // Total savings from discounts
-    giftSavings: unifiedPricing.giftSavings, // Total savings from gifts
-    total: unifiedPricing.finalTotal, // Final total after all deductions
-    totalSavings: unifiedPricing.totalSavings, // Grand total savings
-    detailed: unifiedPricing // For detailed breakdown
+  // Usa il sistema pricing esistente dalla cart 
+  const cartPricing = cart.getPricingWithRules();
+  
+  // Sicurezza contro valori NaN
+  const safePricing = {
+    originalSubtotal: isNaN(cartPricing.originalSubtotal) ? cartPricing.subtotal : cartPricing.originalSubtotal,
+    subtotal: isNaN(cartPricing.subtotal) ? 0 : cartPricing.subtotal,
+    discount: isNaN(cartPricing.discount) ? 0 : cartPricing.discount,
+    giftSavings: isNaN(cartPricing.giftSavings) ? 0 : cartPricing.giftSavings,
+    total: isNaN(cartPricing.total) ? 0 : cartPricing.total,
+    totalSavings: isNaN(cartPricing.totalSavings) ? 0 : cartPricing.totalSavings,
+    detailed: cartPricing.detailed || cartPricing
   };
 
   return (
@@ -307,32 +305,31 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         <div className="border-t pt-2 mt-2 space-y-1">
           <div className="flex justify-between text-sm">
             <span>Subtotale:</span>
-            <span>€{pricing.originalSubtotal}</span> {/* Show original subtotal */}
+            <span>€{safePricing.originalSubtotal.toFixed(0)}</span>
           </div>
-          {pricing.discount > 0 && (
+          {safePricing.discount > 0 && (
             <div className="flex justify-between text-sm text-red-600">
-              <span>Sconto globale:</span>
-              <span>-€{pricing.discount}</span> {/* Show global discount */}
+              <span>Sconti:</span>
+              <span>-€{safePricing.discount.toFixed(0)}</span>
             </div>
           )}
-          {pricing.giftSavings > 0 && (
+          {safePricing.giftSavings > 0 && (
             <div className="flex justify-between text-sm text-green-600">
-              <span>Risparmi omaggi:</span>
-              <span>-€{pricing.giftSavings}</span> {/* Show gift savings */}
+              <span>Servizi gratuiti:</span>
+              <span>-€{safePricing.giftSavings.toFixed(0)}</span>
             </div>
           )}
           <div className="flex justify-between font-bold border-t pt-1">
             <span>TOTALE:</span>
-            <span>€{pricing.total}</span> {/* Show final total */}
+            <span>€{safePricing.total.toFixed(0)}</span>
           </div>
-          {pricing.totalSavings > 0 && (
+          {safePricing.totalSavings > 0 && (
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 mt-3">
               <div className="text-center text-green-800 font-bold text-lg mb-2">
-                🎉 RISPARMIO TOTALE: €{pricing.totalSavings}!
+                🎉 RISPARMIO TOTALE: €{safePricing.totalSavings.toFixed(0)}!
               </div>
               {(() => {
-                const unifiedPricingDetails = pricing.detailed || pricing;
-                const marketingMessages = generateMarketingMessages(unifiedPricingDetails);
+                const marketingMessages = generateMarketingMessages(safePricing.detailed);
                 return (
                   <div className="space-y-1 text-center">
                     {marketingMessages.mainSavings && (
