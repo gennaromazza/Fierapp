@@ -666,25 +666,52 @@ export function DynamicChatGuide() {
                 </div>
               )}
 
-              {message.showCart && cart.cart.items.length > 0 && (
-                <div className="mt-4 p-3 bg-white rounded-lg border">
-                  <h4 className="font-semibold mb-2 text-sm">Riepilogo Ordine:</h4>
-                  {cart.cart.items.map(item => (
-                    <div key={item.id} className="flex justify-between text-xs mb-1">
-                      <span>{item.title}</span>
-                      <span className={item.price === 0 ? "text-green-600 font-bold" : ""}>
-                        {item.price === 0 ? "GRATIS" : `€${item.price}`}
-                      </span>
-                    </div>
-                  ))}
-                  <div className="border-t mt-2 pt-2">
-                    <div className="flex justify-between font-bold">
-                      <span>Totale:</span>
-                      <span>€{cart.getPricingWithRules().total}</span>
+              {message.showCart && cart.cart.items.length > 0 && (() => {
+                // Calculate savings for cart total display
+                const pricing = cart.getPricingWithRules();
+                const cartSavingsInfo = discounts ? 
+                  calculateCartSavings(cart.cart.items, discounts, pricing.giftSavings) :
+                  { finalTotal: pricing.total, originalTotal: pricing.total };
+                
+                return (
+                  <div className="mt-4 p-3 bg-white rounded-lg border">
+                    <h4 className="font-semibold mb-2 text-sm">Riepilogo Ordine:</h4>
+                    {cart.cart.items.map(item => {
+                      // Calculate discount for this item
+                      const originalPrice = item.originalPrice || item.price;
+                      const discountInfo = discounts ? 
+                        getItemDiscountInfo(originalPrice, item.id, discounts) : 
+                        { finalPrice: originalPrice, hasDiscount: false };
+                      const finalPrice = item.price === 0 ? 0 : discountInfo.finalPrice; // Keep gifts as 0
+                      const hasDiscount = discountInfo.hasDiscount && item.price > 0;
+                      
+                      return (
+                        <div key={item.id} className="flex justify-between text-xs mb-1">
+                          <span>{item.title}</span>
+                          <div className="flex items-center gap-2">
+                            {hasDiscount && (
+                              <span className="line-through text-gray-400 text-xs">
+                                €{originalPrice}
+                              </span>
+                            )}
+                            <span className={finalPrice === 0 ? "text-green-600 font-bold" : (hasDiscount ? "text-green-600 font-semibold" : "")}>
+                              {finalPrice === 0 ? "GRATIS" : `€${finalPrice}`}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="border-t mt-2 pt-2">
+                      <div className="flex justify-between font-bold">
+                        <span>Totale:</span>
+                        <span className="text-green-600">
+                          €{cartSavingsInfo.finalTotal}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>
