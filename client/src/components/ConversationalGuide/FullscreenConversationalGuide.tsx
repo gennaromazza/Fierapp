@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Avatar } from './Avatar';
+import { SpectacularAvatar } from './SpectacularAvatar';
+import { format } from 'date-fns';
 import { ActionButtons } from './ActionButtons';
 import { LeadForm } from './LeadForm';
 import { useImprovedGuideLogic } from './ImprovedGuideLogic';
@@ -22,6 +23,9 @@ export function FullscreenConversationalGuide() {
   const [items, setItems] = useState<Item[]>([]);
   const [discounts, setDiscounts] = useState<Discounts>({});
   const [isMobile, setIsMobile] = useState(false);
+  const [showSpectacularAnimation, setShowSpectacularAnimation] = useState(false);
+  const [spectacularMessage, setSpectacularMessage] = useState('');
+  const [dateInput, setDateInput] = useState('');
 
   // Check mobile
   useEffect(() => {
@@ -36,8 +40,9 @@ export function FullscreenConversationalGuide() {
     const unsubscribeItems = onSnapshot(collection(db, 'items'), (snapshot) => {
       const itemsData = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as Item))
-        .filter(item => item.isActive)
+        .filter(item => item.isActive !== false) // Include items without isActive field
         .sort((a, b) => (a.order || 0) - (b.order || 0));
+      console.log('Loaded items:', itemsData.length, 'items');
       setItems(itemsData);
     });
 
@@ -62,6 +67,24 @@ export function FullscreenConversationalGuide() {
 
   const currentStep = guide.getCurrentStep();
   const shouldShowLeadForm = currentStep?.id === 'lead_collection';
+  
+  // Trigger spectacular animations on step changes
+  useEffect(() => {
+    if (currentStep) {
+      // Show spectacular animation for important steps
+      if (currentStep.id === 'services_intro' || 
+          currentStep.id === 'products_intro' || 
+          currentStep.id === 'summary') {
+        setShowSpectacularAnimation(true);
+        setSpectacularMessage(
+          currentStep.id === 'services_intro' ? '🎬 Iniziamo con i SERVIZI!' :
+          currentStep.id === 'products_intro' ? '🎁 Ora i PRODOTTI!' :
+          '✨ Il tuo preventivo è pronto!'
+        );
+        setTimeout(() => setShowSpectacularAnimation(false), 3000);
+      }
+    }
+  }, [currentStep?.id]);
 
   const handleItemClick = (item: Item) => {
     const isSelected = cart.cart.items.some(cartItem => cartItem.id === item.id);
@@ -329,7 +352,18 @@ export function FullscreenConversationalGuide() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
+    <>
+      {/* Spectacular Fullscreen Animation */}
+      {showSpectacularAnimation && (
+        <SpectacularAvatar
+          type="excited"
+          message={spectacularMessage}
+          isFullscreen={true}
+          onAnimationComplete={() => setShowSpectacularAnimation(false)}
+        />
+      )}
+      
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
       {/* Header */}
       <div className="bg-white border-b shadow-sm p-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -369,9 +403,8 @@ export function FullscreenConversationalGuide() {
           <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
             {/* Avatar and Message */}
             <div className="flex gap-4 mb-6">
-              <Avatar 
-                type={currentStep.avatar} 
-                showConfetti={currentStep.confetti}
+              <SpectacularAvatar 
+                type={currentStep.avatar}
                 className="flex-shrink-0"
               />
               <div className="flex-1">
@@ -381,6 +414,58 @@ export function FullscreenConversationalGuide() {
               </div>
             </div>
 
+            {/* Date Input for wedding date */}
+            {currentStep.id === 'wedding_date' && (
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Seleziona la data del matrimonio:
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    type="date"
+                    value={dateInput}
+                    onChange={(e) => {
+                      setDateInput(e.target.value);
+                      if (e.target.value) {
+                        guide.setGuideState(prev => ({
+                          ...prev,
+                          leadData: { 
+                            ...prev.leadData, 
+                            eventDate: new Date(e.target.value).toISOString() 
+                          }
+                        }));
+                      }
+                    }}
+                    className="flex-1"
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                  <Button 
+                    onClick={() => {
+                      if (dateInput) {
+                        guide.setGuideState(prev => ({
+                          ...prev,
+                          currentStep: prev.currentStep + 1
+                        }));
+                      }
+                    }}
+                    disabled={!dateInput}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Continua →
+                  </Button>
+                </div>
+                {dateInput && (
+                  <p className="mt-2 text-sm text-green-600">
+                    ✓ Hai selezionato: {new Date(dateInput).toLocaleDateString('it-IT', { 
+                      day: 'numeric', 
+                      month: 'long', 
+                      year: 'numeric' 
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
+            
             {/* Inline Content Based on Step */}
             {currentStep.uiHint === 'show_services_inline' && (
               <div className="mt-6">
@@ -465,5 +550,6 @@ export function FullscreenConversationalGuide() {
         onClose={() => setIsCheckoutOpen(false)}
       />
     </div>
+    </>
   );
 }
