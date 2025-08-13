@@ -1,4 +1,4 @@
-export type AvatarType = 'smiling' | 'neutral' | 'explaining' | 'enthusiastic';
+export type AvatarType = 'smiling' | 'neutral' | 'explaining' | 'enthusiastic' | 'excited' | 'thoughtful';
 
 export interface GuideStep {
   id: string;

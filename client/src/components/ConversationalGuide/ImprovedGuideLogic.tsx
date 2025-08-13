@@ -128,13 +128,9 @@ Quando ti sposi?`,
       {
         id: 'services_intro',
         avatar: 'explaining',
-        message: `Perfetto! Ora ti spiego le REGOLE D'ORO per risparmiare sui nostri servizi:
+        message: `Perfetto ${guideState.leadData.name}! Ora vediamo i nostri servizi.
 
-🎥 **REGOLA VIDEOMAKER**: Se scegli "Videomaker", si sbloccano automaticamente "Riprese Drone" e "Videoproiezione" a prezzi speciali!
-
-📸 **REGOLA FOTOGRAFICO**: Se scegli "Servizio Fotografico", si sbloccano TUTTI i prodotti fotografici (Album, Foto Invitati, ecc.)
-
-🎁 **SUPER REGALO**: Con il pacchetto completo (tutti e 7 i prodotti), "Foto Invitati" diventa GRATIS!
+💡 **Piccolo trucco**: Alcuni servizi sbloccano prodotti extra e regali speciali. Te lo spiego mentre scegli!
 
 Vuoi vedere i servizi disponibili?`,
         actions: [{
@@ -151,14 +147,7 @@ Vuoi vedere i servizi disponibili?`,
       {
         id: 'services_selection',
         avatar: 'smiling',
-        message: `Ecco tutti i nostri SERVIZI! 
-
-Clicca su quelli che ti interessano. Vedrai in tempo reale:
-✨ Quali prodotti si sbloccano
-💰 Come cambiano i prezzi
-🎁 Quando attivi i regali
-
-**DEVI SCEGLIERE ALMENO UN SERVIZIO per continuare!**`,
+        message: `Ecco tutti i nostri SERVIZI! Scegli quelli che ti interessano:`,
         uiHint: 'show_services_inline',
         requiresAction: true,
         canProceed: () => cart.cart.items.some(item => item.category === 'servizio'),
@@ -177,17 +166,9 @@ Clicca su quelli che ti interessano. Vedrai in tempo reale:
       {
         id: 'products_intro',
         avatar: 'excited',
-        message: `Bravo ${guideState.leadData.name}! Hai scelto: ${cart.cart.items.filter(item => item.category === 'servizio').map(item => item.name).join(', ')}
+        message: `Bravo ${guideState.leadData.name}! Hai scelto: ${cart.cart.items.filter(item => item.category === 'servizio').map(item => item.title || item.name).join(', ')}
 
-Ora vediamo i PRODOTTI che si sono sbloccati grazie alle tue scelte!
-
-${cart.cart.items.some(item => item.name.includes('Fotografico')) ? 
-  '📸 Perfetto! Hai sbloccato TUTTI i prodotti fotografici!' : 
-  '⚠️ Nota: Alcuni prodotti fotografici sono ancora bloccati (serve il Servizio Fotografico)'}
-
-${cart.cart.items.some(item => item.name.includes('Videomaker')) ? 
-  '🎥 Fantastico! Hai sbloccato Drone e Videoproiezione!' : 
-  '⚠️ Nota: Drone e Videoproiezione sono bloccati (serve il Videomaker)'}
+Ora vediamo i prodotti disponibili. Alcuni si sono sbloccati grazie alle tue scelte!
 
 Pronto a scegliere i prodotti?`,
         actions: [{
@@ -204,12 +185,9 @@ Pronto a scegliere i prodotti?`,
       {
         id: 'products_selection',
         avatar: 'explaining',
-        message: `Ecco tutti i PRODOTTI disponibili!
+        message: `Ecco tutti i PRODOTTI disponibili! 
 
-I prodotti con sfondo VERDE sono già sbloccati dalle tue scelte.
-I prodotti GRIGI sono bloccati (ti mancano i servizi base).
-
-💡 **CONSIGLIO**: Se selezioni tutti i prodotti del pacchetto completo, "Foto Invitati" diventa GRATIS!
+💡 **CONSIGLIO**: Se selezioni tutto, "Foto Invitati" diventa GRATIS!
 
 Scegli quelli che ti interessano:`,
         uiHint: 'show_products_inline',
@@ -230,7 +208,7 @@ Scegli quelli che ti interessano:`,
         message: `Perfetto ${guideState.leadData.name}! Ecco il riepilogo delle tue scelte:
 
 ${cart.cart.items.length > 0 ? 
-  `Hai selezionato ${cart.cart.items.length} elementi per un totale di €${cart.getPricingWithRules().finalTotal}` :
+  `Hai selezionato ${cart.cart.items.length} elementi per un totale di €${cart.getPricingWithRules().total}` :
   'Non hai ancora selezionato nulla - torna indietro per scegliere!'
 }
 
@@ -283,7 +261,7 @@ Il tuo preventivo è pronto!
 
 📧 Ti invieremo tutti i dettagli via email
 📱 Ti contatteremo presto per finalizzare tutto
-💰 Totale finale: €${cart.getPricingWithRules().finalTotal}
+💰 Totale finale: €${cart.getPricingWithRules().total}
 
 Grazie per aver scelto ${studioName}!`,
         actions: [{
@@ -292,11 +270,12 @@ Grazie per aver scelto ${studioName}!`,
           type: 'button',
           action: () => {
             cart.clearCart();
-            setGuideState({
+            setGuideState(prev => ({
+              ...prev,
               currentStep: 0,
               isActive: true,
               leadData: {}
-            });
+            }));
           }
         }]
       }
