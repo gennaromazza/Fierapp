@@ -9,6 +9,14 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 
 ## Recent Changes
 
+### Individual Product Discounts & Backend Chat Integration (August 13, 2025 - 2:13 PM) - COMPLETED
+- **Individual Item Discount Support**: Enhanced discount system to handle both global and per-item discounts with priority logic
+- **Comprehensive Savings Summary**: Added detailed savings breakdown showing global discounts, individual item discounts, and gift savings separately
+- **Enhanced Discount Calculations**: `calculateCartSavings` and `getItemDiscountInfo` functions provide detailed discount analysis
+- **Backend Data Integration**: Chat now personalizes messages using studio name, contact info, and discount details from Firebase settings
+- **Smart Discount Display**: Products show individual vs global discounts with "(Special)" badge for item-specific offers
+- **Studio-Personalized Experience**: Welcome messages, summaries, and interactions now use studio name and contact information
+
 ### Enhanced Rules Engine Integration (August 13, 2025 - 10:12 AM) - COMPLETED  
 - **Intelligent Database Information Retrieval**: Integrated comprehensive rules engine with conversational flow for better user feedback
 - **Smart Product Availability Messaging**: Chat now dynamically shows available products count, unlock conditions, and requirements based on selection rules

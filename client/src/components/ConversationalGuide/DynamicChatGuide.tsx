@@ -7,11 +7,11 @@ import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
 import { collection, getDocs, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import type { Item, Discounts } from '../../../../shared/schema';
+import type { Item, Discounts, Settings } from '../../../../shared/schema';
 import CheckoutModal from '@/components/CheckoutModal';
 import { LeadForm } from './LeadForm';
 import { SpectacularAvatar } from './SpectacularAvatar';
-import { calculateDiscountedPrice } from '../../lib/discounts';
+import { calculateDiscountedPrice, getItemDiscountInfo, calculateCartSavings } from '../../lib/discounts';
 
 interface ChatMessage {
   id: string;
@@ -33,6 +33,7 @@ export function DynamicChatGuide() {
   const cart = useCartWithRules();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
   
   // Use items from cart hook instead of loading separately
   const items = cart.getAllItemsWithAvailability() || [];
@@ -54,20 +55,28 @@ export function DynamicChatGuide() {
   }, [cart.rulesLoading, items.length]);
 
   useEffect(() => {
-    // Load global discounts properly from settings
-    async function loadDiscounts() {
+    // Load global discounts and settings from Firebase
+    async function loadData() {
       try {
+        // Load discounts (both global and individual)
         const discountsDoc = await getDoc(doc(db, "settings", "discounts"));
         if (discountsDoc.exists()) {
           const discountsData = discountsDoc.data() as Discounts;
           setDiscounts(discountsData);
         }
+
+        // Load settings (studio name, branding, etc.)
+        const settingsDoc = await getDoc(doc(db, "settings", "app"));
+        if (settingsDoc.exists()) {
+          const settingsData = settingsDoc.data() as Settings;
+          setSettings(settingsData);
+        }
       } catch (error) {
-        console.error("Error loading discounts:", error);
+        console.error("Error loading data:", error);
       }
     }
 
-    loadDiscounts();
+    loadData();
   }, []);
 
   // Auto-scroll to bottom
@@ -101,10 +110,14 @@ export function DynamicChatGuide() {
   // Initialize chat
   useEffect(() => {
     if (messages.length === 0) {
+      const welcomeText = settings?.studioName 
+        ? `Ciao! 👋 Sono l'assistente di ${settings.studioName}! Ti guiderò nella scelta dei servizi e prodotti migliori con offerte esclusive per il tuo matrimonio perfetto.`
+        : "Ciao! 👋 Sono il tuo assistente personale per il matrimonio perfetto! Ti guiderò nella scelta dei servizi e prodotti migliori con offerte esclusive.";
+      
       addMessage({
         type: 'assistant',
         avatar: 'smiling',
-        text: "Ciao! 👋 Sono il tuo assistente personale per il matrimonio perfetto! Ti guiderò nella scelta dei servizi e prodotti migliori con offerte esclusive.",
+        text: welcomeText,
       });
 
       setTimeout(() => {
@@ -135,7 +148,7 @@ export function DynamicChatGuide() {
         });
       }, 1500);
     }
-  }, [messages.length]);
+  }, [messages.length, settings]);
 
   const addMessage = (message: Omit<ChatMessage, 'id'> & { id?: string }) => {
     const messageWithId = {
@@ -164,7 +177,31 @@ export function DynamicChatGuide() {
 
     setLeadData((prev: any) => ({ ...prev, eventYear: date }));
     
+    // Enhanced welcome with studio information and discount details
     setTimeout(() => {
+      const studioPersonalizedText = settings?.studioName ? 
+        `Perfetto! ${settings.studioName} ha tutto quello che serve per il tuo matrimonio da sogno! 🎉` :
+        "Perfetto! Iniziamo a creare il pacchetto ideale per te! 🎉";
+      
+      const contactInfo = [];
+      if (settings?.phoneNumber) contactInfo.push(`📞 ${settings.phoneNumber}`);
+      if (settings?.email) contactInfo.push(`📧 ${settings.email}`);
+      if (settings?.studioAddress) contactInfo.push(`📍 ${settings.studioAddress}`);
+      
+      const contactText = contactInfo.length > 0 ? 
+        `\n\nPer info dirette:\n${contactInfo.join('\n')}` : '';
+      
+      const hasGlobalDiscount = discounts?.global?.isActive;
+      const discountText = hasGlobalDiscount ? 
+        `\n\n🎯 OFFERTA SPECIALE: Sconto ${discounts.global.type === 'percent' ? discounts.global.value + '%' : '€' + discounts.global.value} attivo su tutti i servizi!` : '';
+      
+      addMessage({
+        type: 'assistant',
+        avatar: 'excited',
+        text: `${studioPersonalizedText}${discountText}${contactText}`,
+        typing: true
+      });
+      
       startServicesPhase();
     }, 500);
   };
@@ -360,34 +397,45 @@ export function DynamicChatGuide() {
     const pricing = cart.getPricingWithRules();
     const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
     
-    // Calculate final total with global discounts
-    let finalTotal = pricing.finalTotal;
-    if (discounts?.global?.isActive && cart.cart.items.length > 0) {
-      finalTotal = cart.cart.items.reduce((sum, item) => {
-        if (item.price === 0) return sum; // Skip gift items
-        const originalPrice = item.originalPrice || item.price;
-        const discountedPrice = calculateDiscountedPrice(originalPrice, item.id, discounts);
-        return sum + discountedPrice;
-      }, 0);
-    }
+    // Calculate comprehensive savings using enhanced discount system
+    const savingsInfo = discounts ? 
+      calculateCartSavings(cart.cart.items, discounts, pricing.giftSavings) :
+      {
+        originalTotal: pricing.finalTotal,
+        finalTotal: pricing.finalTotal,
+        globalDiscountSavings: 0,
+        individualDiscountSavings: 0,
+        totalDiscountSavings: 0,
+        giftSavings: pricing.giftSavings,
+        totalSavings: pricing.giftSavings,
+        savingsDetails: []
+      };
     
-    let summaryText = "🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato:\n\n";
+    const studioText = settings?.studioName ? ` da ${settings.studioName}` : '';
+    let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
     
-    if (discounts?.global?.isActive && finalTotal < pricing.finalTotal) {
-      summaryText += `💰 Prezzo originale: €${pricing.finalTotal}\n`;
-      summaryText += `💸 Sconto globale (${discounts.global.type === 'percent' ? discounts.global.value + '%' : '€' + discounts.global.value}): -€${pricing.finalTotal - finalTotal}\n`;
-      summaryText += `💰 Totale finale: €${finalTotal}\n`;
+    if (savingsInfo.totalDiscountSavings > 0 || savingsInfo.giftSavings > 0) {
+      summaryText += `💰 Prezzo originale: €${savingsInfo.originalTotal}\n`;
+      
+      if (savingsInfo.globalDiscountSavings > 0) {
+        const globalDiscount = discounts?.global;
+        const discountText = globalDiscount?.type === 'percent' ? 
+          `${globalDiscount.value}%` : `€${globalDiscount?.value}`;
+        summaryText += `💸 Sconto globale (${discountText}): -€${savingsInfo.globalDiscountSavings}\n`;
+      }
+      
+      if (savingsInfo.individualDiscountSavings > 0) {
+        summaryText += `🎯 Sconti speciali prodotti: -€${savingsInfo.individualDiscountSavings}\n`;
+      }
+      
+      if (savingsInfo.giftSavings > 0) {
+        summaryText += `🎁 Risparmi con regali: €${savingsInfo.giftSavings}\n`;
+      }
+      
+      summaryText += `💰 Totale finale: €${savingsInfo.finalTotal}\n`;
+      summaryText += `✨ RISPARMI TOTALI: €${savingsInfo.totalSavings} 💫\n`;
     } else {
-      summaryText += `💰 Totale: €${finalTotal}\n`;
-    }
-    
-    if (pricing.giftSavings > 0) {
-      summaryText += `🎁 Risparmi con regali: €${pricing.giftSavings}\n`;
-    }
-    
-    if (pricing.totalSavings > 0 || (discounts?.global?.isActive && finalTotal < pricing.finalTotal)) {
-      const totalSavings = pricing.totalSavings + (pricing.finalTotal - finalTotal);
-      summaryText += `✨ Risparmi totali: €${totalSavings}\n`;
+      summaryText += `💰 Totale: €${savingsInfo.finalTotal}\n`;
     }
     
     if (giftItems.length > 0) {
@@ -406,11 +454,15 @@ export function DynamicChatGuide() {
     });
 
     setTimeout(() => {
+      const contactText = settings?.studioName ? 
+        `Compila i tuoi dati per ricevere il preventivo dettagliato di ${settings.studioName}:` :
+        "Compila i tuoi dati per ricevere il preventivo dettagliato:";
+      
       addMessage({
         id: 'final-action',
         type: 'assistant',
         avatar: 'smiling',
-        text: "Compila i tuoi dati per ricevere il preventivo dettagliato:",
+        text: contactText,
         options: [
           {
             id: 'proceed-checkout',
@@ -432,11 +484,12 @@ export function DynamicChatGuide() {
     const unavailableReason = !isAvailable ? cart.getUnavailableReason(item.id) : null;
     const isUnavailable = !isAvailable;
     
-    // Calculate discounted price using global discounts
+    // Calculate discounted price using both global and individual discounts
     const originalPrice = item.originalPrice || item.price;
-    const finalPrice = discounts && !isGift ? 
-      calculateDiscountedPrice(originalPrice, item.id, discounts) : 
-      (isGift ? 0 : originalPrice);
+    const discountInfo = discounts && !isGift ? 
+      getItemDiscountInfo(originalPrice, item.id, discounts) : 
+      { finalPrice: originalPrice, hasDiscount: false, discountType: null, discountPercentage: 0, savings: 0 };
+    const finalPrice = isGift ? 0 : discountInfo.finalPrice;
 
     return (
       <div
@@ -509,7 +562,7 @@ export function DynamicChatGuide() {
               </div>
             ) : (
               <div>
-                {finalPrice < originalPrice && discounts?.global?.isActive && (
+                {discountInfo.hasDiscount && (
                   <span className="text-xs text-gray-400 line-through mr-2">
                     €{originalPrice}
                   </span>
@@ -520,10 +573,11 @@ export function DynamicChatGuide() {
                 )}>
                   €{finalPrice}
                 </span>
-                {discounts?.global?.isActive && finalPrice < originalPrice && (
+                {discountInfo.hasDiscount && (
                   <Badge variant="secondary" className="ml-1 text-xs bg-red-100 text-red-800">
                     <Tag className="w-3 h-3 mr-1" />
-                    -{Math.round((1 - finalPrice / originalPrice) * 100)}%
+                    -{discountInfo.discountPercentage}%
+                    {discountInfo.discountType === 'individual' ? ' (Special)' : ''}
                   </Badge>
                 )}
               </div>
