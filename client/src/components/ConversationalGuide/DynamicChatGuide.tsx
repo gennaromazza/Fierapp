@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { Item, Discount } from '../../../shared/schema';
 import CheckoutModal from '@/components/CheckoutModal';
@@ -40,18 +40,35 @@ export function DynamicChatGuide() {
   const [messageCounter, setMessageCounter] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Load items and discounts from Firebase
+  // Load items and discounts from Firebase  
   useEffect(() => {
-    const unsubscribeItems = onSnapshot(
-      collection(db, 'items'),
-      (snapshot) => {
+    async function loadItems() {
+      try {
+        const itemsQuery = query(
+          collection(db, "items"),
+          where("active", "==", true)
+        );
+        
+        const snapshot = await getDocs(itemsQuery);
         const loadedItems = snapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate(),
+          updatedAt: doc.data().updatedAt?.toDate(),
         } as Item));
-        setItems(loadedItems.filter(item => item.isActive !== false));
+        
+        // Sort by sortOrder
+        loadedItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        
+        console.log('🔥 DynamicChatGuide loaded items:', loadedItems.length, loadedItems.map(i => i.title));
+        setItems(loadedItems);
+        
+      } catch (error) {
+        console.error('Error loading items in DynamicChatGuide:', error);
       }
-    );
+    }
+    
+    loadItems();
 
     const unsubscribeDiscounts = onSnapshot(
       collection(db, 'discounts'),
@@ -64,7 +81,6 @@ export function DynamicChatGuide() {
     );
 
     return () => {
-      unsubscribeItems();
       unsubscribeDiscounts();
     };
   }, []);
@@ -161,8 +177,8 @@ export function DynamicChatGuide() {
       console.log('Items count:', items.length);
       
       const services = items.filter(item => {
-        console.log('Item:', item.title, 'Category:', item.category, 'isActive:', item.isActive);
-        return item.category === 'servizio' && item.isActive !== false;
+        console.log('Item:', item.title, 'Category:', item.category, 'active:', item.active);
+        return item.category === 'servizio' && item.active === true;
       });
       
       console.log('Filtered services:', services);
@@ -184,7 +200,7 @@ export function DynamicChatGuide() {
         
         // Riprova dopo altri 2 secondi
         setTimeout(() => {
-          const retryServices = items.filter(item => item.category === 'servizio' && item.isActive !== false);
+          const retryServices = items.filter(item => item.category === 'servizio' && item.active === true);
           if (retryServices.length > 0) {
             addMessage({
               id: 'services-selection-retry',
@@ -222,7 +238,7 @@ export function DynamicChatGuide() {
         return;
       }
       
-      const success = cart.addItemWithRules({
+      const success = cart.addItem({
         id: item.id,
         title: item.title,
         price: item.price,
