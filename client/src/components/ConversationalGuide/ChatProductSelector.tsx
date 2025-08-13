@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
 import { Button } from '@/components/ui/button';
@@ -21,24 +21,39 @@ export function ChatProductSelector({ category, onComplete, showSavingsTips = tr
   const cart = useCartWithRules();
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'items'),
-      (snapshot) => {
-        const itemsData = snapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() } as Item))
-          .filter(item => item.category === category && item.active)
-          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    async function loadItems() {
+      try {
+        setLoading(true);
         
+        // Use same query logic as Carousel
+        const itemsQuery = query(
+          collection(db, "items"),
+          where("active", "==", true),
+          where("category", "==", category)
+        );
+        
+        const snapshot = await getDocs(itemsQuery);
+        let itemsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate(),
+          updatedAt: doc.data().updatedAt?.toDate(),
+        })) as Item[];
+        
+        // Sort manually by sortOrder 
+        itemsData.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        
+        console.log(`📦 Loaded ${itemsData.length} ${category} items:`, itemsData.map(i => i.title));
         setItems(itemsData);
         setLoading(false);
-      },
-      (error) => {
-        console.error('Error loading items:', error);
+        
+      } catch (error) {
+        console.error(`Error loading ${category} items:`, error);
         setLoading(false);
       }
-    );
-
-    return () => unsubscribe();
+    }
+    
+    loadItems();
   }, [category]);
 
   const handleItemClick = (item: Item) => {
