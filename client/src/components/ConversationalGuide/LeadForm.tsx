@@ -10,10 +10,11 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
 import { generateMarketingMessages, formatPricingSummary } from '../../lib/unifiedPricing';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { LeadData } from './types';
 import { generateClientQuotePDF } from '@/lib/pdf';
+import { useQuery } from '@tanstack/react-query';
 
 
 interface LeadFormProps {
@@ -36,6 +37,20 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   });
   const [dateOpen, setDateOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Fetch settings for WhatsApp number
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        return settingsDoc.exists() ? settingsDoc.data() : null;
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        return null;
+      }
+    },
+  });
 
   const validateField = (field: string, value: any): string => {
     switch (field) {
@@ -193,7 +208,13 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
 
       const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${pricingSummary}\n\n${marketingMessages.mainSavings ? `🔥 ${marketingMessages.mainSavings}\n` : ''}${marketingMessages.giftMessage ? `🎁 ${marketingMessages.giftMessage}\n` : ''}\n📝 Lead ID: ${leadDoc.id}`;
 
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+      // Use WhatsApp number from settings if available
+      const whatsappNumber = settings?.whatsappNumber;
+      const whatsappUrl = whatsappNumber 
+        ? `https://wa.me/${whatsappNumber.replace(/[^\d+]/g, '')}?text=${encodeURIComponent(message)}`
+        : `https://wa.me/?text=${encodeURIComponent(message)}`;
+      
+      window.open(whatsappUrl, '_blank');
       onComplete(formData);
 
     } catch (error) {
