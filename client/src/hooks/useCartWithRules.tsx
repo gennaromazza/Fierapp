@@ -4,9 +4,9 @@ import { RulesEngine } from "../lib/rulesEngine";
 import { calculateUnifiedPricing } from "../lib/unifiedPricing";
 import { useMemo, useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import type { Item, CartItem } from "../../../shared/schema";
+import type { Item, CartItem, Discounts } from "../../../shared/schema";
 import type {
   RulesEvaluationResult,
   ItemState,
@@ -69,6 +69,27 @@ export function useCartWithRules() {
    */
   const { rules: selectionRules = [] } = useSelectionRules();
   const rulesLoading = false; // Since useSelectionRules doesn't provide isLoading
+
+  /**
+   * FETCH DISCOUNTS da Firebase
+   */
+  const { data: discounts = null, isLoading: discountsLoading } = useQuery({
+    queryKey: ["discounts"],
+    queryFn: async () => {
+      try {
+        const discountsDoc = await getDoc(doc(db, "settings", "discounts"));
+        if (discountsDoc.exists()) {
+          const data = discountsDoc.data() as Discounts;
+          console.log("📊 Loaded discounts:", data);
+          return data;
+        }
+        return null;
+      } catch (error) {
+        console.error("Error loading discounts:", error);
+        return null;
+      }
+    },
+  });
 
   /**
    * VALUTAZIONE REGOLE tramite RulesEngine
@@ -147,8 +168,8 @@ export function useCartWithRules() {
       .filter(item => isItemGift(item.id))
       .map(item => item.id);
     
-    // Usa il sistema di calcolo unificato
-    const unified = calculateUnifiedPricing(cart.cart.items, null, giftItemIds);
+    // 🔧 RISOLUZIONE INCONSISTENZA: Usa i veri sconti invece di null!
+    const unified = calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds);
     
     // Mantieni compatibilità con l'interfaccia esistente
     return {
@@ -257,7 +278,7 @@ export function useCartWithRules() {
     appliedRules: rulesEvaluation.appliedRules,
 
     // Loading combinato
-    rulesLoading: rulesLoading || itemsLoading,
+    rulesLoading: rulesLoading || itemsLoading || discountsLoading,
 
     // Debug in dev
     ...(process.env.NODE_ENV === "development" && { getDebugInfo }),

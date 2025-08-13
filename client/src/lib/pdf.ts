@@ -305,7 +305,11 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
   // Usa il sistema unificato per calcoli accurati
   const giftItems = leadData.selectedItems?.filter((item: any) => item.price === 0) || [];
   const giftItemIds = giftItems.map((item: any) => item.id);
-  const unifiedPricing = calculateUnifiedPricing(leadData.selectedItems || [], null, giftItemIds);
+  // 🔧 FETCH DISCOUNTS: Usa i veri sconti invece di null per consistenza con tutto il sistema
+  const discountsSnapshot = await getDoc(doc(db, "settings", "discounts"));
+  const discounts = discountsSnapshot.exists() ? discountsSnapshot.data() : null;
+  
+  const unifiedPricing = calculateUnifiedPricing(leadData.selectedItems || [], discounts, giftItemIds);
   
   const totalBoxY = y;
   const hasDiscounts = unifiedPricing.totalSavings > 0;
