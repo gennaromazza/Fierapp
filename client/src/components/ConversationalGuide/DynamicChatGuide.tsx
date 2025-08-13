@@ -37,6 +37,7 @@ export function DynamicChatGuide() {
   const [currentPhase, setCurrentPhase] = useState<'welcome' | 'services' | 'products' | 'summary' | 'lead'>('welcome');
   const [leadData, setLeadData] = useState<any>({});
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [messageCounter, setMessageCounter] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Load items and discounts from Firebase
@@ -75,52 +76,58 @@ export function DynamicChatGuide() {
 
   // Initialize chat
   useEffect(() => {
-    addMessage({
-      id: '1',
-      type: 'assistant',
-      avatar: 'smiling',
-      text: "Ciao! 👋 Sono il tuo assistente personale per il matrimonio perfetto! Ti guiderò nella scelta dei servizi e prodotti migliori con offerte esclusive.",
-    });
-
-    setTimeout(() => {
+    if (messages.length === 0) {
       addMessage({
-        id: '2',
         type: 'assistant',
-        avatar: 'explaining',
-        text: "Prima di iniziare, quando sarà il grande giorno?",
-        options: [
-          {
-            id: 'date-2025',
-            label: '📅 Nel 2025',
-            value: '2025',
-            action: () => handleDateSelection('2025')
-          },
-          {
-            id: 'date-2026',
-            label: '📅 Nel 2026',
-            value: '2026',
-            action: () => handleDateSelection('2026')
-          },
-          {
-            id: 'date-later',
-            label: '📅 Più avanti',
-            value: 'later',
-            action: () => handleDateSelection('later')
-          }
-        ]
+        avatar: 'smiling',
+        text: "Ciao! 👋 Sono il tuo assistente personale per il matrimonio perfetto! Ti guiderò nella scelta dei servizi e prodotti migliori con offerte esclusive.",
       });
-    }, 1500);
-  }, []);
 
-  const addMessage = (message: ChatMessage) => {
+      setTimeout(() => {
+        addMessage({
+          type: 'assistant',
+          avatar: 'explaining',
+          text: "Prima di iniziare, quando sarà il grande giorno?",
+          options: [
+            {
+              id: 'date-2025',
+              label: '📅 Nel 2025',
+              value: '2025',
+              action: () => handleDateSelection('2025')
+            },
+            {
+              id: 'date-2026',
+              label: '📅 Nel 2026',
+              value: '2026',
+              action: () => handleDateSelection('2026')
+            },
+            {
+              id: 'date-later',
+              label: '📅 Più avanti',
+              value: 'later',
+              action: () => handleDateSelection('later')
+            }
+          ]
+        });
+      }, 1500);
+    }
+  }, [messages.length]);
+
+  const addMessage = (message: Omit<ChatMessage, 'id'> & { id?: string }) => {
+    const messageWithId = {
+      ...message,
+      id: message.id || `msg-${Date.now()}-${messageCounter}`
+    };
+    setMessageCounter(prev => prev + 1);
+    
     if (message.typing) {
       setIsTyping(true);
       setTimeout(() => {
         setIsTyping(false);
-        setMessages(prev => [...prev, { ...message, typing: false }]);
+        setMessages(prev => [...prev, { ...messageWithId, typing: false }]);
       }, 1000);
     } else {
-      setMessages(prev => [...prev, message]);
+      setMessages(prev => [...prev, messageWithId]);
     }
   };
 
@@ -358,7 +365,7 @@ export function DynamicChatGuide() {
         <div className="flex gap-3 mb-4">
           <SpectacularAvatar 
             type={message.avatar || 'smiling'}
-            className="flex-shrink-0"
+            className="flex-shrink-0 w-10 h-10"
           />
           <div className="flex-1">
             <div className="bg-gray-100 rounded-lg p-4 max-w-lg">
@@ -495,7 +502,7 @@ export function DynamicChatGuide() {
           
           {isTyping && (
             <div className="flex gap-3 mb-4">
-              <SpectacularAvatar type="thoughtful" className="flex-shrink-0" />
+              <SpectacularAvatar type="thoughtful" className="flex-shrink-0 w-10 h-10" />
               <div className="bg-gray-100 rounded-lg p-4">
                 <div className="flex gap-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
@@ -519,9 +526,8 @@ export function DynamicChatGuide() {
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               className="flex-1"
-              disabled
             />
-            <Button disabled>
+            <Button>
               <Send className="h-4 w-4" />
             </Button>
           </div>
