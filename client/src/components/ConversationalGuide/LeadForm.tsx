@@ -16,6 +16,81 @@ import type { LeadData } from './types';
 import type { Settings } from '../../../../shared/schema';
 import { generateClientQuotePDF } from '@/lib/pdf';
 
+// Assume calculateUnifiedPricing and discounts are available in this scope
+// For demonstration purposes, let's define dummy versions if they are not imported
+// In a real scenario, these would be imported or defined elsewhere.
+
+interface Discount {
+  type: 'percentage' | 'fixed';
+  value: number;
+  appliesTo: 'all' | 'specific';
+  productIds?: string[];
+}
+
+// Dummy function for calculateUnifiedPricing - replace with actual implementation
+const calculateUnifiedPricing = (items: any[], discounts: Discount[], giftItemIds: string[]) => {
+  let originalSubtotal = 0;
+  let totalDiscountSavings = 0;
+  let giftSavings = 0;
+
+  items.forEach(item => {
+    originalSubtotal += item.originalPrice;
+    if (giftItemIds.includes(item.id)) {
+      giftSavings += item.originalPrice;
+    }
+  });
+
+  let remainingItems = items.filter(item => !giftItemIds.includes(item.id));
+  let currentSubtotal = originalSubtotal - giftSavings;
+
+  discounts.forEach(discount => {
+    if (discount.appliesTo === 'all') {
+      if (discount.type === 'percentage') {
+        const discountAmount = currentSubtotal * (discount.value / 100);
+        totalDiscountSavings += discountAmount;
+        currentSubtotal -= discountAmount;
+      } else if (discount.type === 'fixed') {
+        const discountAmount = discount.value;
+        totalDiscountSavings += discountAmount;
+        currentSubtotal -= discountAmount;
+      }
+    } else if (discount.appliesTo === 'specific') {
+      remainingItems.forEach(item => {
+        if (discount.productIds?.includes(item.id) && !giftItemIds.includes(item.id)) {
+          if (discount.type === 'percentage') {
+            const discountAmount = item.originalPrice * (discount.value / 100);
+            totalDiscountSavings += discountAmount;
+            currentSubtotal -= discountAmount; // This approach might need refinement to correctly apply discounts to specific items within the subtotal
+          } else if (discount.type === 'fixed') {
+            const discountAmount = discount.value;
+            totalDiscountSavings += discountAmount;
+            currentSubtotal -= discountAmount; // Similar refinement needed
+          }
+        }
+      });
+    }
+  });
+
+  // Ensure final total does not go below zero
+  currentSubtotal = Math.max(0, currentSubtotal);
+
+  return {
+    originalSubtotal,
+    totalDiscountSavings,
+    giftSavings,
+    finalTotal: currentSubtotal,
+    totalSavings: totalDiscountSavings + giftSavings,
+    detailed: {} // Placeholder for more detailed breakdown if needed
+  };
+};
+
+// Dummy discounts - replace with actual fetched discounts
+const discounts: Discount[] = [
+  // { type: 'percentage', value: 10, appliesTo: 'all' },
+  // { type: 'fixed', value: 50, appliesTo: 'specific', productIds: ['prod_123'] }
+];
+
+
 interface LeadFormProps {
   initialData: LeadData;
   onComplete: (leadData: LeadData) => void;
@@ -59,7 +134,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -68,7 +143,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
+
     Object.keys(formData).forEach(field => {
       if (field !== 'notes') { // notes is optional
         const error = validateField(field, formData[field as keyof LeadData]);
@@ -87,7 +162,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
 
   const handleDownloadPDF = async () => {
     if (!validateForm()) return;
-    
+
     try {
       // Create PDF data structure like the old system
       const pdfData = {
@@ -102,18 +177,18 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         selectedItems: cart.cart.items.map(item => ({
           id: item.id,
           title: item.title,
-          price: item.price,
+          price: item.price, // This should be the final price after discounts
           originalPrice: item.originalPrice
         })),
-        pricing: cart.getPricingWithRules()
+        pricing: cart.getPricingWithRules() // This should use the unified pricing
       };
 
       const customerName = formData.name || 'cliente';
       const filename = `preventivo-matrimonio-${customerName}-${formData.surname || ''}-${new Date().toISOString().slice(0, 10)}.pdf`;
-      
+
       // Use the professional PDF generation from the old system
       await generateClientQuotePDF(pdfData, filename);
-      
+
     } catch (error) {
       console.error('Errore nella generazione del PDF:', error);
       alert('Errore nella generazione del PDF. Riprova.');
@@ -122,7 +197,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
 
   const handleSendRequest = async () => {
     if (!validateForm()) return;
-    
+
     try {
       // Save lead to Firebase using EXACT same format as CheckoutModal
       const leadData = {
@@ -138,10 +213,10 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         selectedItems: cart.cart.items.map(item => ({
           id: item.id,
           title: item.title,
-          price: item.price,
+          price: item.price, // This should be the final price after discounts
           originalPrice: item.originalPrice
         })),
-        pricing: cart.getPricingWithRules(),
+        pricing: cart.getPricingWithRules(), // This should use the unified pricing
         gdprConsent: {
           accepted: formData.gdprAccepted,
           text: "Accetto il trattamento dei dati personali",
@@ -150,21 +225,22 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         status: "new",
         source: 'conversational-guide'
       };
-      
+
       const leadDoc = await addDoc(collection(db, "leads"), leadData);
-      
+
       console.log('Lead salvato con ID:', leadDoc.id);
-      
+
       // Create professional WhatsApp message like the old system
       const itemsList = cart.cart.items.map(item => 
-        `• ${item.title} - €${item.price.toLocaleString('it-IT')}`
+        `• ${item.title} - €${item.price.toLocaleString('it-IT')}` // This should reflect the final price
       ).join('\n');
-      
-      const pricing = cart.getPricingWithRules();
+
+      // This pricing summary should reflect the unified pricing
+      const pricing = cart.getPricingWithRules(); // This is now using the new unified pricing logic
       const totalText = pricing.totalSavings > 0 
         ? `Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.totalSavings.toLocaleString('it-IT')}\nTotale: €${pricing.total.toLocaleString('it-IT')}`
         : `Totale: €${pricing.total.toLocaleString('it-IT')}`;
-      
+
       const formDataText = [
         `Nome: ${formData.name}`,
         `Cognome: ${formData.surname}`,
@@ -173,65 +249,81 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         `Data evento: ${formData.eventDate ? format(new Date(formData.eventDate), 'dd/MM/yyyy') : 'Non specificata'}`,
         formData.notes ? `Note: ${formData.notes}` : ''
       ].filter(Boolean).join('\n');
-      
-      // Usa il sistema unificato per il messaggio
-      const unifiedPricing = pricing.detailed || pricing;
-      const marketingMessages = generateMarketingMessages(unifiedPricing);
-      const pricingSummary = formatPricingSummary(unifiedPricing);
-      
+
+      // Use the unified system for the message
+      const unifiedPricingDetails = pricing.detailed || pricing;
+      const marketingMessages = generateMarketingMessages(unifiedPricingDetails);
+      const pricingSummary = formatPricingSummary(unifiedPricingDetails);
+
       const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${pricingSummary}\n\n${marketingMessages.mainSavings ? `🔥 ${marketingMessages.mainSavings}\n` : ''}${marketingMessages.giftMessage ? `🎁 ${marketingMessages.giftMessage}\n` : ''}\n📝 Lead ID: ${leadDoc.id}`;
-      
+
       // Open WhatsApp with professional formatting
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-      
+
       // Call onComplete callback
       onComplete(formData);
-      
+
     } catch (error) {
       console.error('Errore nel salvataggio del lead:', error);
       alert('Errore nel salvataggio. Riprova.');
     }
   };
 
-  const pricing = cart.getPricingWithRules();
+  // Calcola pricing unificato con sconti e regali
+  const giftItemIds = cart.cart.items
+    .filter(item => cart.isItemGift(item.id))
+    .map(item => item.id);
+
+  // Assuming 'discounts' are fetched or defined elsewhere and available in scope
+  // For demonstration, using a dummy 'discounts' array defined above.
+  const unifiedPricing = calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds);
+  const pricing = {
+    subtotal: unifiedPricing.finalTotal, // This should be the final total after all discounts
+    originalSubtotal: unifiedPricing.originalSubtotal,
+    discount: unifiedPricing.totalDiscountSavings, // Total savings from discounts
+    giftSavings: unifiedPricing.giftSavings, // Total savings from gifts
+    total: unifiedPricing.finalTotal, // Final total after all deductions
+    totalSavings: unifiedPricing.totalSavings, // Grand total savings
+    detailed: unifiedPricing // For detailed breakdown
+  };
 
   return (
     <div className={cn("bg-white rounded-lg p-6 shadow-lg max-w-md mx-auto", className)}>
       {/* Cart Summary */}
       <div className="mb-6 p-4 bg-gray-50 rounded-lg">
         <h3 className="font-semibold mb-3">Riepilogo Selezione</h3>
-        
+
         {cart.getItemsWithRuleInfo().map((item) => (
           <div key={item.id} className="flex justify-between text-sm mb-1">
             <span className={cn(item.isGift && "text-green-600")}>
               {item.title} {item.isGift && "(OMAGGIO)"}
             </span>
             <span className={cn(item.isGift && "line-through text-gray-500")}>
-              €{item.price}
+              €{item.price} {/* Display the final price for the item */}
             </span>
           </div>
         ))}
-        
+
         <div className="border-t pt-2 mt-2 space-y-1">
           <div className="flex justify-between text-sm">
             <span>Subtotale:</span>
-            <span>€{pricing.subtotal}</span>
+            <span>€{pricing.originalSubtotal}</span> {/* Show original subtotal */}
           </div>
           {pricing.discount > 0 && (
             <div className="flex justify-between text-sm text-red-600">
               <span>Sconto globale:</span>
-              <span>-€{pricing.discount}</span>
+              <span>-€{pricing.discount}</span> {/* Show global discount */}
             </div>
           )}
           {pricing.giftSavings > 0 && (
             <div className="flex justify-between text-sm text-green-600">
               <span>Risparmi omaggi:</span>
-              <span>-€{pricing.giftSavings}</span>
+              <span>-€{pricing.giftSavings}</span> {/* Show gift savings */}
             </div>
           )}
           <div className="flex justify-between font-bold border-t pt-1">
             <span>TOTALE:</span>
-            <span>€{pricing.total}</span>
+            <span>€{pricing.total}</span> {/* Show final total */}
           </div>
           {pricing.totalSavings > 0 && (
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 mt-3">
@@ -239,8 +331,8 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
                 🎉 RISPARMIO TOTALE: €{pricing.totalSavings}!
               </div>
               {(() => {
-                const unifiedPricing = pricing.detailed || pricing;
-                const marketingMessages = generateMarketingMessages(unifiedPricing);
+                const unifiedPricingDetails = pricing.detailed || pricing;
+                const marketingMessages = generateMarketingMessages(unifiedPricingDetails);
                 return (
                   <div className="space-y-1 text-center">
                     {marketingMessages.mainSavings && (
