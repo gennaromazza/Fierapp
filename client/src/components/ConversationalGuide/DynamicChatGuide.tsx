@@ -34,6 +34,7 @@ export function DynamicChatGuide() {
   
   // Use items from cart hook instead of loading separately
   const items = cart.getAllItemsWithAvailability() || [];
+  const [itemsReady, setItemsReady] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [userInput, setUserInput] = useState('');
   const [currentPhase, setCurrentPhase] = useState<'welcome' | 'services' | 'products' | 'summary' | 'lead'>('welcome');
@@ -41,6 +42,14 @@ export function DynamicChatGuide() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [messageCounter, setMessageCounter] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Track when items are ready
+  useEffect(() => {
+    if (!cart.rulesLoading && items.length > 0) {
+      console.log('✅ Items are ready:', items.length);
+      setItemsReady(true);
+    }
+  }, [cart.rulesLoading, items.length]);
 
   useEffect(() => {
     // DISCOUNTS: se li vuoi realtime, mantieni onSnapshot
@@ -61,6 +70,29 @@ export function DynamicChatGuide() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Show services when items become ready (if we're in services phase and showed loading)
+  useEffect(() => {
+    if (itemsReady && currentPhase === 'services' && messages.some(m => m.id === 'services-loading')) {
+      console.log('✅ Items ready! Showing services...');
+      
+      const services = items.filter(item => {
+        const isService = item.category === 'servizio';
+        const isActive = item.isActive !== false;
+        return isService && isActive;
+      });
+      
+      // Remove loading message and add services
+      setMessages(prev => prev.filter(m => m.id !== 'services-loading'));
+      
+      addMessage({
+        id: 'services-selection',
+        type: 'system',
+        text: "Perfetto! Ecco i servizi disponibili:",
+        items: services
+      });
+    }
+  }, [itemsReady, currentPhase, messages, items]);
 
   // Initialize chat
   useEffect(() => {
@@ -144,16 +176,19 @@ export function DynamicChatGuide() {
       typing: true
     });
 
-    // Aspetta che gli items siano caricati
-    const showServicesWhenReady = () => {
-      console.log('🔍 Items from cart hook:', items.length, 'Loading:', cart.rulesLoading);
-      
-      if (cart.rulesLoading || items.length === 0) {
-        console.log('⏳ Still loading, retrying in 500ms...');
-        setTimeout(showServicesWhenReady, 500);
+    // Attendi 2 secondi poi controlla se gli items sono pronti
+    setTimeout(() => {
+      if (!itemsReady) {
+        console.log('⏳ Items not ready yet, showing loading message...');
+        addMessage({
+          id: 'services-loading',
+          type: 'assistant',
+          avatar: 'thoughtful',
+          text: "Sto caricando i servizi disponibili... un momento per favore! ⏳",
+        });
         return;
       }
-      
+
       const services = items.filter(item => {
         const isService = item.category === 'servizio';
         const isActive = item.isActive !== false;
@@ -169,9 +204,7 @@ export function DynamicChatGuide() {
         text: "Seleziona i servizi che desideri:",
         items: services
       });
-    };
-
-    setTimeout(showServicesWhenReady, 1000);
+    }, 2000);
   };
 
   const handleItemToggle = (item: Item) => {
