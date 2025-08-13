@@ -9,6 +9,7 @@ import { CalendarIcon, Download, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
+import { generateMarketingMessages, formatPricingSummary } from '../../lib/unifiedPricing';
 import { collection, addDoc, getDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { LeadData } from './types';
@@ -130,8 +131,8 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
           cognome: formData.surname,
           email: formData.email,
           telefono: formData.phone,
-          data_evento: formData.eventDate,
-          note: formData.notes,
+          data_evento: formData.eventDate ? formData.eventDate : null,
+          note: formData.notes || '',
           gdpr_consent: formData.gdprAccepted
         },
         selectedItems: cart.cart.items.map(item => ({
@@ -144,7 +145,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         gdprConsent: {
           accepted: formData.gdprAccepted,
           text: "Accetto il trattamento dei dati personali",
-          timestamp: Timestamp.now()
+          timestamp: new Date()
         },
         status: "new",
         source: 'conversational-guide'
@@ -173,7 +174,12 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         formData.notes ? `Note: ${formData.notes}` : ''
       ].filter(Boolean).join('\n');
       
-      const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${leadDoc.id}`;
+      // Usa il sistema unificato per il messaggio
+      const unifiedPricing = pricing.detailed || pricing;
+      const marketingMessages = generateMarketingMessages(unifiedPricing);
+      const pricingSummary = formatPricingSummary(unifiedPricing);
+      
+      const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${pricingSummary}\n\n${marketingMessages.mainSavings ? `🔥 ${marketingMessages.mainSavings}\n` : ''}${marketingMessages.giftMessage ? `🎁 ${marketingMessages.giftMessage}\n` : ''}\n📝 Lead ID: ${leadDoc.id}`;
       
       // Open WhatsApp with professional formatting
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
@@ -228,8 +234,33 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
             <span>€{pricing.total}</span>
           </div>
           {pricing.totalSavings > 0 && (
-            <div className="text-center text-green-600 font-semibold">
-              Hai risparmiato €{pricing.totalSavings}!
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 mt-3">
+              <div className="text-center text-green-800 font-bold text-lg mb-2">
+                🎉 RISPARMIO TOTALE: €{pricing.totalSavings}!
+              </div>
+              {(() => {
+                const unifiedPricing = pricing.detailed || pricing;
+                const marketingMessages = generateMarketingMessages(unifiedPricing);
+                return (
+                  <div className="space-y-1 text-center">
+                    {marketingMessages.mainSavings && (
+                      <div className="text-sm text-green-700 font-medium">
+                        {marketingMessages.mainSavings.replace(/🔥|💰|✨|💡/, '')}
+                      </div>
+                    )}
+                    {marketingMessages.giftMessage && (
+                      <div className="text-sm text-green-600">
+                        {marketingMessages.giftMessage}
+                      </div>
+                    )}
+                    {marketingMessages.urgencyText && (
+                      <div className="text-sm text-orange-600 font-medium mt-2">
+                        {marketingMessages.urgencyText}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

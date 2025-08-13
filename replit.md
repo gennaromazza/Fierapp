@@ -9,6 +9,14 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 
 ## Recent Changes
 
+### Unified Discount System & Enhanced Marketing Messages (August 13, 2025 - 6:10 PM) - COMPLETED
+- **Unified Pricing System**: Created comprehensive `unifiedPricing.ts` with consistent discount calculations across all components
+- **Marketing Message Engine**: Intelligent marketing messages that adapt based on savings percentage with persuasive copy
+- **PDF Calculation Fix**: Updated PDF generation to use unified pricing system ensuring accurate totals and breakdowns
+- **Enhanced Visual Feedback**: Rich savings displays with gradient backgrounds, multiple discount types, and urgency messaging
+- **Firebase Error Resolution**: Fixed timestamp handling and data structure issues in lead form submission
+- **Admin Panel Enhancement**: Added "Clear All Leads" functionality with double confirmation for data cleanup
+
 ### Individual Product Discounts & Backend Chat Integration (August 13, 2025 - 2:13 PM) - COMPLETED
 - **Individual Item Discount Support**: Enhanced discount system to handle both global and per-item discounts with priority logic
 - **Comprehensive Savings Summary**: Added detailed savings breakdown showing global discounts, individual item discounts, and gift savings separately

@@ -1,6 +1,7 @@
 import { useCart } from "./useCart";
 import { useSelectionRules } from "./useSelectionRules";
 import { RulesEngine } from "../lib/rulesEngine";
+import { calculateUnifiedPricing } from "../lib/unifiedPricing";
 import { useMemo, useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -139,29 +140,26 @@ export function useCartWithRules() {
     return true;
   };
 
-  // Pricing con regali + sconto globale (compatibile con PriceBar)
+  // Pricing unificato con regali + sconti (compatibile con PriceBar)
   const getPricingWithRules = () => {
-    const base = {
-      subtotal: cart.cart.subtotal,
-      originalSubtotal: cart.cart.subtotal, // nuovo
-      discount: cart.cart.discount,
-      giftSavings: 0, // nuovo
-      total: cart.cart.total,
-      totalSavings: cart.cart.discount, // nuovo
-    };
-
-    // Calcola risparmi dovuti ai regali
-    let giftSavings = 0;
-    for (const cartItem of cart.cart.items) {
-      if (isItemGift(cartItem.id)) {
-        giftSavings += cartItem.originalPrice || cartItem.price;
-      }
-    }
-
+    // Ottieni IDs degli item regalo
+    const giftItemIds = cart.cart.items
+      .filter(item => isItemGift(item.id))
+      .map(item => item.id);
+    
+    // Usa il sistema di calcolo unificato
+    const unified = calculateUnifiedPricing(cart.cart.items, null, giftItemIds);
+    
+    // Mantieni compatibilità con l'interfaccia esistente
     return {
-      ...base,
-      giftSavings,
-      totalSavings: base.discount + giftSavings,
+      subtotal: unified.finalTotal,
+      originalSubtotal: unified.originalSubtotal,
+      discount: unified.totalDiscountSavings,
+      giftSavings: unified.giftSavings,
+      total: unified.finalTotal,
+      totalSavings: unified.totalSavings,
+      // Aggiungi dettagli per uso avanzato
+      detailed: unified
     };
   };
 

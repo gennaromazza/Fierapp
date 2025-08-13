@@ -3,6 +3,7 @@ import { db, storage } from "../firebase";
 import { doc, getDoc, runTransaction } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import type { Lead, Settings } from "@shared/schema";
+import { calculateUnifiedPricing } from "./unifiedPricing";
 
 /* ---------- UTIL COMUNI ---------- */
 type PdfBrand = {
@@ -298,11 +299,17 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
     y = ensureNextLine(doc, y);
   });
 
-  // Sezione Totali - Layout migliorato
+  // Sezione Totali - Layout migliorato con sistema unificato
   y += 15;
-  const pricing = leadData.pricing || {};
+  
+  // Usa il sistema unificato per calcoli accurati
+  const giftItems = leadData.selectedItems?.filter((item: any) => item.price === 0) || [];
+  const giftItemIds = giftItems.map((item: any) => item.id);
+  const unifiedPricing = calculateUnifiedPricing(leadData.selectedItems || [], null, giftItemIds);
+  
   const totalBoxY = y;
-  const totalBoxH = pricing.discount > 0 ? 40 : 25;
+  const hasDiscounts = unifiedPricing.totalSavings > 0;
+  const totalBoxH = hasDiscounts ? (unifiedPricing.giftSavings > 0 ? 55 : 40) : 25;
   
   // Box per i totali con sfondo più scuro
   doc.setFillColor(240, 242, 247);
@@ -311,20 +318,33 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
   
   y = totalBoxY + 10;
   
-  if (pricing.discount > 0) {
+  if (hasDiscounts) {
     // Subtotale
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.text("Subtotale:", tableX + 8, y);
-    doc.text(`€${pricing.subtotal?.toLocaleString('it-IT') || '0'}`, tableX + tableW - 8, y, { align: "right" });
+    doc.text(`€${unifiedPricing.originalSubtotal.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
     y += 8;
     
-    // Sconto
-    doc.setTextColor(220, 53, 69);
-    doc.text("Sconto:", tableX + 8, y);
-    doc.text(`-€${pricing.discount.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
-    doc.setTextColor(33, 33, 33);
-    y += 12;
+    // Sconti
+    if (unifiedPricing.totalDiscountSavings > 0) {
+      doc.setTextColor(220, 53, 69);
+      doc.text("Sconti:", tableX + 8, y);
+      doc.text(`-€${unifiedPricing.totalDiscountSavings.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
+      doc.setTextColor(33, 33, 33);
+      y += 8;
+    }
+    
+    // Servizi gratuiti
+    if (unifiedPricing.giftSavings > 0) {
+      doc.setTextColor(34, 197, 94);
+      doc.text("Servizi gratuiti:", tableX + 8, y);
+      doc.text(`-€${unifiedPricing.giftSavings.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
+      doc.setTextColor(33, 33, 33);
+      y += 8;
+    }
+    
+    y += 4;
   } else {
     y += 5;
   }
@@ -339,7 +359,18 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text("TOTALE:", tableX + 8, y);
-  doc.text(`€${pricing.total?.toLocaleString('it-IT') || '0'}`, tableX + tableW - 8, y, { align: "right" });
+  doc.text(`€${unifiedPricing.finalTotal.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
+  
+  // Messaggio di risparmio se presente
+  if (unifiedPricing.totalSavings > 0) {
+    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(34, 197, 94);
+    const savingsText = `Totale risparmiato: €${unifiedPricing.totalSavings.toLocaleString('it-IT')}!`;
+    doc.text(savingsText, tableX + tableW / 2, y, { align: "center" });
+    doc.setTextColor(33, 33, 33);
+  }
   
   y = totalBoxY + totalBoxH + 10;
 
