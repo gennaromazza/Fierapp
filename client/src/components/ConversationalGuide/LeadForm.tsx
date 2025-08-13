@@ -125,7 +125,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       yPos += 6;
       pdf.text(`Telefono: ${formData.phone}`, 20, yPos);
       yPos += 6;
-      pdf.text(`Data matrimonio: ${format(new Date(formData.eventDate), 'dd/MM/yyyy')}`, 20, yPos);
+      pdf.text(`Data matrimonio: ${formData.eventDate ? format(new Date(formData.eventDate), 'dd/MM/yyyy') : 'Non specificata'}`, 20, yPos);
       yPos += 15;
       
       // Cart items
@@ -206,14 +206,34 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     if (!validateForm()) return;
     
     try {
-      // Save lead to Firebase
-      const leadDoc = await addDoc(collection(db, "leads"), {
-        ...formData,
-        cart: cart.cart,
+      // Save lead to Firebase using EXACT same format as CheckoutModal
+      const leadData = {
+        customer: {
+          nome: formData.name,
+          cognome: formData.surname,
+          email: formData.email,
+          telefono: formData.phone,
+          data_evento: formData.eventDate,
+          note: formData.notes,
+          gdpr_consent: formData.gdprAccepted
+        },
+        selectedItems: cart.cart.items.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          originalPrice: item.originalPrice
+        })),
         pricing: cart.getPricingWithRules(),
-        createdAt: new Date().toISOString(),
+        gdprConsent: {
+          accepted: formData.gdprAccepted,
+          text: "Accetto il trattamento dei dati personali",
+          timestamp: new Date()
+        },
+        status: "new",
         source: 'conversational-guide'
-      });
+      };
+      
+      const leadDoc = await addDoc(collection(db, "leads"), leadData);
       
       console.log('Lead salvato con ID:', leadDoc.id);
       
@@ -226,7 +246,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       const whatsappMessage = encodeURIComponent(
         `🎊 RICHIESTA PREVENTIVO MATRIMONIO\n\n` +
         `👰🤵 Sposi: ${formData.name} ${formData.surname}\n` +
-        `📅 Data matrimonio: ${format(new Date(formData.eventDate), 'dd/MM/yyyy')}\n` +
+        `📅 Data matrimonio: ${formData.eventDate ? format(new Date(formData.eventDate), 'dd/MM/yyyy') : 'Non specificata'}\n` +
         `📞 Telefono: ${formData.phone}\n` +
         `📧 Email: ${formData.email}\n\n` +
         `🛍️ SERVIZI SELEZIONATI:\n${itemsList}\n\n` +

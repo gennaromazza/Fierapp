@@ -36,35 +36,7 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
-// Helper function to get customer data from either format
-const getCustomerData = (lead: Lead) => {
-  if (lead.customer) {
-    // Legacy format - customer object
-    return lead.customer;
-  } else {
-    // New format - direct properties
-    const directProps: any = {};
-    if (lead.name) directProps.name = lead.name;
-    if (lead.surname) directProps.surname = lead.surname;
-    if (lead.email) directProps.email = lead.email;
-    if (lead.phone) directProps.phone = lead.phone;
-    if (lead.eventDate) directProps.eventDate = lead.eventDate;
-    if (lead.notes) directProps.notes = lead.notes;
-    return directProps;
-  }
-};
-
-// Helper function to get selected items from either format
-const getSelectedItems = (lead: Lead) => {
-  if (lead.selectedItems) {
-    // Legacy format
-    return lead.selectedItems;
-  } else if (lead.cart?.items) {
-    // New format - from cart
-    return lead.cart.items;
-  }
-  return [];
-};
+// No more helper functions needed - all leads now use the same unified format
 
 export default function LeadsManagement() {
   const { data: allLeads, loading } = useCollection<Lead>("leads");
@@ -203,7 +175,7 @@ export default function LeadsManagement() {
 
   const openEditModal = (lead: Lead) => {
     setEditingLead(lead);
-    setEditForm(getCustomerData(lead));
+    setEditForm({ ...lead.customer });
     setIsEditModalOpen(true);
   };
 
@@ -248,8 +220,8 @@ export default function LeadsManagement() {
   };
 
   const openEmailCompose = async (lead: Lead) => {
-    const customerData = getCustomerData(lead);
-    const email = customerData.email || customerData.Email;
+    const customer = lead.customer || {};
+    const email = customer.email || customer.Email;
 
     if (!email) {
       toast({
@@ -292,17 +264,17 @@ export default function LeadsManagement() {
       `   Email: ${studioSettings?.email || 'Email non configurata'}`,
       '',
       '👤 CLIENTE:',
-      `   Nome: ${customerData.nome || customerData.Nome || customerData.name || 'N/A'}`,
-      `   Cognome: ${customerData.cognome || customerData.Cognome || customerData.surname || 'N/A'}`,
-      `   Email: ${customerData.email || customerData.Email || 'N/A'}`,
-      `   Telefono: ${customerData.telefono || customerData.Telefono || customerData.phone || 'N/A'}`,
+      `   Nome: ${customer.nome || customer.Nome || 'N/A'}`,
+      `   Cognome: ${customer.cognome || customer.Cognome || 'N/A'}`,
+      `   Email: ${customer.email || customer.Email || 'N/A'}`,
+      `   Telefono: ${customer.telefono || customer.Telefono || 'N/A'}`,
       '',
       '🛍️ SERVIZI/PRODOTTI SELEZIONATI:',
       ''
     ];
 
     // Aggiungi items
-    getSelectedItems(lead).forEach((item, index) => {
+    lead.selectedItems.forEach((item, index) => {
       bodyLines.push(`${index + 1}. ${item.title}`);
       if (item.originalPrice && item.originalPrice !== item.price) {
         bodyLines.push(`   Prezzo originale: €${item.originalPrice.toLocaleString('it-IT')}`);
@@ -655,10 +627,10 @@ export default function LeadsManagement() {
                       <TableCell>
                         <div>
                           <div className="font-medium">
-                            {(lead.customer?.nome || lead.customer?.Nome || (lead as any).name || '')} {(lead.customer?.cognome || lead.customer?.Cognome || (lead as any).surname || '')}
+                            {(lead.customer?.nome || lead.customer?.Nome || '')} {(lead.customer?.cognome || lead.customer?.Cognome || '')}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {getSelectedItems(lead).length || 0} item{(getSelectedItems(lead).length || 0) !== 1 ? 's' : ''}
+                            {lead.selectedItems?.length || 0} item{(lead.selectedItems?.length || 0) !== 1 ? 's' : ''}
                           </div>
                         </div>
                       </TableCell>
@@ -845,12 +817,7 @@ export default function LeadsManagement() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--brand-primary)' }}>
           <DialogHeader>
             <DialogTitle>
-              Dettagli Lead - {(() => {
-                const customerData = getCustomerData(selectedLead!);
-                const firstName = customerData.nome || customerData.Nome || customerData.name || '';
-                const lastName = customerData.cognome || customerData.Cognome || customerData.surname || '';
-                return `${firstName} ${lastName}`.trim() || 'Cliente Anonimo';
-              })()}
+              Dettagli Lead - {selectedLead?.customer?.nome || selectedLead?.customer?.Nome || ''} {selectedLead?.customer?.cognome || selectedLead?.customer?.Cognome || ''}
             </DialogTitle>
           </DialogHeader>
 
@@ -863,8 +830,8 @@ export default function LeadsManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.entries(getCustomerData(selectedLead))
-                      .filter(([key]) => key !== 'gdpr_consent' && key !== 'gdprAccepted')
+                    {Object.entries(selectedLead.customer)
+                      .filter(([key]) => key !== 'gdpr_consent')
                       .map(([key, value]) => (
                         <div key={key}>
                           <Label className="text-sm font-medium text-gray-500">
@@ -884,7 +851,7 @@ export default function LeadsManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {getSelectedItems(selectedLead).map((item, index) => (
+                    {selectedLead.selectedItems.map((item, index) => (
                       <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                         <div>
                           <div className="font-medium">{item.title}</div>
@@ -964,21 +931,15 @@ export default function LeadsManagement() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary">
           <DialogHeader>
             <DialogTitle>
-              Modifica Lead - {(() => {
-                if (!editingLead) return 'Cliente';
-                const customerData = getCustomerData(editingLead);
-                const firstName = customerData.nome || customerData.Nome || customerData.name || '';
-                const lastName = customerData.cognome || customerData.Cognome || customerData.surname || '';
-                return `${firstName} ${lastName}`.trim() || 'Cliente Anonimo';
-              })()}
+              Modifica Lead - {editingLead?.customer?.nome || editingLead?.customer?.Nome || ''} {editingLead?.customer?.cognome || editingLead?.customer?.Cognome || ''}
             </DialogTitle>
           </DialogHeader>
 
           {editingLead && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(getCustomerData(editingLead))
-                  .filter(([key]) => key !== 'gdpr_consent' && key !== 'gdprAccepted')
+                {Object.entries(editingLead.customer)
+                  .filter(([key]) => key !== 'gdpr_consent')
                   .map(([key, value]) => (
                     <div key={key}>
                       <Label htmlFor={`edit-${key}`} className="text-sm font-medium">
