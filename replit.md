@@ -7,6 +7,14 @@ This is a full-stack promotional application ("Promo Fiera") designed for trade 
 Preferred communication style: Simple, everyday language.
 User preference: Dislikes flashing/pulsing animation effects - prefers clean, static design without distracting animations.
 
+## Recent Changes
+
+### In-Chat Product Selection Integration (August 13, 2025 - 9:54 AM) - COMPLETED
+- **Products/Services Inside Chat**: Fixed issue where selection was appearing below chat - now integrated directly inside chat messages
+- **ChatProductSelector Component**: Renders product/service cards as part of the conversation flow
+- **Seamless Experience**: Users can select items without leaving the chat conversation context
+- **Clean Architecture**: Removed duplicate selector rendering that was outside the message bubble
+
 ## System Architecture
 
 ### Frontend Architecture

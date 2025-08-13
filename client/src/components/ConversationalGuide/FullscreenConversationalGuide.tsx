@@ -260,6 +260,36 @@ export function FullscreenConversationalGuide() {
               <div className="flex-1">
                 <div className="bg-gray-100 rounded-lg p-4">
                   <p className="text-gray-800 leading-relaxed">{currentStep.message}</p>
+                  
+                  {/* Render services selector inside the message */}
+                  {currentStep.customComponent === 'services_selector' && (
+                    <div className="mt-4">
+                      <ChatProductSelector 
+                        category="servizio" 
+                        onComplete={() => {
+                          guide.setGuideState(prev => ({ 
+                            ...prev, 
+                            currentStep: prev.currentStep + 1 
+                          }));
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Render products selector inside the message */}
+                  {currentStep.customComponent === 'products_selector' && (
+                    <div className="mt-4">
+                      <ChatProductSelector 
+                        category="prodotto" 
+                        onComplete={() => {
+                          guide.setGuideState(prev => ({ 
+                            ...prev, 
+                            currentStep: prev.currentStep + 1 
+                          }));
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -316,34 +346,7 @@ export function FullscreenConversationalGuide() {
               </div>
             )}
 
-            {/* Inline Content Based on Step */}
-            {currentStep.customComponent === 'services_selector' && (
-              <div className="mt-6">
-                <ChatProductSelector 
-                  category="servizio" 
-                  onComplete={() => {
-                    guide.setGuideState(prev => ({ 
-                      ...prev, 
-                      currentStep: prev.currentStep + 1 
-                    }));
-                  }}
-                />
-              </div>
-            )}
 
-            {currentStep.customComponent === 'products_selector' && (
-              <div className="mt-6">
-                <ChatProductSelector 
-                  category="prodotto" 
-                  onComplete={() => {
-                    guide.setGuideState(prev => ({ 
-                      ...prev, 
-                      currentStep: prev.currentStep + 1 
-                    }));
-                  }}
-                />
-              </div>
-            )}
 
             {(currentStep.uiHint === 'show_cart_inline' || currentStep.id === 'summary') && (
               <div className="mt-6">
