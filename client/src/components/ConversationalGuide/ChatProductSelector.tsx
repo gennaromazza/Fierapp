@@ -26,8 +26,8 @@ export function ChatProductSelector({ category, onComplete, showSavingsTips = tr
       (snapshot) => {
         const itemsData = snapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as Item))
-          .filter(item => item.category === category && item.isActive)
-          .sort((a, b) => (a.order || 0) - (b.order || 0));
+          .filter(item => item.category === category && item.active)
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
         
         setItems(itemsData);
         setLoading(false);
@@ -45,15 +45,26 @@ export function ChatProductSelector({ category, onComplete, showSavingsTips = tr
     const isSelected = cart.cart.items.some(cartItem => cartItem.id === item.id);
     
     if (isSelected) {
-      cart.removeFromCart(item.id);
+      cart.removeItem(item.id);
     } else {
-      cart.addToCart({
+      // Controlla disponibilità prima di aggiungere
+      const isAvailable = cart.isItemAvailable(item.id);
+      if (!isAvailable) {
+        const reason = cart.getUnavailableReason(item.id);
+        console.warn(`Item ${item.title} non disponibile: ${reason}`);
+        return;
+      }
+
+      const success = cart.addItem({
         id: item.id,
-        name: item.name,
+        title: item.title,
         price: item.price,
-        category: item.category,
-        description: item.description
+        category: item.category
       });
+      
+      if (!success) {
+        console.warn(`Impossibile aggiungere ${item.title}`);
+      }
     }
   };
 
@@ -75,7 +86,7 @@ export function ChatProductSelector({ category, onComplete, showSavingsTips = tr
     cart.cart.items.some(cartItem => cartItem.id === item.id)
   ).length;
 
-  const totalSavings = cart.getTotalSavings();
+  const totalSavings = cart.getPricingWithRules().totalSavings;
 
   if (loading) {
     return (
@@ -134,7 +145,7 @@ export function ChatProductSelector({ category, onComplete, showSavingsTips = tr
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-sm">{item.name}</h4>
+                      <h4 className="font-semibold text-sm">{item.title}</h4>
                       {status.isGift && (
                         <Badge className="bg-green-500 text-white text-xs">
                           <Gift className="w-3 h-3 mr-1" />
@@ -181,7 +192,7 @@ export function ChatProductSelector({ category, onComplete, showSavingsTips = tr
                 </div>
 
                 {/* Special Offers for Products */}
-                {category === 'prodotto' && item.name.includes('Album') && !status.isSelected && (
+                {category === 'prodotto' && item.title.includes('Album') && !status.isSelected && (
                   <div className="mt-2 pt-2 border-t border-gray-100">
                     <p className="text-xs text-amber-600 flex items-center gap-1">
                       <Sparkles className="w-3 h-3" />

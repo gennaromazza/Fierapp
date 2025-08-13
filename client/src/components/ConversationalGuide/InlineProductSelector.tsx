@@ -25,8 +25,8 @@ export function InlineProductSelector({ category, onSelectionChange, className }
       (snapshot) => {
         const itemsData = snapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as Item))
-          .filter(item => item.category === category && item.isActive)
-          .sort((a, b) => (a.order || 0) - (b.order || 0));
+          .filter(item => item.category === category && item.active)
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
         
         setItems(itemsData);
         setLoading(false);
@@ -44,23 +44,36 @@ export function InlineProductSelector({ category, onSelectionChange, className }
     const isSelected = cart.cart.items.some(cartItem => cartItem.id === item.id);
     
     if (isSelected) {
-      cart.removeFromCart(item.id);
+      cart.removeItem(item.id);
     } else {
-      cart.addToCart({
+      // Controlla disponibilità prima di aggiungere
+      const isAvailable = cart.isItemAvailable(item.id);
+      if (!isAvailable) {
+        const reason = cart.getUnavailableReason(item.id);
+        console.warn(`Item ${item.title} non disponibile: ${reason}`);
+        return;
+      }
+
+      const success = cart.addItem({
         id: item.id,
-        name: item.name,
+        title: item.title,
         price: item.price,
-        category: item.category,
-        description: item.description
+        category: item.category
       });
+      
+      if (!success) {
+        console.warn(`Impossibile aggiungere ${item.title}`);
+        return;
+      }
     }
 
     // Notify parent of selection change
-    const selectedItems = items.filter(i => 
-      cart.cart.items.some(cartItem => cartItem.id === i.id) || 
-      (i.id === item.id && !isSelected)
-    );
-    onSelectionChange?.(selectedItems);
+    setTimeout(() => {
+      const selectedItems = items.filter(i => 
+        cart.cart.items.some(cartItem => cartItem.id === i.id)
+      );
+      onSelectionChange?.(selectedItems);
+    }, 100);
   };
 
   const getItemStatus = (item: Item) => {
@@ -115,7 +128,7 @@ export function InlineProductSelector({ category, onSelectionChange, className }
                     "font-medium",
                     status.isUnavailable ? "text-gray-400" : "text-gray-900"
                   )}>
-                    {item.name}
+                    {item.title}
                   </h4>
                   
                   {status.isSelected && (
