@@ -180,55 +180,44 @@ export function DynamicChatGuide() {
       typing: true
     });
 
-    setTimeout(() => {
-      console.log('🔍 startServicesPhase: All items:', items);
-      console.log('🔍 startServicesPhase: Items count:', items.length);
-      console.log('🔍 startServicesPhase: Items state type:', typeof items, Array.isArray(items));
+    // Funzione ricorsiva per aspettare che gli items siano caricati
+    const waitForItemsAndShowServices = (attempts = 0) => {
+      console.log(`🔍 Attempt ${attempts + 1}: Checking items...`, items.length);
       
-      if (!items || !Array.isArray(items)) {
-        console.error('❌ Items is not an array!', items);
-        return;
-      }
-      
-      const services = items.filter(item => {
-        const isService = item.category === 'servizio';
-        const isActive = item.active !== false;
-        console.log('🔍 Service check - Item:', item.title, 'Category:', item.category, 'active:', item.active, 'isService:', isService, 'isActive:', isActive);
-        return isService && isActive;
-      });
-      
-      console.log('🔍 startServicesPhase: Filtered services:', services);
-      console.log('🔍 startServicesPhase: Services count:', services.length);
-      
-      if (services.length > 0) {
+      if (items.length > 0) {
+        console.log('✅ Items loaded, showing services:', items.length);
+        
+        const services = items.filter(item => {
+          const isService = item.category === 'servizio';
+          const isActive = item.active !== false;
+          console.log('🔍 Service check - Item:', item.title, 'Category:', item.category, 'active:', item.active, 'isService:', isService, 'isActive:', isActive);
+          return isService && isActive;
+        });
+        
+        console.log('🔍 Filtered services:', services);
+        
         addMessage({
           id: 'services-selection',
           type: 'system',
           text: "Seleziona i servizi che desideri:",
           items: services
         });
+      } else if (attempts < 10) { // Max 10 tentativi (10 secondi)
+        console.log('⏳ Items not loaded yet, retrying in 1 second...');
+        setTimeout(() => waitForItemsAndShowServices(attempts + 1), 1000);
       } else {
+        console.error('❌ Timeout waiting for items to load');
         addMessage({
           id: 'services-error',
           type: 'assistant',
           avatar: 'thoughtful',
-          text: "⚠️ Non riesco a caricare i servizi. Riprova tra un momento.",
+          text: "⚠️ Si è verificato un errore nel caricamento. Ricarica la pagina per riprovare.",
         });
-        
-        // Riprova dopo altri 2 secondi
-        setTimeout(() => {
-          const retryServices = items.filter(item => item.category === 'servizio' && item.active !== false);
-          if (retryServices.length > 0) {
-            addMessage({
-              id: 'services-selection-retry',
-              type: 'system',
-              text: "Ecco i servizi disponibili:",
-              items: retryServices
-            });
-          }
-        }, 2000);
       }
-    }, 2000);
+    };
+
+    // Inizia il controllo dopo 2 secondi
+    setTimeout(() => waitForItemsAndShowServices(), 2000);
   };
 
   const handleItemToggle = (item: Item) => {
