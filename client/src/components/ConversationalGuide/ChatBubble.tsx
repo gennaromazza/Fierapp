@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Avatar } from './Avatar';
+import { InlineProductSelector } from './InlineProductSelector';
+import { InlinePriceDisplay } from './InlinePriceDisplay';
 import type { AvatarType } from './types';
 
 interface ChatBubbleProps {

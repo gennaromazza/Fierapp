@@ -1,42 +1,8 @@
-import { useState, useEffect } from 'react';
-import { MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { ChatBubble } from './ChatBubble';
-import { ActionButtons } from './ActionButtons';
-import { LeadForm } from './LeadForm';
-import { useGuideLogic } from './useGuideLogic';
-import Header from '../Header';
-import Footer from '../Footer';
-import Carousel from '../Carousel';
-import PriceBar from '../PriceBar';
-import CheckoutModal from '../CheckoutModal';
-import EnhancedSavingsDisplay from '../EnhancedSavingsDisplay';
-import RulesInfoPanel from '../RulesInfoPanel';
-import { useCartWithRules } from '@/hooks/useCartWithRules';
-import { MobileOptimizedGuide } from './MobileOptimizedGuide';
+import { FullscreenConversationalGuide } from './FullscreenConversationalGuide';
 
 export function ConversationalGuide() {
-  const [isMobile, setIsMobile] = useState(false);
-  
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-  
-  if (isMobile) {
-    return <MobileOptimizedGuide />;
-  }
-  
-  const guide = useGuideLogic();
-  const cart = useCartWithRules();
-  const [showTyping, setShowTyping] = useState(true);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  // Use the new fullscreen conversational guide that integrates everything in chat
+  return <FullscreenConversationalGuide />;
 
   // Start the guide automatically
   useEffect(() => {

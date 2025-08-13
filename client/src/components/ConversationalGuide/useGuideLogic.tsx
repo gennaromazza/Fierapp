@@ -3,7 +3,7 @@ import { useCartWithRules } from '@/hooks/useCartWithRules';
 import { db } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { GuideStep, LeadData, GuideState, AvatarType } from './types';
-import type { Settings, Discounts, Item } from '../../shared/schema';
+import type { Settings, Discounts, Item } from '@shared/schema';
 
 export function useGuideLogic() {
   const cart = useCartWithRules();
