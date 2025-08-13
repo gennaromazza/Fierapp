@@ -6,6 +6,7 @@ import { useCollection } from "../../hooks/useFirestore";
 import { exportLeadsToExcel } from "../../lib/exportExcel";
 import { generateQuotePDF } from "../../lib/pdf";
 import { useToast } from "@/hooks/use-toast";
+import { clearAllLeads } from "../../utils/clearLeads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -216,6 +217,39 @@ export default function LeadsManagement() {
     }));
   };
 
+  const handleClearAllLeads = async () => {
+    const confirmed = window.confirm(
+      '⚠️ ATTENZIONE: Questa azione cancellerà TUTTI i lead dal database.\n\nQuesta azione è irreversibile!\n\nVuoi davvero continuare?'
+    );
+    
+    if (!confirmed) return;
+    
+    const doubleConfirm = window.confirm(
+      '🚨 ULTIMA CONFERMA: Stai per cancellare TUTTI i lead.\n\nSei assolutamente sicuro?'
+    );
+    
+    if (!doubleConfirm) return;
+
+    try {
+      await clearAllLeads();
+      toast({
+        title: "Lead cancellati",
+        description: "Tutti i lead sono stati cancellati con successo. L'admin panel ora dovrebbe funzionare correttamente.",
+      });
+      
+      // Refresh della pagina per aggiornare la lista
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Errore durante la cancellazione dei lead:', error);
+      toast({
+        title: "Errore",
+        description: "Errore durante la cancellazione dei lead. Riprova.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const openEmailCompose = async (lead: Lead) => {
     const customer = lead.customer || {};
     const email = customer.email || customer.Email;
@@ -421,6 +455,22 @@ export default function LeadsManagement() {
           </div>
 
           <div className="flex space-x-3">
+            <Button
+              onClick={handleClearAllLeads}
+              className="relative px-6 py-3 text-base font-bold text-white rounded-xl shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl overflow-hidden group"
+              style={{
+                background: 'linear-gradient(135deg, #dc2626, #b91c1c, #991b1b)',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2)'
+              }}
+            >
+              {/* Animated background for button */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
+
+              <div className="relative z-10 flex items-center">
+                <Trash2 className="w-5 h-5 mr-2" />
+                Cancella Tutti
+              </div>
+            </Button>
             <Button
               onClick={handleExportExcel}
               className="relative px-6 py-3 text-base font-bold text-white rounded-xl shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl overflow-hidden group"
