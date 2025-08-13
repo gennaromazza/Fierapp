@@ -1,0 +1,221 @@
+Ok, vado dritto al punto. Qui sotto trovi le correzioni minime ma decisive per:
+
+allineare chatbot / riepilogo / PDF / WhatsApp alla stessa logica prezzi
+
+sistemare salvataggio lead in Firestore (date, GDPR, campi coerenti)
+
+eliminare le discrepanze tra sconto globale e sconti per prodotto
+
+1) Crea uno snapshot unificato del preventivo
+Un’unica funzione che legge dal carrello e restituisce items + pricing già “puliti” (regali a 0, originalPrice coerente) e un detailed stabile per marketing.
+
+/lib/quoteSnapshot.ts
+
+ts
+Copia
+Modifica
+// Tipi opzionali: adatta ai tuoi
+export type SnapshotItem = {
+  id: string;
+  title: string;
+  price: number;          // prezzo finale applicato (0 se omaggio)
+  originalPrice: number;  // prezzo listino
+  isGift?: boolean;
+};
+
+export type SnapshotPricing = {
+  originalSubtotal: number;
+  discount: number;
+  giftSavings: number;
+  total: number;
+  totalSavings: number;
+  detailed?: any; // struttura interna del tuo motore prezzi
+};
+
+export type QuoteSnapshot = {
+  items: SnapshotItem[];
+  pricing: SnapshotPricing;
+};
+
+export function buildQuoteSnapshot(cart: ReturnType<typeof import('@/hooks/useCartWithRules').useCartWithRules>): QuoteSnapshot {
+  const p = cart.getPricingWithRules();
+  const items = cart.getItemsWithRuleInfo().map(it => ({
+    id: it.id,
+    title: it.title,
+    price: it.isGift ? 0 : Number(it.price) || 0,
+    originalPrice: Number(it.originalPrice ?? it.price) || 0,
+    isGift: !!it.isGift,
+  }));
+
+  return {
+    items,
+    pricing: {
+      originalSubtotal: Number(p.originalSubtotal) || 0,
+      discount: Number(p.discount) || 0,
+      giftSavings: Number(p.giftSavings) || 0,
+      total: Number(p.total) || 0,
+      totalSavings: Number(p.totalSavings) || 0,
+      detailed: p.detailed ?? p, // garantisce che detailed esista
+    },
+  };
+}
+2) Usa lo snapshot ovunque (UI, PDF, WhatsApp, Firestore)
+Import e utilità
+Nel tuo LeadForm aggiungi:
+
+ts
+Copia
+Modifica
+import { Timestamp, serverTimestamp } from 'firebase/firestore';
+import { buildQuoteSnapshot } from '@/lib/quoteSnapshot';
+Sanitizzazione numero WhatsApp (niente “+” per wa.me)
+ts
+Copia
+Modifica
+const sanitizeForWa = (n?: string) => (n ?? '').replace(/\D/g, ''); // solo cifre
+Sostituisci calcoli duplicati con lo snapshot
+UI (riepilogo):
+
+tsx
+Copia
+Modifica
+const snapshot = buildQuoteSnapshot(cart);
+const { items, pricing } = snapshot;
+
+// ...nel render dei prodotti:
+{items.map((item) => (
+  <div key={item.id} className="flex justify-between text-sm mb-1">
+    <span className={cn(item.isGift && "text-green-600")}>
+      {item.title} {item.isGift && "(OMAGGIO)"}
+    </span>
+    <span className={cn(item.isGift && "line-through text-gray-500")}>
+      €{(item.price).toLocaleString('it-IT')}
+    </span>
+  </div>
+))}
+Totali UI:
+
+tsx
+Copia
+Modifica
+<span>€{pricing.originalSubtotal.toLocaleString('it-IT')}</span>
+{pricing.discount > 0 && <span>-€{pricing.discount.toLocaleString('it-IT')}</span>}
+{pricing.giftSavings > 0 && <span>-€{pricing.giftSavings.toLocaleString('it-IT')}</span>}
+<span>€{pricing.total.toLocaleString('it-IT')}</span>
+PDF:
+
+ts
+Copia
+Modifica
+const pdfData = {
+  customer: {
+    nome: formData.name,
+    cognome: formData.surname,
+    email: formData.email,
+    telefono: formData.phone,
+    data_evento: formData.eventDate, // vedi se vuoi passare ISO o dd/MM/yyyy
+    note: formData.notes
+  },
+  selectedItems: snapshot.items,
+  pricing: snapshot.pricing,
+};
+
+await generateClientQuotePDF(pdfData, filename);
+WhatsApp:
+
+ts
+Copia
+Modifica
+const itemsList = snapshot.items.map(item => {
+  const priceText = item.isGift ? 'GRATIS' : `€${item.price.toLocaleString('it-IT')}`;
+  return `• ${item.title} - ${priceText}`;
+}).join('\n');
+
+const marketingMessages = generateMarketingMessages(snapshot.pricing.detailed);
+const pricingSummary = formatPricingSummary(snapshot.pricing.detailed);
+
+const message = `🎬 RICHIESTA INFORMAZIONI
+...
+🛍️ SERVIZI/PRODOTTI SELEZIONATI:
+${itemsList}
+
+💰 RIEPILOGO:
+${pricingSummary}
+
+${marketingMessages.mainSavings ? `🔥 ${marketingMessages.mainSavings}\n` : ''}${marketingMessages.giftMessage ? `🎁 ${marketingMessages.giftMessage}\n` : ''}`;
+
+// numero da settings (senza +)
+const whatsappNumber = sanitizeForWa(settings?.whatsappNumber);
+const whatsappUrl = whatsappNumber
+  ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
+  : `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+window.open(whatsappUrl, '_blank');
+Firestore (unifica GDPR e usa Timestamp):
+
+Evita doppioni customer.gdpr_consent e gdprConsent. Tieni solo gdprConsent. Salva data_evento come Timestamp.
+
+ts
+Copia
+Modifica
+const leadData = {
+  customer: {
+    nome: formData.name,
+    cognome: formData.surname,
+    email: formData.email,
+    telefono: formData.phone,
+    data_evento: formData.eventDate ? Timestamp.fromDate(new Date(formData.eventDate)) : null,
+    note: formData.notes || '',
+  },
+  selectedItems: snapshot.items,
+  pricing: snapshot.pricing,
+  gdprConsent: {
+    accepted: formData.gdprAccepted,
+    text: "Accetto il trattamento dei dati personali",
+    timestamp: serverTimestamp(),
+  },
+  status: "new",
+  source: 'conversational-guide',
+  createdAt: serverTimestamp(),
+};
+
+const leadDoc = await addDoc(collection(db, "leads"), leadData);
+3) Bug & edge cases che spiegano i “totali che non tornano”
+Regali vs Sconti: se in alcuni punti sottrai il regalo dal subtotale e in altri lo tratti come sconto, i totali risultano diversi. Nello snapshot:
+
+originalSubtotal = somma listini di tutti gli items (inclusi i regali)
+
+giftSavings = somma dei listini degli items omaggio
+
+discount = sconti applicati (globali o per prodotto) sui non-regalo
+
+total = originalSubtotal - giftSavings - discount
+
+totalSavings = giftSavings + discount
+
+detailed mancante: se generateMarketingMessages/formatPricingSummary si aspettano un detailed preciso, ma tu passi oggetti diversi, i testi e i numeri cambiano. Nel snapshot forzo detailed: p.detailed ?? p.
+
+Formattazione numeri: formatta solo in render. In storage e calcoli tieni number.
+
+Timezone date: toISOString() può slittare il giorno in locale. Se vuoi coerenza di giorno, salva Timestamp o una stringa YYYY-MM-DD derivata da selettore data (senza ora).
+
+4) Prompt “anti-allucinazioni” per chi interviene sul codice
+Usalo pari pari con repo e file indicati:
+
+Prompt tecnico:
+
+“Nel progetto React+TS con Firebase sto usando un carrello con regole di prezzo (sconti globali e per prodotto, omaggi). I totali non combaciano tra chatbot, riepilogo UI, PDF e messaggio WhatsApp. Ho introdotto /lib/quoteSnapshot.ts con buildQuoteSnapshot(cart) che deve essere l’unica fonte di items e pricing (originalSubtotal, discount, giftSavings, total, totalSavings, detailed).
+
+Obiettivi:
+
+Rimuovere ogni calcolo prezzi duplicato e usare solo lo snapshot in UI/PDF/WhatsApp/Firestore.
+
+Trattare gli omaggi come price=0 e contabilizzarli in giftSavings, non come sconti.
+
+Garantire che detailed sia presente e compatibile con generateMarketingMessages e formatPricingSummary.
+
+In Firestore salvare data_evento come Timestamp, unificare GDPR in gdprConsent e aggiungere createdAt: serverTimestamp().
+
+Sanitizzare il numero WhatsApp per wa.me (solo cifre, senza +).
+
+Fornisci PR con modifiche atomiche, tipizzazione rigorosa e test manuali (3 casi: solo sconto globale, solo sconto specifico, omaggi + sconto misto) mostrando che total, totalSavings e testi marketing coincidono in tutte le superfici.”
