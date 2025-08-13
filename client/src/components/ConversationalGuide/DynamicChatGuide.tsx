@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { Item, Discount } from '../../../shared/schema';
 import CheckoutModal from '@/components/CheckoutModal';
@@ -40,47 +40,40 @@ export function DynamicChatGuide() {
   const [messageCounter, setMessageCounter] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Load items and discounts from Firebase  
   useEffect(() => {
-    async function loadItems() {
-      try {
-        const itemsQuery = query(
-          collection(db, "items"),
-          where("active", "==", true)
-        );
-        
-        const snapshot = await getDocs(itemsQuery);
-        const loadedItems = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-          updatedAt: doc.data().updatedAt?.toDate(),
-        } as Item));
-        
-        // Sort by sortOrder
-        loadedItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-        
-        console.log('🔥 DynamicChatGuide loaded items:', loadedItems.length, loadedItems.map(i => i.title));
-        setItems(loadedItems);
-        
-      } catch (error) {
-        console.error('Error loading items in DynamicChatGuide:', error);
-      }
-    }
-    
-    loadItems();
+    let isMounted = true;
 
+    // ITEMS: one-shot con filtro WHERE active == true
+    (async () => {
+      try {
+        const itemsRef = collection(db, 'items');
+        const qActive = query(itemsRef, where('active', '==', true));
+        const snap = await getDocs(qActive);
+
+        const loadedItems = snap.docs.map(doc => ({
+          id: doc.id,
+          ...(doc.data() as Item),
+        }));
+
+        console.log('🔥 DynamicChatGuide loaded items', loadedItems.length, loadedItems);
+
+        if (isMounted) setItems(loadedItems);
+      } catch (err) {
+        console.error('Errore caricamento items:', err);
+      }
+    })();
+
+    // DISCOUNTS: se li vuoi realtime, mantieni onSnapshot
     const unsubscribeDiscounts = onSnapshot(
       collection(db, 'discounts'),
       (snapshot) => {
         const discountDoc = snapshot.docs.find(doc => doc.id === 'global');
-        if (discountDoc) {
-          setDiscounts(discountDoc.data() as Discount);
-        }
+        if (discountDoc) setDiscounts(discountDoc.data() as Discount);
       }
     );
 
     return () => {
+      isMounted = false;
       unsubscribeDiscounts();
     };
   }, []);
@@ -178,7 +171,7 @@ export function DynamicChatGuide() {
       
       const services = items.filter(item => {
         console.log('Item:', item.title, 'Category:', item.category, 'active:', item.active);
-        return item.category === 'servizio' && item.active === true;
+        return item.category === 'servizio' && item.active !== false;
       });
       
       console.log('Filtered services:', services);
@@ -200,7 +193,7 @@ export function DynamicChatGuide() {
         
         // Riprova dopo altri 2 secondi
         setTimeout(() => {
-          const retryServices = items.filter(item => item.category === 'servizio' && item.active === true);
+          const retryServices = items.filter(item => item.category === 'servizio' && item.active !== false);
           if (retryServices.length > 0) {
             addMessage({
               id: 'services-selection-retry',

@@ -1,0 +1,106 @@
+Breve verifica: tutte le affermazioni elencate sono FALSE nel codice incollato.
+Ecco dove e come correggere.
+
+Cosa non torna
+❌ onSnapshot → getDocs + query/where: il codice usa ancora onSnapshot su items.
+
+❌ item.isActive → item.active: filtri e log usano isActive.
+
+❌ addItemWithRules → addItem: in handleItemToggle viene chiamato addItemWithRules(...).
+
+❌ log “🔥 DynamicChatGuide loaded items”: non presente.
+
+(✔️ opzionale) Gli sconti possono restare con onSnapshot se li vuoi realtime.
+
+Patch minime e precise
+1) Import
+Sostituisci l’import Firestore per usare query:
+
+ts
+Copia
+Modifica
+- import { collection, onSnapshot } from 'firebase/firestore';
++ import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
+2) Caricamento items con getDocs + where('active','==',true)
+Sostituisci interamente l’useEffect che carica items/discounts con questo (mantiene realtime solo per discounts):
+
+ts
+Copia
+Modifica
+useEffect(() => {
+  let isMounted = true;
+
+  // ITEMS: one-shot con filtro WHERE active == true
+  (async () => {
+    try {
+      const itemsRef = collection(db, 'items');
+      const qActive = query(itemsRef, where('active', '==', true));
+      const snap = await getDocs(qActive);
+
+      const loadedItems = snap.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Item),
+      }));
+
+      console.log('🔥 DynamicChatGuide loaded items', loadedItems.length, loadedItems);
+
+      if (isMounted) setItems(loadedItems);
+    } catch (err) {
+      console.error('Errore caricamento items:', err);
+    }
+  })();
+
+  // DISCOUNTS: se li vuoi realtime, mantieni onSnapshot
+  const unsubscribeDiscounts = onSnapshot(
+    collection(db, 'discounts'),
+    (snapshot) => {
+      const discountDoc = snapshot.docs.find(doc => doc.id === 'global');
+      if (discountDoc) setDiscounts(discountDoc.data() as Discount);
+    }
+  );
+
+  return () => {
+    isMounted = false;
+    unsubscribeDiscounts();
+  };
+}, []);
+3) Usa item.active ovunque
+Cambia tutti i punti in cui filtri o logghi con isActive:
+
+ts
+Copia
+Modifica
+- setItems(loadedItems.filter(item => item.isActive !== false));
++ // non serve più grazie al WHERE, ma se rimane:
++ setItems(loadedItems.filter(item => item.active !== false));
+Nel startServicesPhase():
+
+ts
+Copia
+Modifica
+- console.log('Item:', item.title, 'Category:', item.category, 'isActive:', item.isActive);
+- return item.category === 'servizio' && item.isActive !== false;
++ console.log('Item:', item.title, 'Category:', item.category, 'active:', item.active);
++ return item.category === 'servizio' && item.active !== false;
+Nel retry:
+
+ts
+Copia
+Modifica
+- const retryServices = items.filter(item => item.category === 'servizio' && item.isActive !== false);
++ const retryServices = items.filter(item => item.category === 'servizio' && item.active !== false);
+4) addItemWithRules → addItem
+In handleItemToggle sostituisci la chiamata:
+
+ts
+Copia
+Modifica
+- const success = cart.addItemWithRules({
++ const success = cart.addItem({
+    id: item.id,
+    title: item.title,
+    price: item.price,
+    category: item.category
+});
+5) Logging richiesto
+Il log “🔥 DynamicChatGuide loaded items” è già incluso nel punto (2).
