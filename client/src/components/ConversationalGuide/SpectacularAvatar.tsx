@@ -111,7 +111,7 @@ export function SpectacularAvatar({
             />
           ))}
 
-          {/* Avatar - Responsive Size */}
+          {/* Avatar - More Conservative Responsive Size */}
           <motion.div
             className="relative z-10"
             animate={{
@@ -125,7 +125,7 @@ export function SpectacularAvatar({
             }}
           >
             <motion.div
-              className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 select-none"
+              className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 select-none"
               initial={{ rotate: 0 }}
               animate={{ 
                 rotate: [0, -10, 10, -10, 0],
@@ -139,16 +139,16 @@ export function SpectacularAvatar({
               <img 
                 src={avatarImages[type]} 
                 alt="Avatar"
-                className="w-full h-full object-contain rounded-full"
+                className="w-full h-full object-contain rounded-full shadow-2xl"
               />
             </motion.div>
           </motion.div>
 
-          {/* Cartoon Effects Text - Responsive */}
+          {/* Cartoon Effects Text - More Conservative Size */}
           {showEffects && (
             <>
               <motion.div
-                className="absolute top-4 left-4 sm:top-10 sm:left-10 lg:top-20 lg:left-20 text-3xl sm:text-5xl lg:text-8xl font-bold text-yellow-400"
+                className="absolute top-4 left-4 sm:top-8 sm:left-8 lg:top-12 lg:left-12 xl:top-16 xl:left-16 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-yellow-400"
                 initial={{ scale: 0, rotate: -45 }}
                 animate={{ scale: [0, 1.2, 1], rotate: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
@@ -156,7 +156,7 @@ export function SpectacularAvatar({
                 WOW!
               </motion.div>
               <motion.div
-                className="absolute bottom-4 right-4 sm:bottom-10 sm:right-10 lg:bottom-20 lg:right-20 text-3xl sm:text-5xl lg:text-8xl font-bold text-pink-400"
+                className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 lg:bottom-12 lg:right-12 xl:bottom-16 xl:right-16 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-pink-400"
                 initial={{ scale: 0, rotate: 45 }}
                 animate={{ scale: [0, 1.2, 1], rotate: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
@@ -164,7 +164,7 @@ export function SpectacularAvatar({
                 BOOM!
               </motion.div>
               <motion.div
-                className="absolute top-16 right-8 sm:top-32 sm:right-16 lg:top-40 lg:right-40 text-2xl sm:text-4xl lg:text-6xl font-bold text-cyan-400"
+                className="absolute top-12 right-6 sm:top-20 sm:right-12 lg:top-24 lg:right-20 xl:top-28 xl:right-24 text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-cyan-400"
                 initial={{ scale: 0 }}
                 animate={{ scale: [0, 1.1, 1], rotate: [0, 360] }}
                 transition={{ delay: 0.7, duration: 0.5 }}
@@ -174,15 +174,15 @@ export function SpectacularAvatar({
             </>
           )}
 
-          {/* Message Display - Responsive */}
+          {/* Message Display - Better Proportioned */}
           {message && (
             <motion.div
-              className="absolute bottom-16 sm:bottom-24 lg:bottom-32 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl p-4 sm:p-6 lg:p-8 shadow-2xl max-w-xs sm:max-w-lg lg:max-w-2xl mx-4"
+              className="absolute bottom-12 sm:bottom-16 lg:bottom-20 xl:bottom-24 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl p-3 sm:p-4 lg:p-6 xl:p-8 shadow-2xl max-w-xs sm:max-w-md lg:max-w-lg xl:max-w-xl mx-4"
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 1, duration: 0.5 }}
             >
-              <p className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-800 text-center">
+              <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-bold text-gray-800 text-center">
                 {message}
               </p>
             </motion.div>
