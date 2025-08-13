@@ -144,34 +144,34 @@ export function DynamicChatGuide() {
       typing: true
     });
 
-    setTimeout(() => {
-      console.log('🔍 Items from cart hook:', items.length);
+    // Aspetta che gli items siano caricati
+    const showServicesWhenReady = () => {
+      console.log('🔍 Items from cart hook:', items.length, 'Loading:', cart.rulesLoading);
+      
+      if (cart.rulesLoading || items.length === 0) {
+        console.log('⏳ Still loading, retrying in 500ms...');
+        setTimeout(showServicesWhenReady, 500);
+        return;
+      }
       
       const services = items.filter(item => {
         const isService = item.category === 'servizio';
-        const isActive = item.isActive !== false; // Use isActive from cart hook
+        const isActive = item.isActive !== false;
         console.log('🔍 Service check - Item:', item.title, 'Category:', item.category, 'isActive:', item.isActive, 'isService:', isService);
         return isService && isActive;
       });
       
       console.log('🔍 Filtered services:', services);
       
-      if (services.length > 0) {
-        addMessage({
-          id: 'services-selection',
-          type: 'system',
-          text: "Seleziona i servizi che desideri:",
-          items: services
-        });
-      } else {
-        addMessage({
-          id: 'services-error',
-          type: 'assistant',
-          avatar: 'thoughtful',
-          text: "⚠️ Caricamento servizi in corso, riprova tra un momento.",
-        });
-      }
-    }, 2000);
+      addMessage({
+        id: 'services-selection',
+        type: 'system',
+        text: "Seleziona i servizi che desideri:",
+        items: services
+      });
+    };
+
+    setTimeout(showServicesWhenReady, 1000);
   };
 
   const handleItemToggle = (item: Item) => {
