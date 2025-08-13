@@ -6,6 +6,7 @@ export interface GuideStep {
   message: string;
   actions?: GuideAction[];
   uiHint?: string;
+  customComponent?: string;
   validation?: (data: any) => boolean;
   confetti?: boolean;
   requiresAction?: boolean;

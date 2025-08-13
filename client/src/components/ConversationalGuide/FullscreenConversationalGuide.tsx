@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { MessageCircle, ChevronLeft, ChevronRight, ShoppingCart, Check, Plus, Minus, Gift, Lock, Tag, Sparkles } from 'lucide-react';
+import { MessageCircle, ChevronLeft, ChevronRight, ShoppingCart, Gift, Tag, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { SpectacularAvatar } from './SpectacularAvatar';
+import { ChatProductSelector } from './ChatProductSelector';
 import { format } from 'date-fns';
 import { ActionButtons } from './ActionButtons';
 import { LeadForm } from './LeadForm';
@@ -85,159 +86,9 @@ export function FullscreenConversationalGuide() {
     }
   }, [currentStep?.id]);
 
-  const handleItemClick = (item: Item) => {
-    const isSelected = cart.cart.items.some(cartItem => cartItem.id === item.id);
 
-    if (isSelected) {
-      cart.removeFromCart(item.id);
-    } else {
-      cart.addToCart({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        category: item.category,
-        description: item.description
-      });
-    }
-  };
 
-  const getItemStatus = (item: Item) => {
-    const cartItem = cart.cart.items.find(cartItem => cartItem.id === item.id);
-    const isSelected = !!cartItem;
-    const isGift = cartItem?.price === 0 && cartItem?.originalPrice && cartItem.originalPrice > 0;
-    const unavailableReason = cart.getUnavailableReason(item.id);
 
-    return {
-      isSelected,
-      isGift,
-      isUnavailable: !!unavailableReason,
-      unavailableReason,
-      displayPrice: cartItem?.price ?? item.price,
-      originalPrice: cartItem?.originalPrice ?? item.price
-    };
-  };
-
-  const renderProductSelector = (category: 'servizio' | 'prodotto') => {
-    const categoryItems = items.filter(item => item.category === category);
-
-    if (categoryItems.length === 0) {
-      return (
-        <div className="text-center py-6">
-          <p className="text-gray-500">Caricamento {category === 'servizio' ? 'servizi' : 'prodotti'}...</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-3 max-h-80 overflow-y-auto">
-        {categoryItems.map(item => {
-          const status = getItemStatus(item);
-
-          return (
-            <div
-              key={item.id}
-              className={cn(
-                "border rounded-lg p-4 transition-all cursor-pointer",
-                status.isSelected 
-                  ? "border-blue-500 bg-blue-50" 
-                  : status.isUnavailable
-                    ? "border-gray-200 bg-gray-50 opacity-60"
-                    : "border-gray-200 hover:border-gray-300 hover:shadow-md",
-                status.isUnavailable && "cursor-not-allowed"
-              )}
-              onClick={() => !status.isUnavailable && handleItemClick(item)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className={cn(
-                      "font-medium",
-                      status.isUnavailable ? "text-gray-400" : "text-gray-900"
-                    )}>
-                      {item.name}
-                    </h4>
-
-                    {status.isSelected && (
-                      <Check className="h-4 w-4 text-blue-600" />
-                    )}
-
-                    {status.isGift && (
-                      <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                        <Gift className="h-3 w-3 mr-1" />
-                        GRATIS
-                      </Badge>
-                    )}
-
-                    {status.isUnavailable && (
-                      <Badge variant="secondary" className="bg-gray-100 text-gray-600 text-xs">
-                        <Lock className="h-3 w-3 mr-1" />
-                        Bloccato
-                      </Badge>
-                    )}
-                  </div>
-
-                  {item.description && (
-                    <p className={cn(
-                      "text-sm mb-2",
-                      status.isUnavailable ? "text-gray-400" : "text-gray-600"
-                    )}>
-                      {item.description}
-                    </p>
-                  )}
-
-                  {status.isUnavailable && status.unavailableReason && (
-                    <p className="text-xs text-red-500 italic">
-                      {status.unavailableReason}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col items-end gap-2">
-                  <div className="text-right">
-                    {status.isGift ? (
-                      <div>
-                        <span className="text-lg font-bold text-green-600">GRATIS</span>
-                        <div className="text-sm text-gray-500 line-through">
-                          €{status.originalPrice}
-                        </div>
-                      </div>
-                    ) : (
-                      <span className={cn(
-                        "text-lg font-bold",
-                        status.isUnavailable ? "text-gray-400" : "text-gray-900"
-                      )}>
-                        €{status.displayPrice}
-                      </span>
-                    )}
-                  </div>
-
-                  {!status.isUnavailable && (
-                    <Button
-                      size="sm"
-                      variant={status.isSelected ? "default" : "outline"}
-                      className="min-w-[80px]"
-                    >
-                      {status.isSelected ? (
-                        <>
-                          <Minus className="h-3 w-3 mr-1" />
-                          Rimuovi
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="h-3 w-3 mr-1" />
-                          Aggiungi
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
 
   const renderPriceDisplay = () => {
     if (cart.cart.items.length === 0) {
@@ -466,17 +317,31 @@ export function FullscreenConversationalGuide() {
             )}
 
             {/* Inline Content Based on Step */}
-            {currentStep.uiHint === 'show_services_inline' && (
+            {currentStep.customComponent === 'services_selector' && (
               <div className="mt-6">
-                <h3 className="font-semibold text-lg mb-4 text-blue-700">Scegli i tuoi Servizi</h3>
-                {renderProductSelector('servizio')}
+                <ChatProductSelector 
+                  category="servizio" 
+                  onComplete={() => {
+                    guide.setGuideState(prev => ({ 
+                      ...prev, 
+                      currentStep: prev.currentStep + 1 
+                    }));
+                  }}
+                />
               </div>
             )}
 
-            {currentStep.uiHint === 'show_products_inline' && (
+            {currentStep.customComponent === 'products_selector' && (
               <div className="mt-6">
-                <h3 className="font-semibold text-lg mb-4 text-green-700">Scegli i tuoi Prodotti</h3>
-                {renderProductSelector('prodotto')}
+                <ChatProductSelector 
+                  category="prodotto" 
+                  onComplete={() => {
+                    guide.setGuideState(prev => ({ 
+                      ...prev, 
+                      currentStep: prev.currentStep + 1 
+                    }));
+                  }}
+                />
               </div>
             )}
 

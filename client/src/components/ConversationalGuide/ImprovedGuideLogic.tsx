@@ -147,19 +147,19 @@ Vuoi vedere i servizi disponibili?`,
       {
         id: 'services_selection',
         avatar: 'smiling',
-        message: `Ecco tutti i nostri SERVIZI! Scegli quelli che ti interessano:`,
+        message: `Ecco tutti i nostri SERVIZI! 
+
+📸 **Servizio Fotografico**: Cattura ogni momento del tuo giorno speciale
+🎬 **Videomaker**: Un film emozionante del tuo matrimonio
+
+💡 **TRUCCO PER RISPARMIARE**: Scegliendo entrambi i servizi sbloccherai prodotti esclusivi e regali speciali!
+
+Seleziona i servizi che desideri:`,
         uiHint: 'show_services_inline',
         requiresAction: true,
+        customComponent: 'services_selector',
         canProceed: () => cart.cart.items.some(item => item.category === 'servizio'),
-        actions: [{
-          id: 'continue_to_products',
-          label: 'Ho scelto i servizi, continua!',
-          type: 'button',
-          action: () => {
-            setGuideState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
-          },
-          disabled: () => !cart.cart.items.some(item => item.category === 'servizio')
-        }]
+        actions: []
       },
 
       // Step 5: Products explanation
@@ -187,18 +187,20 @@ Pronto a scegliere i prodotti?`,
         avatar: 'explaining',
         message: `Ecco tutti i PRODOTTI disponibili! 
 
-💡 **CONSIGLIO**: Se selezioni tutto, "Foto Invitati" diventa GRATIS!
+${cart.cart.items.some(item => item.category === 'servizio' && item.name.includes('Foto')) ?
+  '📸 Hai scelto il Servizio Fotografico, quindi puoi aggiungere ALBUM e STAMPE!' : ''}
+${cart.cart.items.some(item => item.category === 'servizio' && item.name.includes('Video')) ?
+  '🎬 Hai scelto il Videomaker, quindi puoi aggiungere DRONE e VIDEOPROIEZIONE!' : ''}
 
-Scegli quelli che ti interessano:`,
+💡 **SUPER RISPARMIO**: 
+- Selezionando più album ottieni sconti crescenti
+- Con il pacchetto completo, "Foto Invitati" diventa GRATIS!
+- Ogni prodotto selezionato aumenta il tuo sconto totale
+
+Scegli i prodotti che desideri:`,
         uiHint: 'show_products_inline',
-        actions: [{
-          id: 'continue_to_summary',
-          label: 'Continua con questi prodotti',
-          type: 'button',
-          action: () => {
-            setGuideState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
-          }
-        }]
+        customComponent: 'products_selector',
+        actions: []
       },
 
       // Step 7: Summary and pricing
