@@ -5,11 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
-import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import type { Item, Discount } from '../../../../shared/schema';
+import type { Item, Discounts } from '../../../../shared/schema';
 import CheckoutModal from '@/components/CheckoutModal';
+import { LeadForm } from './LeadForm';
 import { SpectacularAvatar } from './SpectacularAvatar';
+import { calculateDiscountedPrice } from '../../lib/discounts';
 
 interface ChatMessage {
   id: string;
@@ -30,7 +32,7 @@ interface ChatMessage {
 export function DynamicChatGuide() {
   const cart = useCartWithRules();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [discounts, setDiscounts] = useState<Discount | null>(null);
+  const [discounts, setDiscounts] = useState<Discounts | null>(null);
   
   // Use items from cart hook instead of loading separately
   const items = cart.getAllItemsWithAvailability() || [];
@@ -52,18 +54,20 @@ export function DynamicChatGuide() {
   }, [cart.rulesLoading, items.length]);
 
   useEffect(() => {
-    // DISCOUNTS: se li vuoi realtime, mantieni onSnapshot
-    const unsubscribeDiscounts = onSnapshot(
-      collection(db, 'discounts'),
-      (snapshot) => {
-        const discountDoc = snapshot.docs.find(doc => doc.id === 'global');
-        if (discountDoc) setDiscounts(discountDoc.data() as Discount);
+    // Load global discounts properly from settings
+    async function loadDiscounts() {
+      try {
+        const discountsDoc = await getDoc(doc(db, "settings", "discounts"));
+        if (discountsDoc.exists()) {
+          const discountsData = discountsDoc.data() as Discounts;
+          setDiscounts(discountsData);
+        }
+      } catch (error) {
+        console.error("Error loading discounts:", error);
       }
-    );
+    }
 
-    return () => {
-      unsubscribeDiscounts();
-    };
+    loadDiscounts();
   }, []);
 
   // Auto-scroll to bottom
@@ -191,8 +195,8 @@ export function DynamicChatGuide() {
 
       const services = items.filter(item => {
         const isService = item.category === 'servizio';
-        const isActive = item.isActive !== false;
-        console.log('🔍 Service check - Item:', item.title, 'Category:', item.category, 'isActive:', item.isActive, 'isService:', isService);
+        const isActive = item.active !== false;
+        console.log('🔍 Service check - Item:', item.title, 'Category:', item.category, 'active:', item.active, 'isService:', isService);
         return isService && isActive;
       });
       
@@ -356,19 +360,34 @@ export function DynamicChatGuide() {
     const pricing = cart.getPricingWithRules();
     const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
     
+    // Calculate final total with global discounts
+    let finalTotal = pricing.finalTotal;
+    if (discounts?.global?.isActive && cart.cart.items.length > 0) {
+      finalTotal = cart.cart.items.reduce((sum, item) => {
+        if (item.price === 0) return sum; // Skip gift items
+        const originalPrice = item.originalPrice || item.price;
+        const discountedPrice = calculateDiscountedPrice(originalPrice, item.id, discounts);
+        return sum + discountedPrice;
+      }, 0);
+    }
+    
     let summaryText = "🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato:\n\n";
-    summaryText += `💰 Totale: €${pricing.total}\n`;
+    
+    if (discounts?.global?.isActive && finalTotal < pricing.finalTotal) {
+      summaryText += `💰 Prezzo originale: €${pricing.finalTotal}\n`;
+      summaryText += `💸 Sconto globale (${discounts.global.type === 'percent' ? discounts.global.value + '%' : '€' + discounts.global.value}): -€${pricing.finalTotal - finalTotal}\n`;
+      summaryText += `💰 Totale finale: €${finalTotal}\n`;
+    } else {
+      summaryText += `💰 Totale: €${finalTotal}\n`;
+    }
     
     if (pricing.giftSavings > 0) {
       summaryText += `🎁 Risparmi con regali: €${pricing.giftSavings}\n`;
     }
     
-    if (pricing.discount > 0) {
-      summaryText += `💸 Sconto applicato: €${pricing.discount}\n`;
-    }
-    
-    if (pricing.totalSavings > 0) {
-      summaryText += `✨ Risparmi totali: €${pricing.totalSavings}\n`;
+    if (pricing.totalSavings > 0 || (discounts?.global?.isActive && finalTotal < pricing.finalTotal)) {
+      const totalSavings = pricing.totalSavings + (pricing.finalTotal - finalTotal);
+      summaryText += `✨ Risparmi totali: €${totalSavings}\n`;
     }
     
     if (giftItems.length > 0) {
@@ -412,6 +431,12 @@ export function DynamicChatGuide() {
     const giftSettings = cart.getItemGiftSettings(item.id);
     const unavailableReason = !isAvailable ? cart.getUnavailableReason(item.id) : null;
     const isUnavailable = !isAvailable;
+    
+    // Calculate discounted price using global discounts
+    const originalPrice = item.originalPrice || item.price;
+    const finalPrice = discounts && !isGift ? 
+      calculateDiscountedPrice(originalPrice, item.id, discounts) : 
+      (isGift ? 0 : originalPrice);
 
     return (
       <div
@@ -427,7 +452,21 @@ export function DynamicChatGuide() {
         )}
         onClick={() => !isUnavailable && handleItemToggle(item)}
       >
-        <div className="flex items-start justify-between">
+        <div className="flex items-start gap-3">
+          {/* Product Image */}
+          {item.imageUrl && (
+            <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
+              <img 
+                src={item.imageUrl} 
+                alt={item.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+          
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h4 className={cn(
@@ -469,12 +508,25 @@ export function DynamicChatGuide() {
                 )}
               </div>
             ) : (
-              <span className={cn(
-                "text-sm font-bold",
-                isUnavailable ? "text-gray-400" : "text-gray-900"
-              )}>
-                €{item.price}
-              </span>
+              <div>
+                {finalPrice < originalPrice && discounts?.global?.isActive && (
+                  <span className="text-xs text-gray-400 line-through mr-2">
+                    €{originalPrice}
+                  </span>
+                )}
+                <span className={cn(
+                  "text-sm font-bold",
+                  isUnavailable ? "text-gray-400" : "text-gray-900"
+                )}>
+                  €{finalPrice}
+                </span>
+                {discounts?.global?.isActive && finalPrice < originalPrice && (
+                  <Badge variant="secondary" className="ml-1 text-xs bg-red-100 text-red-800">
+                    <Tag className="w-3 h-3 mr-1" />
+                    -{Math.round((1 - finalPrice / originalPrice) * 100)}%
+                  </Badge>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -589,20 +641,14 @@ export function DynamicChatGuide() {
         <div className="flex-1 max-w-2xl mx-auto w-full p-4">
           <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
             <h2 className="text-2xl font-bold mb-4">Completa la prenotazione</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              setIsCheckoutOpen(true);
-            }}>
-              <div className="space-y-4">
-                <Input placeholder="Nome e Cognome" required />
-                <Input type="email" placeholder="Email" required />
-                <Input type="tel" placeholder="Telefono" required />
-                <Input placeholder="Location del matrimonio" />
-                <Button type="submit" className="w-full">
-                  Invia Richiesta Preventivo
-                </Button>
-              </div>
-            </form>
+            <LeadForm 
+              initialData={leadData}
+              onComplete={(data) => {
+                console.log('Lead data collected:', data);
+                setLeadData(data);
+                setIsCheckoutOpen(true);
+              }}
+            />
           </div>
         </div>
       </div>
