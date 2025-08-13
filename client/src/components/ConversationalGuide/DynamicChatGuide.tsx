@@ -157,8 +157,15 @@ export function DynamicChatGuide() {
     });
 
     setTimeout(() => {
-      const services = items.filter(item => item.category === 'servizio');
-      console.log('Services found:', services);
+      console.log('All items:', items);
+      console.log('Items count:', items.length);
+      
+      const services = items.filter(item => {
+        console.log('Item:', item.title, 'Category:', item.category, 'isActive:', item.isActive);
+        return item.category === 'servizio' && item.isActive !== false;
+      });
+      
+      console.log('Filtered services:', services);
       
       if (services.length > 0) {
         addMessage({
@@ -174,6 +181,19 @@ export function DynamicChatGuide() {
           avatar: 'thoughtful',
           text: "⚠️ Non riesco a caricare i servizi. Riprova tra un momento.",
         });
+        
+        // Riprova dopo altri 2 secondi
+        setTimeout(() => {
+          const retryServices = items.filter(item => item.category === 'servizio' && item.isActive !== false);
+          if (retryServices.length > 0) {
+            addMessage({
+              id: 'services-selection-retry',
+              type: 'system',
+              text: "Ecco i servizi disponibili:",
+              items: retryServices
+            });
+          }
+        }, 2000);
       }
     }, 2000);
   };

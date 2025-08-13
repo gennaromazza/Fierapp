@@ -24,7 +24,7 @@ export function useCartWithRules() {
     queryFn: async () => {
       const itemsQuery = query(
         collection(db, "items"),
-        where("active", "==", true),
+        where("isActive", "==", true),
         orderBy("category", "asc"),
         orderBy("sortOrder", "asc")
       );
