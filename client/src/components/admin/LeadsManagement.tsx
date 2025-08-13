@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 export default function LeadsManagement() {
   const { data: allLeads, loading } = useCollection<Lead>("leads");
   const { toast } = useToast();
-  
+
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -47,7 +47,7 @@ export default function LeadsManagement() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Stato per editing lead
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -56,7 +56,7 @@ export default function LeadsManagement() {
 
   useEffect(() => {
     if (!allLeads) return;
-    
+
     let filtered = allLeads;
 
     // Search filter
@@ -73,7 +73,7 @@ export default function LeadsManagement() {
           (lead as any).name || '', // Handle direct name properties
           (lead as any).surname || ''
         ];
-        
+
         return searchFields.some(field => 
           typeof field === 'string' && field.toLowerCase().includes(searchTerm.toLowerCase())
         ) || Object.values(customer).some(value => 
@@ -179,27 +179,27 @@ export default function LeadsManagement() {
 
   const handleSaveEdit = async () => {
     if (!editingLead) return;
-    
+
     try {
       const updatedLead = {
         ...editingLead,
         customer: editForm
       };
-      
+
       await updateDoc(doc(db, "leads", editingLead.id), {
         customer: editForm,
         updatedAt: Timestamp.now()
       });
-      
+
       toast({
         title: "Lead aggiornato",
         description: "I dati del lead sono stati aggiornati con successo",
       });
-      
+
       setIsEditModalOpen(false);
       setEditingLead(null);
       setEditForm({});
-      
+
     } catch (error) {
       console.error("Error updating lead:", error);
       toast({
@@ -220,7 +220,7 @@ export default function LeadsManagement() {
   const openEmailCompose = async (lead: Lead) => {
     const customer = lead.customer || lead || {};
     const email = customer.email || customer.Email || (lead as any).email;
-    
+
     if (!email) {
       toast({
         title: "Email mancante",
@@ -243,7 +243,7 @@ export default function LeadsManagement() {
 
     // Crea oggetto email
     const subject = `Preventivo ${customer.nome || customer.Nome || ''} ${customer.cognome || customer.Cognome || ''} - ${format(new Date(), 'dd/MM/yyyy')}`;
-    
+
     // Crea corpo email con dettagli preventivo
     const bodyLines = [
       `Gentile ${customer.nome || customer.Nome || 'Cliente'},`,
@@ -289,11 +289,11 @@ export default function LeadsManagement() {
     bodyLines.push('💰 RIEPILOGO PREZZI:');
     bodyLines.push('');
     bodyLines.push(`Subtotale: €${lead.pricing.subtotal.toLocaleString('it-IT')}`);
-    
+
     if (lead.pricing.discount > 0) {
       bodyLines.push(`Sconto applicato: -€${lead.pricing.discount.toLocaleString('it-IT')}`);
     }
-    
+
     bodyLines.push('');
     bodyLines.push(`🎯 TOTALE FINALE: €${lead.pricing.total.toLocaleString('it-IT')}`);
     bodyLines.push('═══════════════════════════════════════════════');
@@ -309,20 +309,20 @@ export default function LeadsManagement() {
     bodyLines.push(`${studioSettings?.studioName || 'Il tuo studio'}`);
 
     const body = bodyLines.join('\n');
-    
+
     // Crea link Gmail web compose
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
+
     // Apri Gmail web in nuova tab
     window.open(gmailUrl, '_blank');
-    
+
     // Aggiorna lo stato del lead a "Email Inviata"
     try {
       await updateDoc(doc(db, "leads", lead.id), { 
         status: "email_sent",
         emailSentAt: Timestamp.now()
       });
-      
+
       toast({
         title: "Gmail aperto",
         description: "Gmail web è stato aperto e lo stato del lead è stato aggiornato",
@@ -400,7 +400,7 @@ export default function LeadsManagement() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-32 translate-x-32 animate-pulse"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-24 -translate-x-24 animate-pulse" style={{ animationDelay: '1s' }}></div>
         </div>
-        
+
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl"
@@ -420,7 +420,7 @@ export default function LeadsManagement() {
               </p>
             </div>
           </div>
-          
+
           <div className="flex space-x-3">
             <Button
               onClick={handleExportExcel}
@@ -432,7 +432,7 @@ export default function LeadsManagement() {
             >
               {/* Animated background for button */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
-              
+
               <div className="relative z-10 flex items-center">
                 <Download className="w-5 h-5 mr-2" />
                 Export Excel
@@ -440,7 +440,7 @@ export default function LeadsManagement() {
             </Button>
           </div>
         </div>
-        
+
         {/* Decorative glow effect */}
         <div className="absolute inset-0 rounded-2xl shadow-inner" 
              style={{ 
@@ -600,7 +600,7 @@ export default function LeadsManagement() {
                 {paginatedLeads.map((lead) => {
                   let leadDate;
                   let isValidDate = false;
-                  
+
                   try {
                     if (lead.createdAt instanceof Date) {
                       leadDate = lead.createdAt;
@@ -619,7 +619,7 @@ export default function LeadsManagement() {
                     leadDate = new Date();
                     isValidDate = true;
                   }
-                  
+
                   return (
                     <TableRow key={lead.id} className="hover:bg-gray-50/50 transition-colors">
                       <TableCell>
@@ -637,13 +637,13 @@ export default function LeadsManagement() {
                           {(lead.customer?.email || lead.customer?.Email || (lead as any).email) && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Mail className="w-3 h-3" />
-                              <span>{lead.customer?.email || lead.customer?.Email || (lead as any).email}</span>
+                              <span>{lead.customer?.email || lead.customer?.Email || (lead as any).email || 'N/A'}</span>
                             </div>
                           )}
                           {(lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone) && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Phone className="w-3 h-3" />
-                              <span>{lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone}</span>
+                              <span>{lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone || 'N/A'}</span>
                             </div>
                           )}
                         </div>
@@ -652,7 +652,7 @@ export default function LeadsManagement() {
                         {(lead.customer?.data_evento || lead.customer?.['Data evento'] || (lead as any).eventDate) && (
                           <div className="flex items-center space-x-1 text-sm">
                             <CalendarDays className="w-3 h-3" />
-                            <span>{lead.customer?.data_evento || lead.customer?.['Data evento'] || (lead as any).eventDate}</span>
+                            <span>{lead.customer?.data_evento || lead.customer?.['Data evento'] || (lead as any).eventDate || 'N/A'}</span>
                           </div>
                         )}
                       </TableCell>
@@ -770,7 +770,7 @@ export default function LeadsManagement() {
                   <span>›</span>
                 </Button>
               </div>
-              
+
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
                   let pageNumber;
@@ -783,7 +783,7 @@ export default function LeadsManagement() {
                   } else {
                     pageNumber = currentPage - 3 + i;
                   }
-                  
+
                   return (
                     <Button
                       key={pageNumber}
@@ -801,7 +801,7 @@ export default function LeadsManagement() {
                   );
                 })}
               </div>
-              
+
               <div className="text-sm text-gray-600">
                 {startIndex + 1}-{Math.min(endIndex, filteredLeads.length)} di {filteredLeads.length}
               </div>
@@ -815,10 +815,10 @@ export default function LeadsManagement() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--brand-primary)' }}>
           <DialogHeader>
             <DialogTitle>
-              Dettagli Lead - {selectedLead?.customer.nome} {selectedLead?.customer.cognome}
+              Dettagli Lead - {selectedLead?.customer?.nome || selectedLead?.customer?.Nome || (selectedLead as any)?.name} {selectedLead?.customer?.cognome || selectedLead?.customer?.Cognome || (selectedLead as any)?.surname}
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedLead && (
             <div className="space-y-6">
               {/* Customer Info */}
@@ -870,7 +870,7 @@ export default function LeadsManagement() {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="border-t pt-4 mt-4">
                     <div className="space-y-2">
                       <div className="flex justify-between">
@@ -929,10 +929,10 @@ export default function LeadsManagement() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary">
           <DialogHeader>
             <DialogTitle>
-              Modifica Lead - {editingLead?.customer.nome} {editingLead?.customer.cognome}
+              Modifica Lead - {editingLead?.customer?.nome || editingLead?.customer?.Nome || (editingLead as any)?.name} {editingLead?.customer?.cognome || editingLead?.customer?.Cognome || (editingLead as any)?.surname}
             </DialogTitle>
           </DialogHeader>
-          
+
           {editingLead && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -953,7 +953,7 @@ export default function LeadsManagement() {
                     </div>
                   ))}
               </div>
-              
+
               <div className="flex justify-end space-x-2 pt-4 border-t">
                 <Button
                   variant="outline"
