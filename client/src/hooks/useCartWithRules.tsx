@@ -1,507 +1,249 @@
-import { useCart } from './useCart';
-import { useSelectionRules } from './useSelectionRules';
-import { RulesEngine } from '../lib/rulesEngine';
-import { useMemo, useEffect, useState, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
-import type { Item, CartItem } from '../../../shared/schema';
-import type { RulesEvaluationResult, ItemState, SelectionRule } from '../../../shared/rulesSchema';
-import type { NotificationItem } from '../components/GiftNotification';
-import { toast } from '../hooks/use-toast';
+import { useCart } from "./useCart";
+import { useSelectionRules } from "./useSelectionRules";
+import { RulesEngine } from "../lib/rulesEngine";
+import { useMemo, useEffect, useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
+import type { Item, CartItem } from "../../../shared/schema";
+import type {
+  RulesEvaluationResult,
+  ItemState,
+  SelectionRule,
+} from "../../../shared/rulesSchema";
+import { toast } from "./use-toast";
 
-/**
- * Hook esteso del carrello che integra le regole di selezione
- * Combina la logica del carrello base con la valutazione delle regole
- */
 export function useCartWithRules() {
-  // Hook base del carrello
+  // Carrello base
   const cart = useCart();
-  
-  // Carica tutti gli item attivi
+
+  /**
+   * FETCH ITEMS — allineato a Carousel:
+   * - where("active","==",true)
+   * - ordinamento manuale su sortOrder (ASC)
+   */
   const { data: allItems = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ['items'],
+    queryKey: ["items", "active"],
     queryFn: async () => {
-      const itemsQuery = query(
-        collection(db, "items"),
-        where("isActive", "==", true),
-        orderBy("category", "asc"),
-        orderBy("sortOrder", "asc")
-      );
-      
-      const snapshot = await getDocs(itemsQuery);
-      return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-        } as Item;
-      });
+      try {
+        const itemsQuery = query(
+          collection(db, "items"),
+          where("active", "==", true),
+        );
+        const snapshot = await getDocs(itemsQuery);
+
+        const items = snapshot.docs.map((doc) => {
+          const data = doc.data() as any;
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: data?.createdAt?.toDate?.() ?? undefined,
+            updatedAt: data?.updatedAt?.toDate?.() ?? undefined,
+          } as Item;
+        });
+
+        // Ordinamento manuale come nel Carousel
+        items.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+        console.info(
+          "🔥 DynamicChatGuide loaded items",
+          items.length,
+          items.map((i) => i.title),
+        );
+        return items;
+      } catch (error: any) {
+        console.error("Error loading items:", error);
+        toast({
+          title: "Errore",
+          description: "Impossibile caricare gli elementi. Riprova più tardi.",
+          variant: "destructive",
+        });
+        return [];
+      }
     },
   });
-  
-  // Regole di selezione
-  const { rules, loading: rulesLoading } = useSelectionRules();
 
-  // Valutazione delle regole in tempo reale
-  const rulesEvaluation = useMemo((): RulesEvaluationResult => {
-    if (itemsLoading || rulesLoading || !allItems.length) {
-      // Stato di caricamento - tutti disponibili per default
-      const itemStates: Record<string, ItemState> = {};
-      allItems.forEach(item => {
-        itemStates[item.id] = {
-          itemId: item.id,
-          isAvailable: true,
-          isGift: false,
-          appliedRules: [],
-        };
-      });
-      
-      return {
-        itemStates,
-        appliedRules: [],
-        conflicts: [],
-      };
-    }
+  /**
+   * REGOLE DI SELEZIONE
+   */
+  const { rules: selectionRules = [] } = useSelectionRules();
+  const rulesLoading = false; // Since useSelectionRules doesn't provide isLoading
 
-    // Converte CartItem a Item per la valutazione delle regole
-    const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
-      const fullItem = allItems.find(item => item.id === cartItem.id);
-      return fullItem || {
-        ...cartItem,
-        active: true,
-        sortOrder: 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    });
+  /**
+   * VALUTAZIONE REGOLE tramite RulesEngine
+   * Viene rivalutata automaticamente quando cambiano cart.items o selectionRules
+   */
+  const rulesEvaluation = useMemo<RulesEvaluationResult>(() => {
+    const engine = new RulesEngine(selectionRules, allItems);
+    const selectedItems = cart.cart.items.map(ci => 
+      allItems.find(item => item.id === ci.id)
+    ).filter(Boolean) as Item[];
     
-    const rulesEngine = new RulesEngine(rules, allItems);
-    const evaluation = rulesEngine.evaluate(cartAsItems);
-    
-    // Debug per vedere quando le regole regalo si attivano
-    console.log("🎁 Rules Evaluation:", {
-      cartItems: cartAsItems.map(item => item.title),
-      appliedRules: evaluation.appliedRules,
-      giftItems: Object.entries(evaluation.itemStates)
-        .filter(([_, state]) => state.isGift)
-        .map(([id, state]) => {
-          const item = allItems.find(i => i.id === id);
-          return { id, title: item?.title, state };
-        })
-    });
-    
-    return evaluation;
-  }, [cart.cart.items, rules, allItems, itemsLoading, rulesLoading]);
+    return engine.evaluate(selectedItems);
+  }, [cart.cart.items, allItems, selectionRules]);
 
-  // Rimuovi automaticamente gli item non disponibili dal carrello
+  /**
+   * NOTIFICAZIONI DI REGALI SBLOCCATI
+   * Mostra toast per nuovi regali quando il carrello cambia
+   */
+  const prevGiftItemsRef = useRef<string[]>([]);
   useEffect(() => {
-    if (itemsLoading || rulesLoading) return;
-    
-    // Raccogli gli item da rimuovere
-    const itemsToRemove: string[] = [];
-    
-    cart.cart.items.forEach((cartItem: CartItem) => {
-      const itemState = rulesEvaluation.itemStates[cartItem.id];
-      
-      // Se l'item esiste nelle regole e non è più disponibile
-      if (itemState && !itemState.isAvailable) {
-        itemsToRemove.push(cartItem.id);
-        console.log(`🚮 Rimuovo automaticamente ${cartItem.title} dal carrello (non più disponibile)`);
-      }
-    });
-    
-    // Rimuovi tutti gli item non disponibili in una sola volta
-    if (itemsToRemove.length > 0) {
-      // Usa setTimeout per evitare aggiornamenti durante il rendering
-      setTimeout(() => {
-        itemsToRemove.forEach(itemId => {
-          cart.removeItem(itemId);
-        });
-      }, 0);
-    }
-  }, [rulesEvaluation.itemStates]); // Dipende solo dallo stato delle regole, non dagli item del carrello
+    const currentGiftItems = Object.entries(rulesEvaluation.itemStates)
+      .filter(([id, state]) => (state as ItemState).isGift)
+      .map(([id]) => id);
 
-  // Tracking per prodotti sbloccati
-  const previousAvailabilityRef = useRef<Record<string, boolean>>({});
+    const newGiftItems = currentGiftItems.filter(
+      (id) => !prevGiftItemsRef.current.includes(id),
+    );
 
-  // Monitora i cambiamenti di disponibilità per mostrare toast di prodotti sbloccati
-  useEffect(() => {
-    if (itemsLoading || rulesLoading || !allItems.length) return;
-
-    const newlyUnlockedItems: Item[] = [];
-    const currentAvailability: Record<string, boolean> = {};
-
-    // Controlla ogni item per vedere se è appena diventato disponibile
-    allItems.forEach(item => {
-      const isCurrentlyAvailable = rulesEvaluation.itemStates[item.id]?.isAvailable ?? true;
-      const wasPreviouslyAvailable = previousAvailabilityRef.current[item.id] ?? true;
-      
-      currentAvailability[item.id] = isCurrentlyAvailable;
-
-      // Se l'item ora è disponibile ma prima non lo era
-      if (isCurrentlyAvailable && !wasPreviouslyAvailable) {
-        newlyUnlockedItems.push(item);
-      }
-    });
-
-    // Mostra toast se ci sono prodotti appena sbloccati
-    if (newlyUnlockedItems.length > 0) {
-      const productNames = newlyUnlockedItems.map(item => item.title).join(', ');
-      const message = newlyUnlockedItems.length === 1 
-        ? `Ora puoi selezionare: ${productNames}`
-        : `Ora puoi selezionare: ${productNames}`;
+    if (newGiftItems.length > 0 && prevGiftItemsRef.current.length > 0) {
+      const giftTitles = newGiftItems
+        .map((id) => allItems.find((item) => item.id === id)?.title)
+        .filter(Boolean)
+        .join(", ");
 
       toast({
-        title: "🔓 Prodotti Sbloccati!",
-        description: message,
+        title: "🎁 Nuovo regalo sbloccato!",
+        description: `${giftTitles} ${
+          newGiftItems.length === 1 ? "è ora" : "sono ora"
+        } gratuito!`,
         duration: 5000,
       });
-
-      console.log("🔓 Prodotti sbloccati:", newlyUnlockedItems.map(item => item.title));
     }
 
-    // Aggiorna il riferimento per il prossimo confronto
-    previousAvailabilityRef.current = currentAvailability;
-  }, [rulesEvaluation.itemStates, allItems, itemsLoading, rulesLoading]);
+    prevGiftItemsRef.current = currentGiftItems;
+  }, [rulesEvaluation.itemStates, allItems]);
 
-  // Funzione per verificare se un item è disponibile per la selezione
-  const isItemAvailable = (itemId: string): boolean => {
-    const itemState = rulesEvaluation.itemStates[itemId];
-    return itemState ? itemState.isAvailable : true;
-  };
+  // METODI PUBBLICI per controllare disponibilità/regali
+  const isItemAvailable = (itemId: string) =>
+    rulesEvaluation.itemStates[itemId]?.isAvailable !== false;
 
-  // Funzione per verificare se un item è un regalo
-  const isItemGift = (itemId: string): boolean => {
-    const itemState = rulesEvaluation.itemStates[itemId];
-    return itemState ? itemState.isGift : false;
-  };
+  const isItemGift = (itemId: string) =>
+    rulesEvaluation.itemStates[itemId]?.isGift || false;
 
-  // Funzione per ottenere le impostazioni regalo di un item
-  const getItemGiftSettings = (itemId: string) => {
-    const itemState = rulesEvaluation.itemStates[itemId];
-    return itemState?.giftSettings;
-  };
+  const getItemGiftSettings = (itemId: string) =>
+    rulesEvaluation.itemStates[itemId]?.giftSettings;
 
-  // Funzione per ottenere tutte le regole applicate a un item
-  const getAppliedRules = (itemId: string): string[] => {
-    const itemState = rulesEvaluation.itemStates[itemId];
-    return itemState?.appliedRules || [];
-  };
+  const getAppliedRules = (itemId: string) =>
+    rulesEvaluation.itemStates[itemId]?.appliedRules || [];
 
-  // Override della funzione addItem per controllare disponibilità
+  // addItem con controllo regole (mantiene la firma addItem)
   const addItemWithRules = (item: CartItem) => {
     if (!isItemAvailable(item.id)) {
-      console.warn(`Item ${item.title} is not available due to selection rules`);
+      console.warn(
+        `Item ${item.title} non disponibile per regole di selezione`,
+      );
       return false;
     }
-    
     cart.addItem(item);
     return true;
   };
 
-  // Calcola il pricing con le regole di regalo e sconti globali applicati
+  // Pricing con regali + sconto globale (compatibile con PriceBar)
   const getPricingWithRules = () => {
-    const basePricing = {
+    const base = {
       subtotal: cart.cart.subtotal,
+      originalSubtotal: cart.cart.subtotal, // nuovo
       discount: cart.cart.discount,
-      total: cart.cart.total
+      giftSavings: 0, // nuovo
+      total: cart.cart.total,
+      totalSavings: cart.cart.discount, // nuovo
     };
-    let adjustedSubtotal = 0;
+
+    // Calcola risparmi dovuti ai regali
     let giftSavings = 0;
-
-    cart.cart.items.forEach((item: CartItem) => {
-      if (isItemGift(item.id)) {
-        // Item è un regalo - aggiungi ai risparmi
-        giftSavings += item.price;
-      } else {
-        // Item normale - aggiungi al subtotale
-        adjustedSubtotal += item.price;
+    for (const cartItem of cart.cart.items) {
+      if (isItemGift(cartItem.id)) {
+        giftSavings += cartItem.originalPrice || cartItem.price;
       }
-    });
-
-    // Recupera sconti globali da localStorage come fa il PriceBar (temporaneo per sync)
-    let globalDiscount = 0;
-    
-    try {
-      const discountsDoc = localStorage.getItem('cachedDiscounts');
-      if (discountsDoc) {
-        const discounts = JSON.parse(discountsDoc);
-        const hasGlobalDiscount = discounts?.global?.isActive;
-        
-        if (hasGlobalDiscount && discounts.global) {
-          if (discounts.global.type === 'fixed') {
-            globalDiscount = discounts.global.value || 0;
-          } else if (discounts.global.type === 'percent') {
-            // Per percentuali, calcola sulla base del subtotale già scontato
-            globalDiscount = Math.round(adjustedSubtotal * ((discounts.global.value || 0) / 100));
-          }
-        }
-      }
-    } catch (error) {
-      console.warn("Error loading global discounts for pricing calculation:", error);
     }
 
-    // Il totale finale è: subtotale scontato - sconto globale
-    // Non sommare gli sconti esistenti perché sono già stati applicati nel adjustedSubtotal
-    const finalTotal = Math.max(0, adjustedSubtotal - globalDiscount);
-    
-    // Calcola i risparmi totali: differenza tra originale e finale + regali
-    const totalSavings = (basePricing.subtotal - finalTotal) + giftSavings;
-    
-
-    
     return {
-      subtotal: adjustedSubtotal,
-      originalSubtotal: basePricing.subtotal,
-      discount: globalDiscount, // Solo lo sconto globale applicato qui
+      ...base,
       giftSavings,
-      total: finalTotal,
-      totalSavings,
+      totalSavings: base.discount + giftSavings,
     };
   };
 
-  // Lista degli item nel carrello con informazioni sulle regole
-  const getItemsWithRuleInfo = () => {
-    return cart.cart.items.map((item: CartItem) => ({
+  // Ottieni tutti gli item del carrello con info sui regali
+  const getItemsWithRuleInfo = () =>
+    cart.cart.items.map((item) => ({
       ...item,
       isGift: isItemGift(item.id),
       giftSettings: getItemGiftSettings(item.id),
       appliedRules: getAppliedRules(item.id),
-      finalPrice: isItemGift(item.id) ? 0 : item.price,
     }));
+
+  // Motivo per cui un item non è disponibile
+  const getUnavailableReason = (itemId: string) => {
+    if (isItemAvailable(itemId)) return null;
+
+    const itemState = rulesEvaluation.itemStates[itemId];
+    if (!itemState || !itemState.appliedRules) return "Elemento non disponibile";
+
+    const disableRule = itemState.appliedRules.find(
+      (ruleName: string) => {
+        const rule = selectionRules.find((r: any) => r.name === ruleName);
+        return rule && rule.action === "disable";
+      }
+    );
+
+    if (disableRule) {
+      const rule = selectionRules.find((r: any) => r.name === disableRule);
+      return rule?.description || "Elemento non disponibile";
+    }
+
+    return "Elemento non disponibile";
   };
 
-  // Lista di tutti gli item con stato di disponibilità
-  const getAllItemsWithAvailability = () => {
-    return allItems.map((item: Item) => ({
+  // Lista di tutti gli item con info su disponibilità (per Carousel, etc.)
+  const getAllItemsWithAvailability = () =>
+    allItems.map((item: Item) => ({
       ...item,
       isAvailable: isItemAvailable(item.id),
       isGift: isItemGift(item.id),
       giftSettings: getItemGiftSettings(item.id),
       appliedRules: getAppliedRules(item.id),
     }));
-  };
 
-  // Debug info per sviluppo
-  const getDebugInfo = () => {
-    if (itemsLoading || rulesLoading) {
-      return {
-        loading: true,
-        itemsLoading,
-        rulesLoading,
-        rulesCount: rules.length
-      };
-    }
-    
-    // Converte CartItem a Item per debug
-    const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
-      const fullItem = allItems.find(item => item.id === cartItem.id);
-      return fullItem || {
-        ...cartItem,
-        active: true,
-        sortOrder: 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as Item;
-    });
-    
-    const rulesEngine = new RulesEngine(rules, allItems);
-    const engineDebug = rulesEngine.getDebugInfo(cartAsItems);
-    
-    return {
-      ...engineDebug,
-      loadedRules: rules.length,
-      cartItems: cartAsItems.length,
-      selectedItemIds: cartAsItems.map(item => item.id),
-    };
-  };
+  // Debug helper (solo in dev)
+  const getDebugInfo = () => ({
+    rulesEvaluation,
+    allItems,
+    selectionRules,
+    cartItems: cart.cart.items,
+  });
 
-  // Ottiene il motivo per cui un item non è disponibile o ha comportamenti speciali
-  const getUnavailableReason = (itemId: string): string => {
-    if (rulesLoading || itemsLoading) return "Caricamento...";
-    
+  // Aiuto per capire regole required_items
+  const getRequiredItemIds = (targetItemId: string) => {
     try {
-      const rulesEngine = new RulesEngine(rules, allItems);
-      const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
-        const fullItem = allItems.find(item => item.id === cartItem.id);
-        return fullItem || {
-          ...cartItem,
-          active: true,
-          sortOrder: 0,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        } as Item;
-      });
-      
-      // Controlla tutte le regole che influenzano questo item
-      const applicableRules = rules.filter(rule => 
-        rule.active && rule.targetItems.includes(itemId)
+      // Trova regole che disabilitano targetItemId
+      const disablingRules = selectionRules.filter(
+        (r: any) =>
+          r.action === "disable" &&
+          r.targetItems?.includes(targetItemId) &&
+          r.conditions?.type === "required_items",
       );
-      
-      for (const rule of applicableRules) {
-        const conditionMet = rulesEngine.evaluateCondition(rule.conditions, cartAsItems, cartAsItems.map(i => i.id));
-        
-        // Logica specifica per tipo di regola e azione
-        let shouldShowReason = false;
-        
-        if (rule.type === 'availability') {
-          if (rule.action === 'disable') {
-            // Per regole disable, controlla il tipo di condizione
-            if (rule.conditions.type === 'mutually_exclusive') {
-              // Per mutua esclusione, mostra il motivo quando la condizione è soddisfatta (prodotto conflittuale presente)
-              shouldShowReason = conditionMet;
-            } else {
-              // Per altre condizioni, mostra il motivo quando NON soddisfatta
-              shouldShowReason = !conditionMet;
-            }
-          } else if (rule.action === 'enable' && conditionMet) {
-            shouldShowReason = true; // Regola enable attiva quando condizione soddisfatta
-          }
-        } else if (rule.type === 'gift_transformation') {
-          if (rule.action === 'make_gift' && conditionMet) {
-            // Per regali, potremmo voler mostrare un messaggio informativo
-            return generateConditionMessage(rule, allItems, false, 'gift');
-          }
-        }
-        
-        if (shouldShowReason) {
-          return generateConditionMessage(rule, allItems, !conditionMet);
+
+      for (const rule of disablingRules) {
+        if (rule.conditions?.requiredItems) {
+          return rule.conditions.requiredItems;
         }
       }
-      
-      return "Non disponibile";
-    } catch (error) {
-      console.error('Error in getUnavailableReason:', error);
-      return "Non disponibile";
-    }
-  };
-
-  // Genera messaggio basato sulla condizione della regola
-  const generateConditionMessage = (
-    rule: SelectionRule, 
-    allItems: Item[], 
-    isNegated: boolean = false,
-    messageType: 'unavailable' | 'gift' = 'unavailable'
-  ): string => {
-    const prefix = messageType === 'gift' ? 'Regalo per:' : 'Richiede:';
-    
-    switch (rule.conditions.type) {
-      case 'required_items':
-        if (rule.conditions.requiredItems && rule.conditions.requiredItems.length > 0) {
-          const requiredItemNames = rule.conditions.requiredItems.map((itemId: string) => {
-            const item = allItems.find(i => i.id === itemId);
-            return item?.title || 'Prodotto sconosciuto';
-          });
-          
-          if (requiredItemNames.length === 1) {
-            return `${prefix} ${requiredItemNames[0]}`;
-          } else {
-            return `${prefix} ${requiredItemNames.join(', ')}`;
-          }
-        }
-        break;
-        
-      case 'min_selection_count':
-        const count = rule.conditions.value || 1;
-        if (messageType === 'gift') {
-          return `Regalo per ${count}+ selezioni`;
-        }
-        return `Seleziona almeno ${count} prodotti`;
-        
-      case 'category_count':
-        if (rule.conditions.categories && rule.conditions.categories.length > 0) {
-          const count = rule.conditions.value || 1;
-          const categories = rule.conditions.categories.join(', ');
-          if (messageType === 'gift') {
-            return `Regalo per ${count} da: ${categories}`;
-          }
-          return `Seleziona ${count} da: ${categories}`;
-        }
-        return messageType === 'gift' ? 'Regalo per categoria' : 'Seleziona più prodotti nella categoria';
-        
-      case 'specific_items':
-        if (rule.conditions.specificItems && rule.conditions.specificItems.length > 0) {
-          const itemNames = rule.conditions.specificItems.map((itemId: string) => {
-            const item = allItems.find(i => i.id === itemId);
-            return item?.title || 'Prodotto sconosciuto';
-          });
-          return `${prefix} ${itemNames.join(' o ')}`;
-        }
-        break;
-        
-      case 'mutually_exclusive':
-        if (rule.conditions.mutuallyExclusiveWith && rule.conditions.mutuallyExclusiveWith.length > 0) {
-          const exclusiveItemNames = rule.conditions.mutuallyExclusiveWith.map((itemId: string) => {
-            const item = allItems.find(i => i.id === itemId);
-            return item?.title || 'Prodotto sconosciuto';
-          });
-          
-          if (exclusiveItemNames.length === 1) {
-            return `Non disponibile con: ${exclusiveItemNames[0]}`;
-          } else {
-            return `Non disponibile con: ${exclusiveItemNames.join(', ')}`;
-          }
-        }
-        break;
-        
-      default:
-        return rule.description || (messageType === 'gift' ? "Regalo speciale" : "Non disponibile");
-    }
-    
-    return rule.description || (messageType === 'gift' ? "Regalo speciale" : "Non disponibile");
-  };
-
-  // Ottiene gli ID degli item richiesti per un item non disponibile
-  const getRequiredItemIds = (itemId: string): string[] => {
-    if (rulesLoading || itemsLoading) return [];
-    
-    try {
-      const rulesEngine = new RulesEngine(rules, allItems);
-      const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
-        const fullItem = allItems.find(item => item.id === cartItem.id);
-        return fullItem || {
-          ...cartItem,
-          active: true,
-          sortOrder: 0,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        } as Item;
-      });
-      
-      // Controlla tutte le regole che influenzano questo item
-      const applicableRules = rules.filter(rule => 
-        rule.active && rule.targetItems.includes(itemId)
-      );
-      
-      for (const rule of applicableRules) {
-        const conditionMet = rulesEngine.evaluateCondition(rule.conditions, cartAsItems, cartAsItems.map(i => i.id));
-        
-        if (rule.type === 'availability' && rule.action === 'disable' && !conditionMet) {
-          // Restituisce gli ID degli item richiesti per questa regola
-          if (rule.conditions.type === 'required_items' && rule.conditions.requiredItems) {
-            return rule.conditions.requiredItems.filter(id => !cartAsItems.map(i => i.id).includes(id));
-          }
-        }
-      }
-      
       return [];
-    } catch (error) {
-      console.error('Error in getRequiredItemIds:', error);
+    } catch (e) {
+      console.error("Error in getRequiredItemIds:", e);
       return [];
     }
   };
 
   return {
-    // Tutte le funzioni e proprietà del carrello base
     ...cart,
-    
-    // Override di addItem con controllo regole
+
+    // Espone addItem con controllo regole
     addItem: addItemWithRules,
-    
-    // Nuove funzioni per le regole
+
+    // API regole
     isItemAvailable,
     isItemGift,
     getItemGiftSettings,
@@ -511,15 +253,15 @@ export function useCartWithRules() {
     getItemsWithRuleInfo,
     getAllItemsWithAvailability,
     getRequiredItemIds,
-    
-    // Dati delle regole
+
+    // Dati/evaluations
     rulesEvaluation,
     appliedRules: rulesEvaluation.appliedRules,
-    
-    // Loading states
+
+    // Loading combinato
     rulesLoading: rulesLoading || itemsLoading,
-    
-    // Debug (solo in development)
-    ...(process.env.NODE_ENV === 'development' && { getDebugInfo }),
+
+    // Debug in dev
+    ...(process.env.NODE_ENV === "development" && { getDebugInfo }),
   };
 }

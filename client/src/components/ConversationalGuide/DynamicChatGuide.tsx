@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
 import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
-import type { Item, Discount } from '../../../shared/schema';
+import type { Item, Discount } from '../../../../shared/schema';
 import CheckoutModal from '@/components/CheckoutModal';
 import { SpectacularAvatar } from './SpectacularAvatar';
 
@@ -15,7 +15,7 @@ interface ChatMessage {
   id: string;
   type: 'assistant' | 'user' | 'system';
   text?: string;
-  avatar?: 'smiling' | 'explaining' | 'enthusiastic_money' | 'excited' | 'thoughtful';
+  avatar?: 'smiling' | 'explaining' | 'enthusiastic' | 'excited' | 'thoughtful';
   options?: Array<{
     id: string;
     label: string;
@@ -52,7 +52,7 @@ export function DynamicChatGuide() {
 
         const loadedItems = snap.docs.map(doc => ({
           id: doc.id,
-          ...(doc.data() as Item),
+          ...(doc.data() as Omit<Item, 'id'>),
         }));
 
         console.log('🔥 DynamicChatGuide loaded items', loadedItems.length, loadedItems);
@@ -147,7 +147,7 @@ export function DynamicChatGuide() {
       text: date === '2025' ? 'Nel 2025' : date === '2026' ? 'Nel 2026' : 'Più avanti'
     });
 
-    setLeadData(prev => ({ ...prev, eventYear: date }));
+    setLeadData((prev: any) => ({ ...prev, eventYear: date }));
     
     setTimeout(() => {
       startServicesPhase();
@@ -160,7 +160,7 @@ export function DynamicChatGuide() {
     addMessage({
       id: 'services-intro',
       type: 'assistant',
-      avatar: 'enthusiastic_money',
+      avatar: 'enthusiastic',
       text: "Perfetto! Iniziamo con i SERVIZI FONDAMENTALI 🎬📸\n\n💡 SUGGERIMENTO: Scegliendo entrambi i servizi (Foto + Video) sbloccherai prodotti esclusivi e otterrai il massimo risparmio!",
       typing: true
     });
@@ -291,7 +291,7 @@ export function DynamicChatGuide() {
       
       addMessage({
         type: 'assistant',
-        avatar: 'enthusiastic_money',
+        avatar: 'enthusiastic',
         text: `🎉 FANTASTICO! Hai sbloccato dei REGALI!\n\n🎁 Ora ${giftNames} ${availableGifts.length === 1 ? 'è' : 'sono'} GRATUITO!\n\nPuoi aggiungerlo al tuo carrello senza costi aggiuntivi! ✨`,
         typing: true
       });
@@ -336,7 +336,7 @@ export function DynamicChatGuide() {
     
     addMessage({
       type: 'assistant',
-      avatar: 'enthusiastic_money',
+      avatar: 'enthusiastic',
       text: unlockMessage,
       typing: true
     });
@@ -516,7 +516,7 @@ export function DynamicChatGuide() {
                   <h4 className="font-semibold mb-2 text-sm">Riepilogo Ordine:</h4>
                   {cart.cart.items.map(item => (
                     <div key={item.id} className="flex justify-between text-xs mb-1">
-                      <span>{item.name}</span>
+                      <span>{item.title}</span>
                       <span className={item.price === 0 ? "text-green-600 font-bold" : ""}>
                         {item.price === 0 ? "GRATIS" : `€${item.price}`}
                       </span>
@@ -525,7 +525,7 @@ export function DynamicChatGuide() {
                   <div className="border-t mt-2 pt-2">
                     <div className="flex justify-between font-bold">
                       <span>Totale:</span>
-                      <span>€{cart.getPricingWithRules().finalTotal}</span>
+                      <span>€{cart.getPricingWithRules().total}</span>
                     </div>
                   </div>
                 </div>
@@ -622,7 +622,7 @@ export function DynamicChatGuide() {
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 text-gray-600" />
               <span className="text-sm font-medium">{cart.cart.items.length}</span>
-              <span className="text-sm text-gray-600">€{cart.getPricingWithRules().finalTotal}</span>
+              <span className="text-sm text-gray-600">€{cart.getPricingWithRules().total}</span>
             </div>
           )}
         </div>

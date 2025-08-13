@@ -12,7 +12,7 @@ import RulesInfoPanel from "../components/RulesInfoPanel";
 import { ConversationalGuide } from "../components/ConversationalGuide";
 import { useCartWithRules } from "../hooks/useCartWithRules";
 import { useABFlag } from "../hooks/useABFlag";
-import type { Settings } from "../../shared/schema";
+import type { Settings } from "../../../shared/schema";
 
 export default function Home() {
   const cart = useCartWithRules();
