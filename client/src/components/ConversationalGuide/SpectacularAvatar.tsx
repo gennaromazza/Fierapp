@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+
+// Import user's avatar images
+import avatar1 from '@assets/0861d60d-c48c-4f65-830d-642326651c52_1755072609157.png';
+import avatar2 from '@assets/ChatGPT Image 13 ago 2025, 10_51_24_1755075132893.png';
+import avatar3 from '@assets/ChatGPT Image 13 ago 2025, 10_51_36 (1)_1755075132894.png';
 import type { AvatarType } from './types';
 
 interface SpectacularAvatarProps {
@@ -34,13 +39,14 @@ export function SpectacularAvatar({
     }
   }, [isFullscreen]);
 
-  const avatarEmojis = {
-    smiling: '😊',
-    neutral: '🤔',
-    explaining: '🧐',
-    enthusiastic: '🤩',
-    excited: '🎉',
-    thoughtful: '💭'
+  // Use user's provided avatar images
+  const avatarImages = {
+    smiling: avatar1,
+    neutral: avatar2,
+    explaining: avatar3,
+    enthusiastic: avatar1,
+    excited: avatar2,
+    thoughtful: avatar3
   };
 
   const backgroundColors = {
@@ -130,7 +136,11 @@ export function SpectacularAvatar({
                 times: [0, 0.2, 0.4, 0.6, 1]
               }}
             >
-              {avatarEmojis[type]}
+              <img 
+                src={avatarImages[type]} 
+                alt="Avatar"
+                className="w-full h-full object-contain"
+              />
             </motion.div>
           </motion.div>
 
@@ -213,7 +223,11 @@ export function SpectacularAvatar({
           ease: "easeInOut"
         }}
       >
-        {avatarEmojis[type]}
+        <img 
+          src={avatarImages[type]} 
+          alt="Avatar"
+          className="w-full h-full object-contain"
+        />
       </motion.div>
       
       {/* Small particle effect on hover */}

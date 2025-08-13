@@ -35,14 +35,13 @@ export function FullscreenConversationalGuide() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Load items and discounts
+  // Load items and discounts - no filter on isActive
   useEffect(() => {
     const unsubscribeItems = onSnapshot(collection(db, 'items'), (snapshot) => {
       const itemsData = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as Item))
-        .filter(item => item.isActive !== false) // Include items without isActive field
         .sort((a, b) => (a.order || 0) - (b.order || 0));
-      console.log('Loaded items:', itemsData.length, 'items');
+      console.log('Loaded all items:', itemsData);
       setItems(itemsData);
     });
 

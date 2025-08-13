@@ -29,10 +29,11 @@ export class RulesEngine {
     const conflicts: any[] = [];
 
     // Inizializza stato base per tutti gli item
+    // I servizi sono sempre disponibili, le regole si applicano solo ai prodotti
     this.allItems.forEach(item => {
       itemStates[item.id] = {
         itemId: item.id,
-        isAvailable: true,
+        isAvailable: true, // Services always available initially
         isGift: false,
         originalPrice: item.price,
         appliedRules: [],
@@ -252,6 +253,13 @@ export class RulesEngine {
       if (!currentState) {
         console.warn(`Target item ${targetItemId} not found in states`);
         return;
+      }
+      
+      // Don't apply availability rules to services - they're always available
+      const targetItem = this.allItems.find(item => item.id === targetItemId);
+      if (targetItem?.category === 'servizio' && rule.type === 'availability') {
+        console.log(`⚠️ Skipping availability rule for service: ${targetItem.title}`);
+        return; // Skip availability rules for services
       }
       
       switch (rule.action) {
