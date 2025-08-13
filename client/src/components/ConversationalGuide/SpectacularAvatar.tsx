@@ -71,8 +71,8 @@ export function SpectacularAvatar({
             damping: 15,
             duration: 0.8 
           }}
-          className="fixed inset-0 z-40 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)' }}
+          className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
         >
           {/* Animated Background Gradient */}
           <motion.div
@@ -125,7 +125,7 @@ export function SpectacularAvatar({
             }}
           >
             <motion.div
-              className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 select-none"
+              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 xl:w-40 xl:h-40 select-none"
               initial={{ rotate: 0 }}
               animate={{ 
                 rotate: [0, -10, 10, -10, 0],
@@ -148,7 +148,7 @@ export function SpectacularAvatar({
           {showEffects && (
             <>
               <motion.div
-                className="absolute top-4 left-4 sm:top-8 sm:left-8 lg:top-12 lg:left-12 xl:top-16 xl:left-16 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-yellow-400"
+                className="absolute top-8 left-8 sm:top-12 sm:left-12 md:top-16 md:left-16 text-xl sm:text-2xl md:text-3xl font-bold text-yellow-400"
                 initial={{ scale: 0, rotate: -45 }}
                 animate={{ scale: [0, 1.2, 1], rotate: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
@@ -156,7 +156,7 @@ export function SpectacularAvatar({
                 WOW!
               </motion.div>
               <motion.div
-                className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 lg:bottom-12 lg:right-12 xl:bottom-16 xl:right-16 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-pink-400"
+                className="absolute bottom-8 right-8 sm:bottom-12 sm:right-12 md:bottom-16 md:right-16 text-xl sm:text-2xl md:text-3xl font-bold text-pink-400"
                 initial={{ scale: 0, rotate: 45 }}
                 animate={{ scale: [0, 1.2, 1], rotate: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
@@ -164,7 +164,7 @@ export function SpectacularAvatar({
                 BOOM!
               </motion.div>
               <motion.div
-                className="absolute top-12 right-6 sm:top-20 sm:right-12 lg:top-24 lg:right-20 xl:top-28 xl:right-24 text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-cyan-400"
+                className="absolute top-16 right-12 sm:top-20 sm:right-16 md:top-24 md:right-20 text-lg sm:text-xl md:text-2xl font-bold text-cyan-400"
                 initial={{ scale: 0 }}
                 animate={{ scale: [0, 1.1, 1], rotate: [0, 360] }}
                 transition={{ delay: 0.7, duration: 0.5 }}
