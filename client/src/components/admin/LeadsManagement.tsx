@@ -64,16 +64,13 @@ export default function LeadsManagement() {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(lead => {
-        // Handle both old structure (lead.customer) and new structure (direct properties)
-        const customer = lead.customer || lead || {};
+        // Handle only unified structure (lead.customer)
+        const customer = lead.customer || {};
         const searchFields = [
-          customer.nome || customer.Nome || customer.name || '',
-          customer.cognome || customer.Cognome || customer.surname || '',
+          customer.nome || customer.Nome || '',
+          customer.cognome || customer.Cognome || '',
           customer.email || customer.Email || '',
-          customer.telefono || customer.Telefono || customer.phone || '',
-          (lead as any).email || '', // Handle direct email property
-          (lead as any).name || '', // Handle direct name properties
-          (lead as any).surname || ''
+          customer.telefono || customer.Telefono || ''
         ];
 
         return searchFields.some(field => 
@@ -627,7 +624,7 @@ export default function LeadsManagement() {
                       <TableCell>
                         <div>
                           <div className="font-medium">
-                            {(lead.customer?.nome || lead.customer?.Nome || '')} {(lead.customer?.cognome || lead.customer?.Cognome || '')}
+                            {(lead.customer?.nome || lead.customer?.Nome || 'Cliente')} {(lead.customer?.cognome || lead.customer?.Cognome || 'Anonimo')}
                           </div>
                           <div className="text-sm text-gray-500">
                             {lead.selectedItems?.length || 0} item{(lead.selectedItems?.length || 0) !== 1 ? 's' : ''}
@@ -636,10 +633,10 @@ export default function LeadsManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {(lead.customer?.email || lead.customer?.Email || (lead as any).email) && (
+                          {(lead.customer?.email || lead.customer?.Email) && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Mail className="w-3 h-3" />
-                              <span>{lead.customer?.email || lead.customer?.Email || (lead as any).email || 'N/A'}</span>
+                              <span>{lead.customer?.email || lead.customer?.Email || 'N/A'}</span>
                             </div>
                           )}
                           {(lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone) && (
@@ -724,7 +721,7 @@ export default function LeadsManagement() {
                             variant="outline"
                             onClick={() => openEmailCompose(lead)}
                             title="Invia email preventivo"
-                            disabled={!lead.customer.email && !lead.customer.Email}
+                            disabled={!lead.customer?.email && !lead.customer?.Email}
                           >
                             <Send className="w-4 h-4" />
                           </Button>

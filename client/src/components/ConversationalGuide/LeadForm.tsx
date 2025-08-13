@@ -9,11 +9,11 @@ import { CalendarIcon, Download, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
-import { collection, addDoc, getDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
-import jsPDF from 'jspdf';
 import type { LeadData } from './types';
 import type { Settings } from '../../../../shared/schema';
+import { generateClientQuotePDF } from '@/lib/pdf';
 
 interface LeadFormProps {
   initialData: LeadData;
@@ -88,113 +88,30 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     if (!validateForm()) return;
     
     try {
-      // Load settings for studio info
-      const settingsDoc = await getDoc(doc(db, "settings", "app"));
-      const settings = settingsDoc.exists() ? settingsDoc.data() as Settings : null;
+      // Create PDF data structure like the old system
+      const pdfData = {
+        customer: {
+          nome: formData.name,
+          cognome: formData.surname,
+          email: formData.email,
+          telefono: formData.phone,
+          data_evento: formData.eventDate,
+          note: formData.notes
+        },
+        selectedItems: cart.cart.items.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          originalPrice: item.originalPrice
+        })),
+        pricing: cart.getPricingWithRules()
+      };
+
+      const customerName = formData.name || 'cliente';
+      const filename = `preventivo-matrimonio-${customerName}-${formData.surname || ''}-${new Date().toISOString().slice(0, 10)}.pdf`;
       
-      // Create PDF
-      const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      let yPos = 20;
-      
-      // Header
-      pdf.setFontSize(20);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('PREVENTIVO MATRIMONIO', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 15;
-      
-      if (settings?.studioName) {
-        pdf.setFontSize(14);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(settings.studioName, pageWidth / 2, yPos, { align: 'center' });
-        yPos += 10;
-      }
-      
-      yPos += 10;
-      
-      // Customer info
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('DATI CLIENTE:', 20, yPos);
-      yPos += 8;
-      
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Nome: ${formData.name} ${formData.surname}`, 20, yPos);
-      yPos += 6;
-      pdf.text(`Email: ${formData.email}`, 20, yPos);
-      yPos += 6;
-      pdf.text(`Telefono: ${formData.phone}`, 20, yPos);
-      yPos += 6;
-      pdf.text(`Data matrimonio: ${formData.eventDate ? format(new Date(formData.eventDate), 'dd/MM/yyyy') : 'Non specificata'}`, 20, yPos);
-      yPos += 15;
-      
-      // Cart items
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('SERVIZI E PRODOTTI:', 20, yPos);
-      yPos += 8;
-      
-      const pricing = cart.getPricingWithRules();
-      const itemsWithRules = cart.getItemsWithRuleInfo();
-      
-      pdf.setFont('helvetica', 'normal');
-      itemsWithRules.forEach(item => {
-        const itemText = `${item.title}${item.isGift ? ' (OMAGGIO)' : ''}`;
-        const priceText = item.isGift ? 'GRATIS' : `€${item.price}`;
-        pdf.text(itemText, 20, yPos);
-        pdf.text(priceText, pageWidth - 40, yPos, { align: 'right' });
-        yPos += 6;
-      });
-      
-      yPos += 5;
-      
-      // Pricing summary
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`Subtotale: €${pricing.subtotal}`, pageWidth - 80, yPos, { align: 'right' });
-      yPos += 6;
-      
-      if (pricing.discount > 0) {
-        pdf.setTextColor(220, 38, 38); // Red color
-        pdf.text(`Sconto globale: -€${pricing.discount}`, pageWidth - 80, yPos, { align: 'right' });
-        yPos += 6;
-      }
-      
-      if (pricing.giftSavings > 0) {
-        pdf.setTextColor(34, 197, 94); // Green color
-        pdf.text(`Risparmi omaggi: -€${pricing.giftSavings}`, pageWidth - 80, yPos, { align: 'right' });
-        yPos += 6;
-      }
-      
-      pdf.setTextColor(0, 0, 0); // Black color
-      pdf.setFontSize(14);
-      pdf.text(`TOTALE: €${pricing.total}`, pageWidth - 80, yPos, { align: 'right' });
-      
-      if (pricing.totalSavings > 0) {
-        yPos += 8;
-        pdf.setTextColor(34, 197, 94); // Green color
-        pdf.setFontSize(12);
-        pdf.text(`Hai risparmiato €${pricing.totalSavings}!`, pageWidth / 2, yPos, { align: 'center' });
-      }
-      
-      // Notes section
-      if (formData.notes) {
-        yPos += 15;
-        pdf.setTextColor(0, 0, 0);
-        pdf.setFontSize(12);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('NOTE:', 20, yPos);
-        yPos += 8;
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(formData.notes, 20, yPos, { maxWidth: pageWidth - 40 });
-      }
-      
-      // Footer
-      yPos += 20;
-      pdf.setFontSize(10);
-      pdf.setTextColor(128, 128, 128);
-      pdf.text('Preventivo generato automaticamente', pageWidth / 2, yPos, { align: 'center' });
-      
-      // Save PDF
-      pdf.save(`preventivo-matrimonio-${formData.name}-${formData.surname}.pdf`);
+      // Use the professional PDF generation from the old system
+      await generateClientQuotePDF(pdfData, filename);
       
     } catch (error) {
       console.error('Errore nella generazione del PDF:', error);
@@ -227,7 +144,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         gdprConsent: {
           accepted: formData.gdprAccepted,
           text: "Accetto il trattamento dei dati personali",
-          timestamp: new Date()
+          timestamp: Timestamp.now()
         },
         status: "new",
         source: 'conversational-guide'
@@ -237,30 +154,29 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       
       console.log('Lead salvato con ID:', leadDoc.id);
       
-      // Prepare WhatsApp message
-      const itemsList = cart.getItemsWithRuleInfo()
-        .map(item => `• ${item.title}${item.isGift ? ' (OMAGGIO)' : ` - €${item.price}`}`)
-        .join('\n');
+      // Create professional WhatsApp message like the old system
+      const itemsList = cart.cart.items.map(item => 
+        `• ${item.title} - €${item.price.toLocaleString('it-IT')}`
+      ).join('\n');
       
       const pricing = cart.getPricingWithRules();
-      const whatsappMessage = encodeURIComponent(
-        `🎊 RICHIESTA PREVENTIVO MATRIMONIO\n\n` +
-        `👰🤵 Sposi: ${formData.name} ${formData.surname}\n` +
-        `📅 Data matrimonio: ${formData.eventDate ? format(new Date(formData.eventDate), 'dd/MM/yyyy') : 'Non specificata'}\n` +
-        `📞 Telefono: ${formData.phone}\n` +
-        `📧 Email: ${formData.email}\n\n` +
-        `🛍️ SERVIZI SELEZIONATI:\n${itemsList}\n\n` +
-        `💰 RIEPILOGO PREZZI:\n` +
-        `Subtotale: €${pricing.subtotal}\n` +
-        (pricing.discount > 0 ? `Sconto globale: -€${pricing.discount}\n` : '') +
-        (pricing.giftSavings > 0 ? `Risparmi omaggi: -€${pricing.giftSavings}\n` : '') +
-        `TOTALE: €${pricing.total}\n` +
-        (pricing.totalSavings > 0 ? `\n✨ Hai risparmiato €${pricing.totalSavings}!\n` : '') +
-        (formData.notes ? `\n📝 Note: ${formData.notes}` : '')
-      );
+      const totalText = pricing.totalSavings > 0 
+        ? `Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.totalSavings.toLocaleString('it-IT')}\nTotale: €${pricing.total.toLocaleString('it-IT')}`
+        : `Totale: €${pricing.total.toLocaleString('it-IT')}`;
       
-      // Open WhatsApp
-      window.open(`https://wa.me/?text=${whatsappMessage}`, '_blank');
+      const formDataText = [
+        `Nome: ${formData.name}`,
+        `Cognome: ${formData.surname}`,
+        `Email: ${formData.email}`,
+        `Telefono: ${formData.phone}`,
+        `Data evento: ${formData.eventDate ? format(new Date(formData.eventDate), 'dd/MM/yyyy') : 'Non specificata'}`,
+        formData.notes ? `Note: ${formData.notes}` : ''
+      ].filter(Boolean).join('\n');
+      
+      const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${leadDoc.id}`;
+      
+      // Open WhatsApp with professional formatting
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
       
       // Call onComplete callback
       onComplete(formData);
