@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Avatar } from './Avatar';
 import { ActionButtons } from './ActionButtons';
 import { LeadForm } from './LeadForm';
-import { useGuideLogic } from './useGuideLogic';
+import { useImprovedGuideLogic } from './ImprovedGuideLogic';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
 import { collection, onSnapshot, doc } from 'firebase/firestore';
 import { db } from '@/firebase';
@@ -15,7 +15,7 @@ import type { Item, Discounts } from '@shared/schema';
 import CheckoutModal from '../CheckoutModal';
 
 export function FullscreenConversationalGuide() {
-  const guide = useGuideLogic();
+  const guide = useImprovedGuideLogic();
   const cart = useCartWithRules();
   const [showTyping, setShowTyping] = useState(true);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -422,7 +422,7 @@ export function FullscreenConversationalGuide() {
           </div>
         )}
 
-        {/* Navigation Controls */}
+        {/* Smart Navigation Controls */}
         <div className="bg-white rounded-lg shadow-lg p-4">
           <div className="flex justify-between items-center">
             <Button
@@ -435,11 +435,22 @@ export function FullscreenConversationalGuide() {
               Indietro
             </Button>
             
+            <div className="text-center">
+              {!guide.canProceedToNext() && currentStep?.requiresAction && (
+                <p className="text-sm text-amber-600 font-medium">
+                  ⚠️ Completa l'azione richiesta per continuare
+                </p>
+              )}
+            </div>
+            
             <Button
               variant="outline"
               onClick={guide.nextStep}
-              disabled={guide.guideState.currentStep >= guide.generateSteps().length - 1}
-              className="flex items-center gap-2"
+              disabled={guide.guideState.currentStep >= guide.generateSteps().length - 1 || !guide.canProceedToNext()}
+              className={cn(
+                "flex items-center gap-2",
+                !guide.canProceedToNext() && "opacity-50 cursor-not-allowed"
+              )}
             >
               Avanti
               <ChevronRight className="h-4 w-4" />

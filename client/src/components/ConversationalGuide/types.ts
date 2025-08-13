@@ -8,6 +8,8 @@ export interface GuideStep {
   uiHint?: string;
   validation?: (data: any) => boolean;
   confetti?: boolean;
+  requiresAction?: boolean;
+  canProceed?: () => boolean;
 }
 
 export interface GuideAction {
@@ -16,6 +18,7 @@ export interface GuideAction {
   type: 'button' | 'input' | 'datepicker' | 'checkbox';
   required?: boolean;
   action: (value?: any) => void;
+  disabled?: () => boolean;
 }
 
 export interface LeadData {
@@ -32,5 +35,5 @@ export interface GuideState {
   currentStep: number;
   leadData: LeadData;
   isActive: boolean;
-  showChat: boolean;
+  showChat?: boolean;
 }
