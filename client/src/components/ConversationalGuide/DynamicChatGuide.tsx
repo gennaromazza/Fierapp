@@ -49,7 +49,7 @@ export function DynamicChatGuide() {
           id: doc.id,
           ...doc.data()
         } as Item));
-        setItems(loadedItems.filter(item => item.active));
+        setItems(loadedItems.filter(item => item.isActive !== false));
       }
     );
 
@@ -158,13 +158,23 @@ export function DynamicChatGuide() {
 
     setTimeout(() => {
       const services = items.filter(item => item.category === 'servizio');
+      console.log('Services found:', services);
       
-      addMessage({
-        id: 'services-selection',
-        type: 'system',
-        text: "Seleziona i servizi che desideri:",
-        items: services
-      });
+      if (services.length > 0) {
+        addMessage({
+          id: 'services-selection',
+          type: 'system',
+          text: "Seleziona i servizi che desideri:",
+          items: services
+        });
+      } else {
+        addMessage({
+          id: 'services-error',
+          type: 'assistant',
+          avatar: 'thoughtful',
+          text: "⚠️ Non riesco a caricare i servizi. Riprova tra un momento.",
+        });
+      }
     }, 2000);
   };
 
@@ -506,12 +516,18 @@ export function DynamicChatGuide() {
     } else if (message.type === 'system' && message.items) {
       return (
         <div className="mb-4">
-          <div className="bg-white rounded-lg p-4 border">
+          <div className="bg-gray-50 rounded-lg p-4 border">
             {message.text && (
-              <p className="text-sm text-gray-600 mb-3">{message.text}</p>
+              <h4 className="text-sm font-semibold text-gray-800 mb-3">{message.text}</h4>
             )}
-            <div className="space-y-2">
-              {message.items.map(item => renderItemCard(item))}
+            <div className="space-y-3">
+              {message.items.length > 0 ? (
+                message.items.map(item => renderItemCard(item))
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  Nessun elemento disponibile
+                </p>
+              )}
             </div>
             {currentPhase === 'products' && (
               <Button
@@ -519,6 +535,14 @@ export function DynamicChatGuide() {
                 className="w-full mt-4 bg-green-600 hover:bg-green-700"
               >
                 ✅ Procedi al Riepilogo
+              </Button>
+            )}
+            {currentPhase === 'services' && cart.cart.items.some(i => i.category === 'servizio') && (
+              <Button
+                onClick={() => startProductsPhase()}
+                className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+              >
+                ➡️ Continua con i prodotti
               </Button>
             )}
           </div>
