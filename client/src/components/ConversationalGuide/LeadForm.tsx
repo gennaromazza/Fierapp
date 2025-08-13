@@ -9,7 +9,11 @@ import { CalendarIcon, Download, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
+import { collection, addDoc, getDoc, doc } from 'firebase/firestore';
+import { db } from '../../firebase';
+import jsPDF from 'jspdf';
 import type { LeadData } from './types';
+import type { Settings } from '../../../../shared/schema';
 
 interface LeadFormProps {
   initialData: LeadData;
@@ -80,19 +84,171 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
            formData.phone && formData.eventDate && formData.gdprAccepted;
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!validateForm()) return;
     
-    // TODO: Implement PDF generation
-    console.log('Generating PDF with:', { cart: cart.cart, lead: formData });
+    try {
+      // Load settings for studio info
+      const settingsDoc = await getDoc(doc(db, "settings", "app"));
+      const settings = settingsDoc.exists() ? settingsDoc.data() as Settings : null;
+      
+      // Create PDF
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let yPos = 20;
+      
+      // Header
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('PREVENTIVO MATRIMONIO', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+      
+      if (settings?.studioName) {
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(settings.studioName, pageWidth / 2, yPos, { align: 'center' });
+        yPos += 10;
+      }
+      
+      yPos += 10;
+      
+      // Customer info
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('DATI CLIENTE:', 20, yPos);
+      yPos += 8;
+      
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Nome: ${formData.name} ${formData.surname}`, 20, yPos);
+      yPos += 6;
+      pdf.text(`Email: ${formData.email}`, 20, yPos);
+      yPos += 6;
+      pdf.text(`Telefono: ${formData.phone}`, 20, yPos);
+      yPos += 6;
+      pdf.text(`Data matrimonio: ${format(new Date(formData.eventDate), 'dd/MM/yyyy')}`, 20, yPos);
+      yPos += 15;
+      
+      // Cart items
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('SERVIZI E PRODOTTI:', 20, yPos);
+      yPos += 8;
+      
+      const pricing = cart.getPricingWithRules();
+      const itemsWithRules = cart.getItemsWithRuleInfo();
+      
+      pdf.setFont('helvetica', 'normal');
+      itemsWithRules.forEach(item => {
+        const itemText = `${item.title}${item.isGift ? ' (OMAGGIO)' : ''}`;
+        const priceText = item.isGift ? 'GRATIS' : `€${item.price}`;
+        pdf.text(itemText, 20, yPos);
+        pdf.text(priceText, pageWidth - 40, yPos, { align: 'right' });
+        yPos += 6;
+      });
+      
+      yPos += 5;
+      
+      // Pricing summary
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`Subtotale: €${pricing.subtotal}`, pageWidth - 80, yPos, { align: 'right' });
+      yPos += 6;
+      
+      if (pricing.discount > 0) {
+        pdf.setTextColor(220, 38, 38); // Red color
+        pdf.text(`Sconto globale: -€${pricing.discount}`, pageWidth - 80, yPos, { align: 'right' });
+        yPos += 6;
+      }
+      
+      if (pricing.giftSavings > 0) {
+        pdf.setTextColor(34, 197, 94); // Green color
+        pdf.text(`Risparmi omaggi: -€${pricing.giftSavings}`, pageWidth - 80, yPos, { align: 'right' });
+        yPos += 6;
+      }
+      
+      pdf.setTextColor(0, 0, 0); // Black color
+      pdf.setFontSize(14);
+      pdf.text(`TOTALE: €${pricing.total}`, pageWidth - 80, yPos, { align: 'right' });
+      
+      if (pricing.totalSavings > 0) {
+        yPos += 8;
+        pdf.setTextColor(34, 197, 94); // Green color
+        pdf.setFontSize(12);
+        pdf.text(`Hai risparmiato €${pricing.totalSavings}!`, pageWidth / 2, yPos, { align: 'center' });
+      }
+      
+      // Notes section
+      if (formData.notes) {
+        yPos += 15;
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('NOTE:', 20, yPos);
+        yPos += 8;
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(formData.notes, 20, yPos, { maxWidth: pageWidth - 40 });
+      }
+      
+      // Footer
+      yPos += 20;
+      pdf.setFontSize(10);
+      pdf.setTextColor(128, 128, 128);
+      pdf.text('Preventivo generato automaticamente', pageWidth / 2, yPos, { align: 'center' });
+      
+      // Save PDF
+      pdf.save(`preventivo-matrimonio-${formData.name}-${formData.surname}.pdf`);
+      
+    } catch (error) {
+      console.error('Errore nella generazione del PDF:', error);
+      alert('Errore nella generazione del PDF. Riprova.');
+    }
   };
 
-  const handleSendRequest = () => {
+  const handleSendRequest = async () => {
     if (!validateForm()) return;
     
-    // TODO: Implement lead submission and WhatsApp opening
-    console.log('Submitting lead and opening WhatsApp:', formData);
-    onComplete(formData);
+    try {
+      // Save lead to Firebase
+      const leadDoc = await addDoc(collection(db, "leads"), {
+        ...formData,
+        cart: cart.cart,
+        pricing: cart.getPricingWithRules(),
+        createdAt: new Date().toISOString(),
+        source: 'conversational-guide'
+      });
+      
+      console.log('Lead salvato con ID:', leadDoc.id);
+      
+      // Prepare WhatsApp message
+      const itemsList = cart.getItemsWithRuleInfo()
+        .map(item => `• ${item.title}${item.isGift ? ' (OMAGGIO)' : ` - €${item.price}`}`)
+        .join('\n');
+      
+      const pricing = cart.getPricingWithRules();
+      const whatsappMessage = encodeURIComponent(
+        `🎊 RICHIESTA PREVENTIVO MATRIMONIO\n\n` +
+        `👰🤵 Sposi: ${formData.name} ${formData.surname}\n` +
+        `📅 Data matrimonio: ${format(new Date(formData.eventDate), 'dd/MM/yyyy')}\n` +
+        `📞 Telefono: ${formData.phone}\n` +
+        `📧 Email: ${formData.email}\n\n` +
+        `🛍️ SERVIZI SELEZIONATI:\n${itemsList}\n\n` +
+        `💰 RIEPILOGO PREZZI:\n` +
+        `Subtotale: €${pricing.subtotal}\n` +
+        (pricing.discount > 0 ? `Sconto globale: -€${pricing.discount}\n` : '') +
+        (pricing.giftSavings > 0 ? `Risparmi omaggi: -€${pricing.giftSavings}\n` : '') +
+        `TOTALE: €${pricing.total}\n` +
+        (pricing.totalSavings > 0 ? `\n✨ Hai risparmiato €${pricing.totalSavings}!\n` : '') +
+        (formData.notes ? `\n📝 Note: ${formData.notes}` : '')
+      );
+      
+      // Open WhatsApp
+      window.open(`https://wa.me/?text=${whatsappMessage}`, '_blank');
+      
+      // Call onComplete callback
+      onComplete(formData);
+      
+    } catch (error) {
+      console.error('Errore nel salvataggio del lead:', error);
+      alert('Errore nel salvataggio. Riprova.');
+    }
   };
 
   const pricing = cart.getPricingWithRules();
