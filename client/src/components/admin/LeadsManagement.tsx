@@ -62,16 +62,22 @@ export default function LeadsManagement() {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(lead => {
-        const customer = lead.customer || {};
-        return (
-          (customer.nome || customer.Nome || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (customer.cognome || customer.Cognome || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (customer.email || customer.Email || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (customer.telefono || customer.Telefono || '')?.includes(searchTerm) ||
-          // Also search in form data keys
-          Object.values(customer).some(value => 
-            typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
-          )
+        // Handle both old structure (lead.customer) and new structure (direct properties)
+        const customer = lead.customer || lead || {};
+        const searchFields = [
+          customer.nome || customer.Nome || customer.name || '',
+          customer.cognome || customer.Cognome || customer.surname || '',
+          customer.email || customer.Email || '',
+          customer.telefono || customer.Telefono || customer.phone || '',
+          (lead as any).email || '', // Handle direct email property
+          (lead as any).name || '', // Handle direct name properties
+          (lead as any).surname || ''
+        ];
+        
+        return searchFields.some(field => 
+          typeof field === 'string' && field.toLowerCase().includes(searchTerm.toLowerCase())
+        ) || Object.values(customer).some(value => 
+          typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
         );
       });
     }
@@ -212,8 +218,8 @@ export default function LeadsManagement() {
   };
 
   const openEmailCompose = async (lead: Lead) => {
-    const customer = lead.customer;
-    const email = customer.email || customer.Email;
+    const customer = lead.customer || lead || {};
+    const email = customer.email || customer.Email || (lead as any).email;
     
     if (!email) {
       toast({
@@ -619,7 +625,7 @@ export default function LeadsManagement() {
                       <TableCell>
                         <div>
                           <div className="font-medium">
-                            {lead.customer?.nome || lead.customer?.Nome || ''} {lead.customer?.cognome || lead.customer?.Cognome || ''}
+                            {(lead.customer?.nome || lead.customer?.Nome || (lead as any).name || '')} {(lead.customer?.cognome || lead.customer?.Cognome || (lead as any).surname || '')}
                           </div>
                           <div className="text-sm text-gray-500">
                             {lead.selectedItems?.length || 0} item{(lead.selectedItems?.length || 0) !== 1 ? 's' : ''}
@@ -628,25 +634,25 @@ export default function LeadsManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {(lead.customer?.email || lead.customer?.Email) && (
+                          {(lead.customer?.email || lead.customer?.Email || (lead as any).email) && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Mail className="w-3 h-3" />
-                              <span>{lead.customer.email || lead.customer.Email}</span>
+                              <span>{lead.customer?.email || lead.customer?.Email || (lead as any).email}</span>
                             </div>
                           )}
-                          {(lead.customer?.telefono || lead.customer?.Telefono) && (
+                          {(lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone) && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Phone className="w-3 h-3" />
-                              <span>{lead.customer.telefono || lead.customer.Telefono}</span>
+                              <span>{lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone}</span>
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {(lead.customer?.data_evento || lead.customer?.['Data evento']) && (
+                        {(lead.customer?.data_evento || lead.customer?.['Data evento'] || (lead as any).eventDate) && (
                           <div className="flex items-center space-x-1 text-sm">
                             <CalendarDays className="w-3 h-3" />
-                            <span>{lead.customer.data_evento || lead.customer['Data evento']}</span>
+                            <span>{lead.customer?.data_evento || lead.customer?.['Data evento'] || (lead as any).eventDate}</span>
                           </div>
                         )}
                       </TableCell>
