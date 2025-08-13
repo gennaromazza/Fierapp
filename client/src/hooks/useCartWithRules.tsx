@@ -168,12 +168,12 @@ export function useCartWithRules() {
       .filter(item => isItemGift(item.id))
       .map(item => item.id);
     
-    // 🔧 RISOLUZIONE INCONSISTENZA: Usa i veri sconti invece di null!
+    // Usa il sistema di pricing unificato con i veri sconti
     const unified = calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds);
     
     // Mantieni compatibilità con l'interfaccia esistente
     return {
-      subtotal: unified.finalTotal,
+      subtotal: unified.subtotal,
       originalSubtotal: unified.originalSubtotal,
       discount: unified.totalDiscountSavings,
       giftSavings: unified.giftSavings,

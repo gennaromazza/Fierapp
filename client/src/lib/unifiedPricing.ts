@@ -44,23 +44,21 @@ export function calculateUnifiedPricing(
     const originalPrice = item.originalPrice || item.price;
     const isGift = giftItemIds.includes(item.id);
     
-    // Calcola prezzo scontato tramite sistema sconti
     let finalPrice = originalPrice;
     let discountType: 'global' | 'individual' | null = null;
     let itemSavings = 0;
     
-    if (discounts && !isGift) {
-      const discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
-      finalPrice = discountInfo.finalPrice;
-      discountType = discountInfo.discountType;
-      itemSavings = discountInfo.savings;
-    }
-    
-    // Se è un regalo, il prezzo finale è 0 e risparmi tutto il prezzo originale
+    // Se è un regalo, il prezzo finale è 0
     if (isGift) {
       giftSavings += originalPrice;
       finalPrice = 0;
       itemSavings = originalPrice;
+    } else if (discounts) {
+      // Solo se non è un regalo, applica gli sconti
+      const discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
+      finalPrice = discountInfo.finalPrice;
+      discountType = discountInfo.discountType;
+      itemSavings = discountInfo.savings;
     }
     
     subtotal += finalPrice;
@@ -77,13 +75,13 @@ export function calculateUnifiedPricing(
     };
   });
   
-  // Calcola sconti separati
+  // Calcola sconti separati (esclusi i regali)
   const globalDiscountSavings = itemDetails
-    .filter(item => item.discountType === 'global')
+    .filter(item => !item.isGift && item.discountType === 'global')
     .reduce((sum, item) => sum + item.savings, 0);
     
   const individualDiscountSavings = itemDetails
-    .filter(item => item.discountType === 'individual')
+    .filter(item => !item.isGift && item.discountType === 'individual')
     .reduce((sum, item) => sum + item.savings, 0);
   
   const totalDiscountSavings = globalDiscountSavings + individualDiscountSavings;

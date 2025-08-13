@@ -221,13 +221,13 @@ export default function LeadsManagement() {
     const confirmed = window.confirm(
       '⚠️ ATTENZIONE: Questa azione cancellerà TUTTI i lead dal database.\n\nQuesta azione è irreversibile!\n\nVuoi davvero continuare?'
     );
-    
+
     if (!confirmed) return;
-    
+
     const doubleConfirm = window.confirm(
       '🚨 ULTIMA CONFERMA: Stai per cancellare TUTTI i lead.\n\nSei assolutamente sicuro?'
     );
-    
+
     if (!doubleConfirm) return;
 
     try {
@@ -236,10 +236,10 @@ export default function LeadsManagement() {
         title: "Lead cancellati",
         description: "Tutti i lead sono stati cancellati con successo. L'admin panel ora dovrebbe funzionare correttamente.",
       });
-      
+
       // Refresh della pagina per aggiornare la lista
       window.location.reload();
-      
+
     } catch (error) {
       console.error('Errore durante la cancellazione dei lead:', error);
       toast({
@@ -686,7 +686,7 @@ export default function LeadsManagement() {
                           {(lead.customer?.email || lead.customer?.Email) && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Mail className="w-3 h-3" />
-                              <span>{lead.customer?.email || lead.customer?.Email || 'N/A'}</span>
+                              <TableCell>{lead.customer?.email || lead.email || 'N/A'}</TableCell>
                             </div>
                           )}
                           {(lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone) && (
