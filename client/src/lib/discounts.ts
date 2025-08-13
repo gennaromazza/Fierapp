@@ -26,26 +26,26 @@ export function calculateDiscountedPrice(
   }
 
   // Apply global discount if no valid item-specific discount
-  const discount = discounts.global;
-  if (!discount?.isActive) return originalPrice;
+  const globalDiscount = discounts.global;
+  if (!globalDiscount?.isActive) return originalPrice;
 
   // Check if discount is expired
   const now = new Date();
-  if (discount.endDate && isAfter(now, discount.endDate)) {
+  if (globalDiscount.endDate && isAfter(now, globalDiscount.endDate)) {
     return originalPrice;
   }
   
   // Check if discount hasn't started yet
-  if (discount.startDate && isBefore(now, discount.startDate)) {
+  if (globalDiscount.startDate && isBefore(now, globalDiscount.startDate)) {
     return originalPrice;
   }
 
-  // Apply discount
-  if (discount.type === "percent") {
-    const discountAmount = (originalPrice * discount.value) / 100;
+  // Apply global discount
+  if (globalDiscount.type === "percent") {
+    const discountAmount = (originalPrice * globalDiscount.value) / 100;
     return Math.max(0, originalPrice - discountAmount);
-  } else if (discount.type === "fixed") {
-    return Math.max(0, originalPrice - discount.value);
+  } else if (globalDiscount.type === "fixed") {
+    return Math.max(0, originalPrice - globalDiscount.value);
   }
 
   return originalPrice;
@@ -225,7 +225,7 @@ export function calculateCartSavings(
     const originalPrice = item.originalPrice || item.price;
     const itemOriginalTotal = originalPrice * quantity;
     
-    if (discounts && item.price > 0) { // Skip gift items (price = 0)
+    if (discounts) {
       const discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
       const itemFinalTotal = discountInfo.finalPrice * quantity;
       

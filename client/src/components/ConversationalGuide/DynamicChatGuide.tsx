@@ -61,7 +61,53 @@ export function DynamicChatGuide() {
         // Load discounts (both global and individual)
         const discountsDoc = await getDoc(doc(db, "settings", "discounts"));
         if (discountsDoc.exists()) {
-          const discountsData = discountsDoc.data() as Discounts;
+          let discountsData = discountsDoc.data() as Discounts;
+          
+          // Process Firebase Timestamps to Date objects
+          if (discountsData.global) {
+            if (discountsData.global.startDate && typeof discountsData.global.startDate === 'object') {
+              // Handle both Firebase Timestamp objects and timestamp objects with seconds/nanoseconds
+              if ('toDate' in discountsData.global.startDate) {
+                discountsData.global.startDate = (discountsData.global.startDate as any).toDate();
+              } else if ('seconds' in discountsData.global.startDate) {
+                const timestamp = discountsData.global.startDate as any;
+                discountsData.global.startDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+              }
+            }
+            if (discountsData.global.endDate && typeof discountsData.global.endDate === 'object') {
+              // Handle both Firebase Timestamp objects and timestamp objects with seconds/nanoseconds
+              if ('toDate' in discountsData.global.endDate) {
+                discountsData.global.endDate = (discountsData.global.endDate as any).toDate();
+              } else if ('seconds' in discountsData.global.endDate) {
+                const timestamp = discountsData.global.endDate as any;
+                discountsData.global.endDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+              }
+            }
+          }
+          
+          // Process per-item overrides timestamps
+          if (discountsData.perItemOverrides) {
+            Object.keys(discountsData.perItemOverrides).forEach(key => {
+              const itemDiscount = discountsData.perItemOverrides![key];
+              if (itemDiscount.startDate && typeof itemDiscount.startDate === 'object') {
+                if ('toDate' in itemDiscount.startDate) {
+                  itemDiscount.startDate = (itemDiscount.startDate as any).toDate();
+                } else if ('seconds' in itemDiscount.startDate) {
+                  const timestamp = itemDiscount.startDate as any;
+                  itemDiscount.startDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+                }
+              }
+              if (itemDiscount.endDate && typeof itemDiscount.endDate === 'object') {
+                if ('toDate' in itemDiscount.endDate) {
+                  itemDiscount.endDate = (itemDiscount.endDate as any).toDate();
+                } else if ('seconds' in itemDiscount.endDate) {
+                  const timestamp = itemDiscount.endDate as any;
+                  itemDiscount.endDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+                }
+              }
+            });
+          }
+          
           setDiscounts(discountsData);
         }
 
@@ -486,9 +532,12 @@ export function DynamicChatGuide() {
     
     // Calculate discounted price using both global and individual discounts
     const originalPrice = item.originalPrice || item.price;
-    const discountInfo = discounts && !isGift ? 
-      getItemDiscountInfo(originalPrice, item.id, discounts) : 
-      { finalPrice: originalPrice, hasDiscount: false, discountType: null, discountPercentage: 0, savings: 0 };
+    let discountInfo = { finalPrice: originalPrice, hasDiscount: false, discountType: null, discountPercentage: 0, savings: 0 };
+    
+    if (discounts && !isGift) {
+      discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
+    }
+    
     const finalPrice = isGift ? 0 : discountInfo.finalPrice;
 
     return (
