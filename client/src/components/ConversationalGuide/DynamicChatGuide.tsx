@@ -46,20 +46,35 @@ export function DynamicChatGuide() {
     // ITEMS: one-shot con filtro WHERE active == true
     (async () => {
       try {
+        console.log('🔍 DynamicChatGuide: Starting items fetch...');
+        
         const itemsRef = collection(db, 'items');
         const qActive = query(itemsRef, where('active', '==', true));
+        
+        console.log('🔍 DynamicChatGuide: Executing query...');
         const snap = await getDocs(qActive);
+        
+        console.log('🔍 DynamicChatGuide: Query result - docs count:', snap.docs.length);
+        
+        const loadedItems = snap.docs.map(doc => {
+          const data = doc.data();
+          console.log('🔍 Item data:', doc.id, data);
+          return {
+            id: doc.id,
+            ...(data as Omit<Item, 'id'>),
+          };
+        });
 
-        const loadedItems = snap.docs.map(doc => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Item, 'id'>),
-        }));
+        console.log('🔥 DynamicChatGuide loaded items', loadedItems.length, loadedItems.map(i => ({ id: i.id, title: i.title, category: i.category, active: i.active })));
 
-        console.log('🔥 DynamicChatGuide loaded items', loadedItems.length, loadedItems);
-
-        if (isMounted) setItems(loadedItems);
+        if (isMounted) {
+          console.log('🔍 DynamicChatGuide: Setting items state...');
+          setItems(loadedItems);
+        } else {
+          console.log('🔍 DynamicChatGuide: Component unmounted, not setting state');
+        }
       } catch (err) {
-        console.error('Errore caricamento items:', err);
+        console.error('❌ Errore caricamento items:', err);
       }
     })();
 
@@ -166,15 +181,24 @@ export function DynamicChatGuide() {
     });
 
     setTimeout(() => {
-      console.log('All items:', items);
-      console.log('Items count:', items.length);
+      console.log('🔍 startServicesPhase: All items:', items);
+      console.log('🔍 startServicesPhase: Items count:', items.length);
+      console.log('🔍 startServicesPhase: Items state type:', typeof items, Array.isArray(items));
+      
+      if (!items || !Array.isArray(items)) {
+        console.error('❌ Items is not an array!', items);
+        return;
+      }
       
       const services = items.filter(item => {
-        console.log('Item:', item.title, 'Category:', item.category, 'active:', item.active);
-        return item.category === 'servizio' && item.active !== false;
+        const isService = item.category === 'servizio';
+        const isActive = item.active !== false;
+        console.log('🔍 Service check - Item:', item.title, 'Category:', item.category, 'active:', item.active, 'isService:', isService, 'isActive:', isActive);
+        return isService && isActive;
       });
       
-      console.log('Filtered services:', services);
+      console.log('🔍 startServicesPhase: Filtered services:', services);
+      console.log('🔍 startServicesPhase: Services count:', services.length);
       
       if (services.length > 0) {
         addMessage({
