@@ -127,8 +127,22 @@ export type Settings = z.infer<typeof settingsSchema>;
 // Lead Schema
 export const leadSchema = z.object({
   id: z.string(),
-  customer: z.record(z.string(), z.any()).optional(), // Legacy format
-  // New conversational guide format - add direct properties
+  // Legacy format (CheckoutModal)
+  customer: z.record(z.string(), z.any()).optional(),
+  selectedItems: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    price: z.number(),
+    originalPrice: z.number().optional(),
+  })).optional(),
+  gdprConsent: z.object({
+    accepted: z.boolean(),
+    text: z.string(),
+    timestamp: z.date(),
+  }).optional(),
+  reCAPTCHAToken: z.string().optional(),
+  
+  // New conversational guide format
   name: z.string().optional(),
   surname: z.string().optional(),
   email: z.string().optional(),
@@ -136,28 +150,20 @@ export const leadSchema = z.object({
   eventDate: z.string().optional(),
   notes: z.string().optional(),
   gdprAccepted: z.boolean().optional(),
-  selectedItems: z.array(z.object({
-    id: z.string(),
-    title: z.string(),
-    price: z.number(),
-    originalPrice: z.number().optional(),
-  })).optional(), // Legacy format
-  cart: z.any().optional(), // New format cart data
+  cart: z.any().optional(), // Full cart object from useCartWithRules
+  
+  // Pricing (both formats)
   pricing: z.object({
     subtotal: z.number(),
     discount: z.number(),
     total: z.number(),
     giftSavings: z.number().optional(),
     totalSavings: z.number().optional(),
-  }).optional(),
-  gdprConsent: z.object({
-    accepted: z.boolean(),
-    text: z.string(),
-    timestamp: z.date(),
-  }).optional(),
-  reCAPTCHAToken: z.string().optional(),
-  createdAt: z.date(),
-  source: z.string().optional(), // Track where lead came from
+  }),
+  
+  // Common fields
+  createdAt: z.union([z.date(), z.string()]), // Handle both Date and ISO string
+  source: z.string().optional(), // Track where lead came from ('conversational-guide' vs legacy)
   status: z.enum(["new", "contacted", "email_sent", "quoted", "closed"]).default("new"),
 });
 
