@@ -1,7 +1,32 @@
+import { useState, useEffect } from 'react';
 import { FullscreenConversationalGuide } from './FullscreenConversationalGuide';
+import { MobileOptimizedGuide } from './MobileOptimizedGuide';
 
 export function ConversationalGuide() {
-  // Use the new fullscreen conversational guide that integrates everything in chat
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      // More comprehensive mobile detection
+      const width = window.innerWidth;
+      const userAgent = navigator.userAgent;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      
+      setIsMobile(width < 768 || mobileRegex.test(userAgent));
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  // Use mobile-optimized version for small screens and mobile devices
+  if (isMobile) {
+    return <MobileOptimizedGuide />;
+  }
+
+  // Use fullscreen version for desktop
   return <FullscreenConversationalGuide />;
 
   // Start the guide automatically

@@ -29,7 +29,7 @@
   --chart-4: hsl(147, 78%, 42%);
   --chart-5: hsl(341, 75%, 51%);
   --radius: 0.75rem;
-  
+
   /* Brand Colors - Will be dynamically updated by Firebase settings */
   --brand-primary: #F1EFEC;
   --brand-secondary: #D4C9BE;
@@ -77,15 +77,15 @@
   .brand-gradient {
     background: linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-hover) 100%);
   }
-  
+
   .savings-glow {
     box-shadow: 0 0 20px rgba(5, 150, 105, 0.3);
   }
-  
+
   .price-drop {
     animation: slideUp 0.5s ease-out;
   }
-  
+
   .animate-counter {
     animation: counter 2s ease-out;
   }
@@ -444,11 +444,40 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  /* Touch improvements */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  /* Extra small screen breakpoint */
+  @media (min-width: 475px) {
+    .xs\:inline {
+      display: inline;
+    }
+
+    .xs\:hidden {
+      display: none;
+    }
+  }
+
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -459,23 +488,23 @@
   .swiper-container {
     overflow: hidden;
   }
-  
+
   .swiper-wrapper {
     display: flex;
     transition: transform 0.3s ease;
   }
-  
+
   .swiper-slide {
     flex-shrink: 0;
     width: 100%;
   }
-  
+
   @media (min-width: 768px) {
     .swiper-slide {
       width: 50%;
     }
   }
-  
+
   @media (min-width: 1024px) {
     .swiper-slide {
       width: 33.333%;

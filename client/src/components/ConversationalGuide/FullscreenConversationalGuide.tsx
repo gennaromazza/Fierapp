@@ -66,7 +66,7 @@ export function FullscreenConversationalGuide() {
 
   const currentStep = guide.getCurrentStep();
   const shouldShowLeadForm = currentStep?.id === 'lead_collection';
-  
+
   // Trigger spectacular animations on step changes
   useEffect(() => {
     if (currentStep) {
@@ -87,7 +87,7 @@ export function FullscreenConversationalGuide() {
 
   const handleItemClick = (item: Item) => {
     const isSelected = cart.cart.items.some(cartItem => cartItem.id === item.id);
-    
+
     if (isSelected) {
       cart.removeFromCart(item.id);
     } else {
@@ -106,7 +106,7 @@ export function FullscreenConversationalGuide() {
     const isSelected = !!cartItem;
     const isGift = cartItem?.price === 0 && cartItem?.originalPrice && cartItem.originalPrice > 0;
     const unavailableReason = cart.getUnavailableReason(item.id);
-    
+
     return {
       isSelected,
       isGift,
@@ -119,7 +119,7 @@ export function FullscreenConversationalGuide() {
 
   const renderProductSelector = (category: 'servizio' | 'prodotto') => {
     const categoryItems = items.filter(item => item.category === category);
-    
+
     if (categoryItems.length === 0) {
       return (
         <div className="text-center py-6">
@@ -132,7 +132,7 @@ export function FullscreenConversationalGuide() {
       <div className="space-y-3 max-h-80 overflow-y-auto">
         {categoryItems.map(item => {
           const status = getItemStatus(item);
-          
+
           return (
             <div
               key={item.id}
@@ -156,18 +156,18 @@ export function FullscreenConversationalGuide() {
                     )}>
                       {item.name}
                     </h4>
-                    
+
                     {status.isSelected && (
                       <Check className="h-4 w-4 text-blue-600" />
                     )}
-                    
+
                     {status.isGift && (
                       <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
                         <Gift className="h-3 w-3 mr-1" />
                         GRATIS
                       </Badge>
                     )}
-                    
+
                     {status.isUnavailable && (
                       <Badge variant="secondary" className="bg-gray-100 text-gray-600 text-xs">
                         <Lock className="h-3 w-3 mr-1" />
@@ -175,7 +175,7 @@ export function FullscreenConversationalGuide() {
                       </Badge>
                     )}
                   </div>
-                  
+
                   {item.description && (
                     <p className={cn(
                       "text-sm mb-2",
@@ -184,14 +184,14 @@ export function FullscreenConversationalGuide() {
                       {item.description}
                     </p>
                   )}
-                  
+
                   {status.isUnavailable && status.unavailableReason && (
                     <p className="text-xs text-red-500 italic">
                       {status.unavailableReason}
                     </p>
                   )}
                 </div>
-                
+
                 <div className="flex flex-col items-end gap-2">
                   <div className="text-right">
                     {status.isGift ? (
@@ -210,7 +210,7 @@ export function FullscreenConversationalGuide() {
                       </span>
                     )}
                   </div>
-                  
+
                   {!status.isUnavailable && (
                     <Button
                       size="sm"
@@ -268,7 +268,7 @@ export function FullscreenConversationalGuide() {
             <ShoppingCart className="h-4 w-4" />
             Prodotti Selezionati ({cart.cart.items.length})
           </h3>
-          
+
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {cart.cart.items.map(item => (
               <div key={item.id} className="flex justify-between items-center py-1">
@@ -302,7 +302,7 @@ export function FullscreenConversationalGuide() {
             <span>Subtotale:</span>
             <span>€{subtotal}</span>
           </div>
-          
+
           {giftSavings > 0 && (
             <div className="flex justify-between text-sm text-green-600">
               <span className="flex items-center gap-1">
@@ -312,7 +312,7 @@ export function FullscreenConversationalGuide() {
               <span>-€{giftSavings}</span>
             </div>
           )}
-          
+
           {globalDiscount > 0 && (
             <div className="flex justify-between text-sm text-blue-600">
               <span className="flex items-center gap-1">
@@ -322,12 +322,12 @@ export function FullscreenConversationalGuide() {
               <span>-€{globalDiscount}</span>
             </div>
           )}
-          
+
           <div className="flex justify-between text-lg font-bold border-t pt-2">
             <span>Totale:</span>
             <span className="text-blue-600">€{finalTotal}</span>
           </div>
-          
+
           {(giftSavings > 0 || globalDiscount > 0) && (
             <div className="text-center">
               <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
@@ -361,28 +361,28 @@ export function FullscreenConversationalGuide() {
           onAnimationComplete={() => setShowSpectacularAnimation(false)}
         />
       )}
-      
+
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b shadow-sm p-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <MessageCircle className="h-6 w-6 text-blue-600" />
-            <div>
-              <h1 className="font-bold text-xl text-gray-800">Assistente Matrimonio</h1>
-              <p className="text-sm text-gray-600">Ti guido nella creazione del preventivo perfetto</p>
+      <div className="bg-white border-b shadow-sm p-3 sm:p-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
+            <div className="min-w-0">
+              <h1 className="font-bold text-lg sm:text-xl text-gray-800 truncate">Assistente Matrimonio</h1>
+              <p className="text-xs sm:text-sm text-gray-600 truncate">Ti guido nella creazione del preventivo perfetto</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
               {guide.guideState.currentStep + 1}/{guide.generateSteps().length}
             </span>
-            <div className="flex gap-1">
+            <div className="hidden sm:flex gap-1 max-w-32 overflow-x-auto">
               {guide.generateSteps().map((_, index) => (
                 <div
                   key={index}
                   className={cn(
-                    "w-2 h-2 rounded-full",
+                    "w-2 h-2 rounded-full flex-shrink-0",
                     index === guide.guideState.currentStep 
                       ? "bg-blue-600" 
                       : index < guide.guideState.currentStep 
@@ -464,7 +464,7 @@ export function FullscreenConversationalGuide() {
                 )}
               </div>
             )}
-            
+
             {/* Inline Content Based on Step */}
             {currentStep.uiHint === 'show_services_inline' && (
               <div className="mt-6">
@@ -518,7 +518,7 @@ export function FullscreenConversationalGuide() {
               <ChevronLeft className="h-4 w-4" />
               Indietro
             </Button>
-            
+
             <div className="text-center">
               {!guide.canProceedToNext() && currentStep?.requiresAction && (
                 <p className="text-sm text-amber-600 font-medium">
@@ -526,7 +526,7 @@ export function FullscreenConversationalGuide() {
                 </p>
               )}
             </div>
-            
+
             <Button
               variant="outline"
               onClick={guide.nextStep}
