@@ -172,25 +172,49 @@ export function DynamicChatGuide() {
     const isSelected = cart.cart.items.some(cartItem => cartItem.id === item.id);
     
     if (isSelected) {
-      cart.removeFromCart(item.id);
+      cart.removeItem(item.id);
       addMessage({
-        id: `remove-${Date.now()}`,
         type: 'user',
         text: `❌ Rimosso: ${item.title}`
       });
     } else {
-      cart.addToCart({
+      // Controlla se posso aggiungere l'item (regole di disponibilità)
+      const isAvailable = cart.isItemAvailable(item.id);
+      
+      if (!isAvailable) {
+        const reason = cart.getUnavailableReason(item.id);
+        addMessage({
+          type: 'assistant',
+          avatar: 'thoughtful',
+          text: `⚠️ ${item.title} non è disponibile: ${reason}`,
+          typing: true
+        });
+        return;
+      }
+      
+      const success = cart.addItemWithRules({
         id: item.id,
-        name: item.title,
+        title: item.title,
         price: item.price,
-        category: item.category,
-        description: item.description
+        category: item.category
       });
-      addMessage({
-        id: `add-${Date.now()}`,
-        type: 'user',
-        text: `✅ Aggiunto: ${item.name}`
-      });
+      
+      if (success) {
+        const isGift = cart.isItemGift(item.id);
+        const message = isGift 
+          ? `🎁 Aggiunto GRATIS: ${item.title}!`
+          : `✅ Aggiunto: ${item.title}`;
+          
+        addMessage({
+          type: 'user',
+          text: message
+        });
+        
+        // Controllo per feedback intelligente sui regali sbloccati
+        setTimeout(() => {
+          checkForNewGifts();
+        }, 500);
+      }
     }
 
     // Check if should move to next phase
@@ -199,7 +223,6 @@ export function DynamicChatGuide() {
       if (selectedServices.length > 0) {
         setTimeout(() => {
           addMessage({
-            id: 'services-confirm',
             type: 'assistant',
             avatar: 'excited',
             text: "Ottima scelta! Vuoi procedere con i prodotti aggiuntivi?",
@@ -217,26 +240,62 @@ export function DynamicChatGuide() {
     }
   };
 
+  // Controlla se ci sono nuovi regali attivati e mostra feedback
+  const checkForNewGifts = () => {
+    const availableGifts = items.filter(item => 
+      cart.isItemGift(item.id) && 
+      !cart.cart.items.find(ci => ci.id === item.id)
+    );
+    
+    if (availableGifts.length > 0) {
+      const giftNames = availableGifts.map(item => item.title).join(', ');
+      
+      addMessage({
+        type: 'assistant',
+        avatar: 'enthusiastic_money',
+        text: `🎉 FANTASTICO! Hai sbloccato dei REGALI!\n\n🎁 Ora ${giftNames} ${availableGifts.length === 1 ? 'è' : 'sono'} GRATUITO!\n\nPuoi aggiungerlo al tuo carrello senza costi aggiuntivi! ✨`,
+        typing: true
+      });
+    }
+  };
+
   const startProductsPhase = () => {
     setCurrentPhase('products');
     
     const hasPhotoService = cart.cart.items.some(i => i.id === 'bsCHxhOyCn70gtzBAGQQ');
     const hasVideoService = cart.cart.items.some(i => i.id === 'wFwLZdWcjo6tdkhasQbs');
     
+    // Analizza quali prodotti sono disponibili tramite le regole
+    const products = items.filter(item => item.category === 'prodotto');
+    const availableProducts = products.filter(item => cart.isItemAvailable(item.id));
+    const giftProducts = products.filter(item => cart.isItemGift(item.id));
+    
     let unlockMessage = "Ora vediamo i PRODOTTI AGGIUNTIVI! 🎁\n\n";
     
     if (hasPhotoService && hasVideoService) {
       unlockMessage += "🎉 FANTASTICO! Hai scelto entrambi i servizi!\n";
-      unlockMessage += "✨ Hai sbloccato TUTTI i prodotti esclusivi\n";
-      unlockMessage += "🎁 Con il pacchetto completo, Foto Invitati diventa GRATIS!";
+      unlockMessage += `✨ Hai sbloccato ${availableProducts.length} prodotti esclusivi\n`;
+      if (giftProducts.length > 0) {
+        const giftNames = giftProducts.map(item => item.title).join(', ');
+        unlockMessage += `🎁 Regalo per te: ${giftNames}!`;
+      }
     } else if (hasPhotoService) {
-      unlockMessage += "📸 Con il servizio fotografico hai sbloccato gli album!";
+      unlockMessage += "📸 Con il servizio fotografico hai sbloccato gli album fotografici!";
+      const unavailableCount = products.length - availableProducts.length;
+      if (unavailableCount > 0) {
+        unlockMessage += `\n💡 Aggiungi il servizio video per sbloccare altri ${unavailableCount} prodotti!`;
+      }
     } else if (hasVideoService) {
       unlockMessage += "🎬 Con il servizio video hai sbloccato Drone e VideoProiezione!";
+      const unavailableCount = products.length - availableProducts.length;
+      if (unavailableCount > 0) {
+        unlockMessage += `\n💡 Aggiungi il servizio fotografico per sbloccare altri ${unavailableCount} prodotti!`;
+      }
+    } else {
+      unlockMessage += "🔒 Scegli almeno un servizio per sbloccare i prodotti esclusivi!";
     }
     
     addMessage({
-      id: 'products-intro',
       type: 'assistant',
       avatar: 'enthusiastic_money',
       text: unlockMessage,
@@ -244,12 +303,9 @@ export function DynamicChatGuide() {
     });
 
     setTimeout(() => {
-      const products = items.filter(item => item.category === 'prodotto');
-      
       addMessage({
-        id: 'products-selection',
         type: 'system',
-        text: "Scegli i prodotti che desideri:",
+        text: availableProducts.length > 0 ? "Scegli i prodotti che desideri:" : "Seleziona prima un servizio per vedere i prodotti:",
         items: products
       });
     }, 2000);
@@ -258,14 +314,35 @@ export function DynamicChatGuide() {
   const startSummaryPhase = () => {
     setCurrentPhase('summary');
     
-    const total = cart.getPricingWithRules().finalTotal;
-    const savings = cart.getPricingWithRules().totalSavings;
+    const pricing = cart.getPricingWithRules();
+    const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
+    
+    let summaryText = "🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato:\n\n";
+    summaryText += `💰 Totale: €${pricing.total}\n`;
+    
+    if (pricing.giftSavings > 0) {
+      summaryText += `🎁 Risparmi con regali: €${pricing.giftSavings}\n`;
+    }
+    
+    if (pricing.discount > 0) {
+      summaryText += `💸 Sconto applicato: €${pricing.discount}\n`;
+    }
+    
+    if (pricing.totalSavings > 0) {
+      summaryText += `✨ Risparmi totali: €${pricing.totalSavings}\n`;
+    }
+    
+    if (giftItems.length > 0) {
+      const giftNames = giftItems.map(item => item.title).join(', ');
+      summaryText += `\n🎁 Prodotti GRATUITI: ${giftNames}`;
+    }
+    
+    summaryText += "\n\nVuoi procedere con la prenotazione?";
     
     addMessage({
-      id: 'summary-intro',
       type: 'assistant',
       avatar: 'excited',
-      text: `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato:\n\n💰 Totale: €${total}\n🎁 Risparmi: €${savings}\n\nVuoi procedere con la prenotazione?`,
+      text: summaryText,
       showCart: true,
       typing: true
     });
@@ -291,9 +368,11 @@ export function DynamicChatGuide() {
   const renderItemCard = (item: Item) => {
     const cartItem = cart.cart.items.find(ci => ci.id === item.id);
     const isSelected = !!cartItem;
-    const isGift = cartItem?.price === 0 && cartItem?.originalPrice && cartItem.originalPrice > 0;
-    const unavailableReason = cart.getUnavailableReason(item.id);
-    const isUnavailable = !!unavailableReason;
+    const isAvailable = cart.isItemAvailable(item.id);
+    const isGift = cart.isItemGift(item.id);
+    const giftSettings = cart.getItemGiftSettings(item.id);
+    const unavailableReason = !isAvailable ? cart.getUnavailableReason(item.id) : null;
+    const isUnavailable = !isAvailable;
 
     return (
       <div
@@ -343,7 +422,12 @@ export function DynamicChatGuide() {
             {isGift ? (
               <div>
                 <span className="text-sm font-bold text-green-600">GRATIS</span>
-                <div className="text-xs text-gray-500 line-through">€{cartItem.originalPrice}</div>
+                <div className="text-xs text-gray-500 line-through">€{item.price}</div>
+                {giftSettings?.giftText && (
+                  <div className="text-xs text-green-600 font-medium">
+                    {giftSettings.giftText}
+                  </div>
+                )}
               </div>
             ) : (
               <span className={cn(
