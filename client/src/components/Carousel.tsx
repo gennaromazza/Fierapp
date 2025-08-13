@@ -1,454 +1,490 @@
-import { useState, useEffect, createContext, useContext } from "react";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { useCart } from "./useCart";
+import { useSelectionRules } from "./useSelectionRules";
+import { RulesEngine } from "../lib/rulesEngine";
+import { useMemo, useEffect, useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import { Item } from "@shared/schema";
-import ItemCard from "./ItemCard";
+import type { Item, CartItem } from "../../../shared/schema";
+import type {
+  RulesEvaluationResult,
+  ItemState,
+  SelectionRule,
+} from "../../../shared/rulesSchema";
+import { toast } from "../hooks/use-toast";
 
-type TabType = "servizi" | "prodotti" | "tutti";
+export function useCartWithRules() {
+  // Carrello base
+  const cart = useCart();
 
-// Context per condividere le funzioni di navigazione del carousel
-interface CarouselContextType {
-  items: Item[];
-  currentSlide: number;
-  totalSlides: number;
-  slidesPerView: number;
-  goToSlide: (index: number) => void;
-  nextSlide: () => void;
-  prevSlide: () => void;
-  findItemSlide: (itemId: string) => number | null;
-}
-
-const CarouselContext = createContext<CarouselContextType | null>(null);
-
-export const useCarouselNavigation = () => {
-  const context = useContext(CarouselContext);
-  if (!context) {
-    throw new Error("useCarouselNavigation must be used within a Carousel");
-  }
-  return context;
-};
-
-export default function Carousel() {
-  const [activeTab, setActiveTab] = useState<TabType>("tutti");
-  const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
-
-  useEffect(() => {
-    async function loadItems() {
+  /**
+   * FETCH ITEMS — allineato a Carousel:
+   * - where("active","==",true)
+   * - ordinamento manuale su sortOrder (ASC)
+   */
+  const { data: allItems = [], isLoading: itemsLoading } = useQuery({
+    queryKey: ["items", "active"],
+    queryFn: async () => {
       try {
-        setLoading(true);
-        
-        // First try simple query without orderBy to avoid index requirement
-        let itemsQuery;
-        if (activeTab === "tutti") {
-          itemsQuery = query(
-            collection(db, "items"),
-            where("active", "==", true)
-          );
-        } else {
-          itemsQuery = query(
-            collection(db, "items"),
-            where("active", "==", true),
-            where("category", "==", activeTab === "servizi" ? "servizio" : "prodotto")
-          );
-        }
-        
+        const itemsQuery = query(
+          collection(db, "items"),
+          where("active", "==", true),
+        );
         const snapshot = await getDocs(itemsQuery);
-        let itemsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-          updatedAt: doc.data().updatedAt?.toDate(),
-        })) as Item[];
-        
-        // Sort manually by sortOrder 
-        itemsData.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-        
-        setItems(itemsData);
-        setCurrentSlide(0);
-        
-        // If we got data successfully, log that we need indices for optimization
-        if (itemsData.length > 0) {
-          console.info(
-            "🔥 FIREBASE INDEX NEEDED: Per ottimizzare le query, crea un indice composito in Firestore per:\n" +
-            "Collezione: items\n" +
-            "Campi: active (ASC), category (ASC), sortOrder (ASC)\n" +
-            "Vai su: Firebase Console > Firestore Database > Indexes"
-          );
-        }
-        
+
+        const items = snapshot.docs.map((doc) => {
+          const data = doc.data() as any;
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: data?.createdAt?.toDate?.() ?? undefined,
+            updatedAt: data?.updatedAt?.toDate?.() ?? undefined,
+          } as Item;
+        });
+
+        // Ordinamento manuale come nel Carousel
+        items.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+        console.info(
+          "🔥 DynamicChatGuide loaded items",
+          items.length,
+          items.map((i) => i.title),
+        );
+        return items;
       } catch (error: any) {
         console.error("Error loading items:", error);
-        
-        // Check if it's specifically an index error
-        if (error.code === 'failed-precondition' && error.message?.includes('index')) {
-          console.warn(
-            "🚨 FIREBASE INDEX REQUIRED: Devi creare un indice composito in Firestore.\n" +
-            "Collezione: items\n" +
-            "Campi: active (ASC), category (ASC), sortOrder (ASC)\n" +
-            "Link: " + (error.message.match(/https:\/\/[^\s]+/) || ['Console Firebase > Firestore Database > Indexes'])[0]
-          );
-        }
-        
-        // Try simpler query without category filter
-        try {
-          const simpleQuery = query(collection(db, "items"), where("active", "==", true));
-          const simpleSnapshot = await getDocs(simpleQuery);
-          let allItems = simpleSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate(),
-            updatedAt: doc.data().updatedAt?.toDate(),
-          })) as Item[];
-          
-          // Filter by category manually
-          const filteredItems = activeTab === "tutti" 
-            ? allItems 
-            : allItems.filter(item => 
-                item.category === (activeTab === "servizi" ? "servizio" : "prodotto")
-              );
-          
-          // Sort manually
-          filteredItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-          
-          setItems(filteredItems);
-          console.info("✅ Caricati " + filteredItems.length + " items dal database");
-          
-        } catch (fallbackError) {
-          console.error("Fallback query failed:", fallbackError);
-          setItems([]); // Empty instead of demo data - show real database state
-        }
-      } finally {
-        setLoading(false);
+        return [];
       }
+    },
+  });
+
+  // Regole
+  const { rules, loading: rulesLoading } = useSelectionRules();
+
+  // Valutazione regole
+  const rulesEvaluation = useMemo((): RulesEvaluationResult => {
+    if (itemsLoading || rulesLoading || !allItems.length) {
+      const itemStates: Record<string, ItemState> = {};
+      allItems.forEach((item) => {
+        itemStates[item.id] = {
+          itemId: item.id,
+          isAvailable: true,
+          isGift: false,
+          appliedRules: [],
+        };
+      });
+      return { itemStates, appliedRules: [], conflicts: [] };
     }
 
-    loadItems();
-  }, [activeTab]);
+    // Mappa i cart items ai full items
+    const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
+      const fullItem = allItems.find((i) => i.id === cartItem.id);
+      return (
+        fullItem ||
+        ({
+          ...cartItem,
+          active: true,
+          sortOrder: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as unknown as Item)
+      );
+    });
 
-  // Handle window resize for responsiveness
+    const rulesEngine = new RulesEngine(rules, allItems);
+    const evaluation = rulesEngine.evaluate(cartAsItems);
+
+    // Debug gift
+    console.log("🎁 Rules Evaluation:", {
+      cartItems: cartAsItems.map((i) => i.title),
+      appliedRules: evaluation.appliedRules,
+      giftItems: Object.entries(evaluation.itemStates)
+        .filter(([_, s]) => s.isGift)
+        .map(([id, s]) => {
+          const item = allItems.find((i) => i.id === id);
+          return { id, title: item?.title, state: s };
+        }),
+    });
+
+    return evaluation;
+  }, [cart.cart.items, rules, allItems, itemsLoading, rulesLoading]);
+
+  // Auto-rimozione item non più disponibili
   useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setCurrentSlide(0); // Reset to first slide on resize
+    if (itemsLoading || rulesLoading) return;
+
+    const toRemove: string[] = [];
+    cart.cart.items.forEach((cartItem: CartItem) => {
+      const st = rulesEvaluation.itemStates[cartItem.id];
+      if (st && !st.isAvailable) {
+        toRemove.push(cartItem.id);
+        console.log(
+          `🚮 Rimuovo automaticamente ${cartItem.title} (non più disponibile)`,
+        );
+      }
+    });
+
+    if (toRemove.length) {
+      setTimeout(() => {
+        toRemove.forEach((id) => cart.removeItem(id));
+      }, 0);
+    }
+  }, [rulesEvaluation.itemStates]); // dipende solo dallo stato regole
+
+  // Toast per prodotti appena sbloccati
+  const previousAvailabilityRef = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    if (itemsLoading || rulesLoading || !allItems.length) return;
+
+    const newlyUnlocked: Item[] = [];
+    const currentAvailability: Record<string, boolean> = {};
+
+    allItems.forEach((item) => {
+      const isAvail = rulesEvaluation.itemStates[item.id]?.isAvailable ?? true;
+      const wasAvail = previousAvailabilityRef.current[item.id] ?? true;
+      currentAvailability[item.id] = isAvail;
+      if (isAvail && !wasAvail) newlyUnlocked.push(item);
+    });
+
+    if (newlyUnlocked.length) {
+      const names = newlyUnlocked.map((i) => i.title).join(", ");
+      toast({
+        title: "🔓 Prodotti Sbloccati!",
+        description: `Ora puoi selezionare: ${names}`,
+        duration: 5000,
+      });
+      console.log(
+        "🔓 Prodotti sbloccati:",
+        newlyUnlocked.map((i) => i.title),
+      );
+    }
+
+    previousAvailabilityRef.current = currentAvailability;
+  }, [rulesEvaluation.itemStates, allItems, itemsLoading, rulesLoading]);
+
+  // Helpers regole
+  const isItemAvailable = (itemId: string) =>
+    rulesEvaluation.itemStates[itemId]?.isAvailable ?? true;
+
+  const isItemGift = (itemId: string) =>
+    rulesEvaluation.itemStates[itemId]?.isGift ?? false;
+
+  const getItemGiftSettings = (itemId: string) =>
+    rulesEvaluation.itemStates[itemId]?.giftSettings;
+
+  const getAppliedRules = (itemId: string) =>
+    rulesEvaluation.itemStates[itemId]?.appliedRules || [];
+
+  // addItem con controllo regole (mantiene la firma addItem)
+  const addItemWithRules = (item: CartItem) => {
+    if (!isItemAvailable(item.id)) {
+      console.warn(
+        `Item ${item.title} non disponibile per regole di selezione`,
+      );
+      return false;
+    }
+    cart.addItem(item);
+    return true;
+  };
+
+  // Pricing con regali + sconto globale (compatibile con PriceBar)
+  const getPricingWithRules = () => {
+    const base = {
+      subtotal: cart.cart.subtotal,
+      discount: cart.cart.discount,
+      total: cart.cart.total,
     };
 
-    if (typeof window !== "undefined") {
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }
-  }, []);
+    let adjustedSubtotal = 0;
+    let giftSavings = 0;
 
-  const slidesPerView = getSlidesPerView();
-  const totalSlides = Math.ceil(items.length / slidesPerView);
-  
-  // Ensure currentSlide doesn't exceed available slides
-  useEffect(() => {
-    if (currentSlide >= totalSlides && totalSlides > 0) {
-      setCurrentSlide(0);
-    }
-  }, [currentSlide, totalSlides]);
-  
-  // Debug per verificare il rendering
-  useEffect(() => {
-    console.log("🎠 Carousel State:", {
-      activeTab,
-      itemsCount: items.length,
-      slidesPerView,
-      totalSlides,
-      currentSlide,
-      currentSlideItems: items.slice(currentSlide * slidesPerView, (currentSlide + 1) * slidesPerView).map(item => item.title)
+    cart.cart.items.forEach((item: CartItem) => {
+      if (isItemGift(item.id)) giftSavings += item.price;
+      else adjustedSubtotal += item.price;
     });
-  }, [items, activeTab, currentSlide, slidesPerView, totalSlides]);
 
-  function getSlidesPerView() {
-    if (windowWidth >= 1024) return 3; // Desktop: 3 items per slide
-    if (windowWidth >= 768) return 2;  // Tablet: 2 items per slide
-    return 1; // Mobile: 1 item per slide
-  }
+    // Sconto globale (cache locale)
+    let globalDiscount = 0;
+    try {
+      const discountsDoc = localStorage.getItem("cachedDiscounts");
+      if (discountsDoc) {
+        const discounts = JSON.parse(discountsDoc);
+        const hasGlobal = discounts?.global?.isActive;
+        if (hasGlobal && discounts.global) {
+          if (discounts.global.type === "fixed") {
+            globalDiscount = discounts.global.value || 0;
+          } else if (discounts.global.type === "percent") {
+            globalDiscount = Math.round(
+              adjustedSubtotal * ((discounts.global.value || 0) / 100),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      console.warn(
+        "Error loading global discounts for pricing calculation:",
+        e,
+      );
+    }
 
-  const nextSlide = () => {
-    if (currentSlide < totalSlides - 1) {
-      setCurrentSlide((prev) => prev + 1);
+    const finalTotal = Math.max(0, adjustedSubtotal - globalDiscount);
+    const totalSavings = base.subtotal - finalTotal + giftSavings;
+
+    return {
+      subtotal: adjustedSubtotal,
+      originalSubtotal: base.subtotal,
+      discount: globalDiscount,
+      giftSavings,
+      total: finalTotal, // mantenuto per retro-compatibilità
+      finalTotal, // alias usato dal DynamicChatGuide
+      totalSavings,
+    };
+  };
+
+  const getItemsWithRuleInfo = () =>
+    cart.cart.items.map((item: CartItem) => ({
+      ...item,
+      isGift: isItemGift(item.id),
+      giftSettings: getItemGiftSettings(item.id),
+      appliedRules: getAppliedRules(item.id),
+      finalPrice: isItemGift(item.id) ? 0 : item.price,
+    }));
+
+  const getAllItemsWithAvailability = () =>
+    allItems.map((item: Item) => ({
+      ...item,
+      isAvailable: isItemAvailable(item.id),
+      isGift: isItemGift(item.id),
+      giftSettings: getItemGiftSettings(item.id),
+      appliedRules: getAppliedRules(item.id),
+    }));
+
+  const getDebugInfo = () => {
+    if (itemsLoading || rulesLoading) {
+      return {
+        loading: true,
+        itemsLoading,
+        rulesLoading,
+        rulesCount: rules.length,
+      };
+    }
+
+    const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
+      const fullItem = allItems.find((i) => i.id === cartItem.id);
+      return (
+        fullItem ||
+        ({
+          ...cartItem,
+          active: true,
+          sortOrder: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as unknown as Item)
+      );
+    });
+
+    const rulesEngine = new RulesEngine(rules, allItems);
+    const engineDebug = rulesEngine.getDebugInfo(cartAsItems);
+
+    return {
+      ...engineDebug,
+      loadedRules: rules.length,
+      cartItems: cartAsItems.length,
+      selectedItemIds: cartAsItems.map((i) => i.id),
+    };
+  };
+
+  const getUnavailableReason = (itemId: string): string => {
+    if (rulesLoading || itemsLoading) return "Caricamento...";
+    try {
+      const rulesEngine = new RulesEngine(rules, allItems);
+      const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
+        const fullItem = allItems.find((i) => i.id === cartItem.id);
+        return (
+          fullItem ||
+          ({
+            ...cartItem,
+            active: true,
+            sortOrder: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          } as unknown as Item)
+        );
+      });
+
+      const applicable = rules.filter(
+        (r) => r.active && r.targetItems.includes(itemId),
+      );
+
+      for (const rule of applicable) {
+        const conditionMet = rulesEngine.evaluateCondition(
+          rule.conditions,
+          cartAsItems,
+          cartAsItems.map((i) => i.id),
+        );
+
+        let shouldShowReason = false;
+
+        if (rule.type === "availability") {
+          if (rule.action === "disable") {
+            if (rule.conditions.type === "mutually_exclusive") {
+              shouldShowReason = conditionMet; // conflitto presente
+            } else {
+              shouldShowReason = !conditionMet; // requisito mancante
+            }
+          } else if (rule.action === "enable" && conditionMet) {
+            shouldShowReason = true;
+          }
+        } else if (rule.type === "gift_transformation") {
+          if (rule.action === "make_gift" && conditionMet) {
+            return generateConditionMessage(rule, allItems, false, "gift");
+          }
+        }
+
+        if (shouldShowReason) {
+          return generateConditionMessage(rule, allItems, !conditionMet);
+        }
+      }
+
+      return "Non disponibile";
+    } catch (e) {
+      console.error("Error in getUnavailableReason:", e);
+      return "Non disponibile";
     }
   };
 
-  const prevSlide = () => {
-    if (currentSlide > 0) {
-      setCurrentSlide((prev) => prev - 1);
+  const generateConditionMessage = (
+    rule: SelectionRule,
+    allItems: Item[],
+    _isNegated: boolean = false,
+    messageType: "unavailable" | "gift" = "unavailable",
+  ): string => {
+    const prefix = messageType === "gift" ? "Regalo per:" : "Richiede:";
+
+    switch (rule.conditions.type) {
+      case "required_items": {
+        const req = rule.conditions.requiredItems || [];
+        const names = req.map(
+          (id) =>
+            allItems.find((i) => i.id === id)?.title || "Prodotto sconosciuto",
+        );
+        return `${prefix} ${names.join(", ")}`;
+      }
+      case "min_selection_count": {
+        const count = rule.conditions.value || 1;
+        return messageType === "gift"
+          ? `Regalo per ${count}+ selezioni`
+          : `Seleziona almeno ${count} prodotti`;
+      }
+      case "category_count": {
+        const count = rule.conditions.value || 1;
+        const cats = (rule.conditions.categories || []).join(", ");
+        return messageType === "gift"
+          ? `Regalo per ${count} da: ${cats}`
+          : `Seleziona ${count} da: ${cats}`;
+      }
+      case "specific_items": {
+        const spec = rule.conditions.specificItems || [];
+        const names = spec.map(
+          (id) =>
+            allItems.find((i) => i.id === id)?.title || "Prodotto sconosciuto",
+        );
+        return `${prefix} ${names.join(" o ")}`;
+      }
+      case "mutually_exclusive": {
+        const ex = rule.conditions.mutuallyExclusiveWith || [];
+        const names = ex.map(
+          (id) =>
+            allItems.find((i) => i.id === id)?.title || "Prodotto sconosciuto",
+        );
+        return names.length === 1
+          ? `Non disponibile con: ${names[0]}`
+          : `Non disponibile con: ${names.join(", ")}`;
+      }
+      default:
+        return (
+          rule.description ||
+          (messageType === "gift" ? "Regalo speciale" : "Non disponibile")
+        );
     }
   };
 
-  const goToSlide = (index: number) => {
-    if (index >= 0 && index < totalSlides) {
-      setCurrentSlide(index);
+  const getRequiredItemIds = (itemId: string): string[] => {
+    if (rulesLoading || itemsLoading) return [];
+    try {
+      const rulesEngine = new RulesEngine(rules, allItems);
+      const cartAsItems = cart.cart.items.map((cartItem: CartItem) => {
+        const fullItem = allItems.find((i) => i.id === cartItem.id);
+        return (
+          fullItem ||
+          ({
+            ...cartItem,
+            active: true,
+            sortOrder: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          } as unknown as Item)
+        );
+      });
+
+      const applicable = rules.filter(
+        (r) => r.active && r.targetItems.includes(itemId),
+      );
+
+      for (const rule of applicable) {
+        const conditionMet = rulesEngine.evaluateCondition(
+          rule.conditions,
+          cartAsItems,
+          cartAsItems.map((i) => i.id),
+        );
+
+        if (
+          rule.type === "availability" &&
+          rule.action === "disable" &&
+          !conditionMet
+        ) {
+          if (
+            rule.conditions.type === "required_items" &&
+            rule.conditions.requiredItems
+          ) {
+            return rule.conditions.requiredItems.filter(
+              (id) => !cartAsItems.some((i) => i.id === id),
+            );
+          }
+        }
+      }
+      return [];
+    } catch (e) {
+      console.error("Error in getRequiredItemIds:", e);
+      return [];
     }
   };
 
-  // Funzione per trovare in quale slide si trova un item
-  const findItemSlide = (itemId: string): number | null => {
-    const itemIndex = items.findIndex(item => item.id === itemId);
-    if (itemIndex === -1) return null;
-    
-    return Math.floor(itemIndex / slidesPerView);
+  return {
+    ...cart,
+
+    // Espone addItem con controllo regole
+    addItem: addItemWithRules,
+
+    // API regole
+    isItemAvailable,
+    isItemGift,
+    getItemGiftSettings,
+    getUnavailableReason,
+    getAppliedRules,
+    getPricingWithRules,
+    getItemsWithRuleInfo,
+    getAllItemsWithAvailability,
+    getRequiredItemIds,
+
+    // Dati/evaluations
+    rulesEvaluation,
+    appliedRules: rulesEvaluation.appliedRules,
+
+    // Loading combinato
+    rulesLoading: rulesLoading || itemsLoading,
+
+    // Debug in dev
+    ...(process.env.NODE_ENV === "development" && { getDebugInfo }),
   };
-
-  // Valore del context per condividere con i componenti figli
-  const carouselValue: CarouselContextType = {
-    items,
-    currentSlide,
-    totalSlides,
-    slidesPerView,
-    goToSlide,
-    nextSlide,
-    prevSlide,
-    findItemSlide,
-  };
-
-  if (loading) {
-    return (
-      <div className="animate-pulse">
-        <div className="flex space-x-1 bg-brand-secondary/30 rounded-lg p-1 mb-6 md:hidden">
-          <div className="flex-1 py-2 px-4 rounded-md bg-gray-300 h-10"></div>
-          <div className="flex-1 py-2 px-4 rounded-md bg-gray-300 h-10"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl shadow-lg p-6">
-              <div className="w-full h-48 bg-gray-300 rounded-lg mb-4"></div>
-              <div className="h-6 bg-gray-300 rounded mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded mb-4"></div>
-              <div className="h-10 bg-gray-300 rounded"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <CarouselContext.Provider value={carouselValue}>
-      <div>
-      {/* Mobile Tab Navigation */}
-      <div className="md:hidden pb-3">
-        <div className="flex space-x-1 glass rounded-xl p-2">
-          <button
-            className={`flex-1 py-3 px-3 rounded-lg font-semibold text-xs transition-all duration-300 ${
-              activeTab === "tutti"
-                ? "text-white shadow-glow"
-                : "hover:scale-105"
-            }`}
-            style={activeTab === "tutti" 
-              ? { backgroundColor: 'var(--brand-accent)' }
-              : { color: 'var(--brand-accent)' }
-            }
-            onClick={() => setActiveTab("tutti")}
-          >
-            TUTTI
-          </button>
-          <button
-            className={`flex-1 py-3 px-3 rounded-lg font-semibold text-xs transition-all duration-300 ${
-              activeTab === "servizi"
-                ? "text-white shadow-glow"
-                : "hover:scale-105"
-            }`}
-            style={activeTab === "servizi" 
-              ? { backgroundColor: 'var(--brand-accent)' }
-              : { color: 'var(--brand-accent)' }
-            }
-            onClick={() => setActiveTab("servizi")}
-          >
-            SERVIZI
-          </button>
-          <button
-            className={`flex-1 py-3 px-3 rounded-lg font-semibold text-xs transition-all duration-300 ${
-              activeTab === "prodotti"
-                ? "text-white shadow-glow"
-                : "hover:scale-105"
-            }`}
-            style={activeTab === "prodotti" 
-              ? { backgroundColor: 'var(--brand-accent)' }
-              : { color: 'var(--brand-accent)' }
-            }
-            onClick={() => setActiveTab("prodotti")}
-          >
-            PRODOTTI
-          </button>
-        </div>
-      </div>
-
-      {/* Desktop Tab Navigation */}
-      <div className="hidden md:flex items-center justify-center space-x-8 mb-10">
-        <button
-          className={`font-semibold text-lg pb-2 transition-all duration-300 ${
-            activeTab === "tutti"
-              ? "text-gradient border-b-3 shadow-glow scale-110"
-              : "opacity-70 hover:opacity-100 hover:scale-105"
-          }`}
-          style={activeTab === "tutti" ? { borderBottom: '3px solid var(--brand-accent)' } : { color: 'var(--brand-accent)' }}
-          onClick={() => setActiveTab("tutti")}
-        >
-          TUTTI
-        </button>
-        <button
-          className={`font-semibold text-lg pb-2 transition-all duration-300 ${
-            activeTab === "servizi"
-              ? "text-gradient border-b-3 shadow-glow scale-110"
-              : "opacity-70 hover:opacity-100 hover:scale-105"
-          }`}
-          style={activeTab === "servizi" ? { borderBottom: '3px solid var(--brand-accent)' } : { color: 'var(--brand-accent)' }}
-          onClick={() => setActiveTab("servizi")}
-        >
-          SERVIZI
-        </button>
-        <button
-          className={`font-semibold text-lg pb-2 transition-all duration-300 ${
-            activeTab === "prodotti"
-              ? "text-gradient border-b-3 shadow-glow scale-110"
-              : "opacity-70 hover:opacity-100 hover:scale-105"
-          }`}
-          style={activeTab === "prodotti" ? { borderBottom: '3px solid var(--brand-accent)' } : { color: 'var(--brand-accent)' }}
-          onClick={() => setActiveTab("prodotti")}
-        >
-          PRODOTTI
-        </button>
-      </div>
-
-      {/* Carousel Content */}
-      {items.length > 0 ? (
-        <div>
-          <div className="relative overflow-hidden touch-pan-y">
-            <div 
-              className="flex transition-transform duration-500 ease-out"
-              style={{
-                transform: `translateX(-${currentSlide * 100}%)`,
-                willChange: 'transform'
-              }}
-              onTouchStart={(e) => {
-                const touch = e.touches[0];
-                e.currentTarget.dataset.startX = touch.clientX.toString();
-              }}
-              onTouchEnd={(e) => {
-                const startX = parseFloat(e.currentTarget.dataset.startX || '0');
-                const touch = e.changedTouches[0];
-                const diffX = startX - touch.clientX;
-                const threshold = 50;
-                
-                if (Math.abs(diffX) > threshold) {
-                  if (diffX > 0 && currentSlide < totalSlides - 1) {
-                    nextSlide();
-                  } else if (diffX < 0 && currentSlide > 0) {
-                    prevSlide();
-                  }
-                }
-              }}
-            >
-              {Array.from({ length: totalSlides }, (_, slideIndex) => (
-                <div
-                  key={slideIndex}
-                  className="flex min-w-full"
-                >
-                  {items
-                    .slice(slideIndex * slidesPerView, (slideIndex + 1) * slidesPerView)
-                    .map((item) => (
-                      <div 
-                        key={item.id} 
-                        className="px-1 sm:px-2"
-                        style={{ width: `${100 / slidesPerView}%` }}
-                      >
-                        <ItemCard item={item} />
-                      </div>
-                    ))}
-                  {/* Fill empty slots on last slide */}
-                  {slideIndex === totalSlides - 1 &&
-                    Array.from({ 
-                      length: Math.max(0, slidesPerView - (items.length % slidesPerView || slidesPerView))
-                    }, (_, i) => (
-                      <div key={`empty-${i}`} style={{ width: `${100 / slidesPerView}%` }} />
-                    ))}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Navigation Controls */}
-          {totalSlides > 1 && (
-            <>
-              {/* Carousel Navigation Arrows */}
-              <div className="flex justify-between items-center mt-6">
-                <button
-                  onClick={prevSlide}
-                  disabled={currentSlide === 0}
-                  className={`p-3 rounded-full shadow-lg transition-all duration-200 ${
-                    currentSlide === 0 
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                      : 'bg-white hover:shadow-xl hover:scale-110'
-                  }`}
-                  style={currentSlide === 0 ? {} : { color: 'var(--brand-accent)' }}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                
-                <div className="flex justify-center space-x-2">
-                  {[...Array(totalSlides)].map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => goToSlide(index)}
-                      className={`w-4 h-4 rounded-full transition-all duration-200 hover:scale-125 ${
-                        index === currentSlide ? "shadow-lg" : "hover:bg-gray-400"
-                      }`}
-                      style={{ 
-                        backgroundColor: index === currentSlide ? 'var(--brand-accent)' : '#d1d5db'
-                      }}
-                    />
-                  ))}
-                </div>
-                
-                <button
-                  onClick={nextSlide}
-                  disabled={currentSlide === totalSlides - 1}
-                  className={`p-3 rounded-full shadow-lg transition-all duration-200 ${
-                    currentSlide === totalSlides - 1 
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                      : 'bg-white hover:shadow-xl hover:scale-110'
-                  }`}
-                  style={currentSlide === totalSlides - 1 ? {} : { color: 'var(--brand-accent)' }}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-              
-              {/* Items counter */}
-              <div className="text-center mt-4 text-sm opacity-70">
-                <span style={{ color: 'var(--brand-text-secondary)' }}>
-                  Pagina {currentSlide + 1} di {totalSlides} • {items.length} {activeTab === "tutti" ? "elementi" : activeTab}
-                </span>
-                <div className="text-xs mt-1 hidden sm:block">
-                  <span style={{ color: 'var(--brand-text-secondary)' }}>
-                    {windowWidth >= 1024 ? "3 elementi per pagina" : windowWidth >= 768 ? "2 elementi per pagina" : "1 elemento per pagina"}
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">
-            {activeTab === "tutti" 
-              ? "Nessun articolo disponibile al momento."
-              : `Nessun ${activeTab === "servizi" ? "servizio" : "prodotto"} disponibile al momento.`
-            }
-          </div>
-        </div>
-      )}
-      </div>
-    </CarouselContext.Provider>
-  );
 }
