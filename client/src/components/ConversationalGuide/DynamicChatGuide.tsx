@@ -30,8 +30,10 @@ interface ChatMessage {
 export function DynamicChatGuide() {
   const cart = useCartWithRules();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [items, setItems] = useState<Item[]>([]);
   const [discounts, setDiscounts] = useState<Discount | null>(null);
+  
+  // Use items from cart hook instead of loading separately
+  const items = cart.getAllItemsWithAvailability() || [];
   const [isTyping, setIsTyping] = useState(false);
   const [userInput, setUserInput] = useState('');
   const [currentPhase, setCurrentPhase] = useState<'welcome' | 'services' | 'products' | 'summary' | 'lead'>('welcome');
@@ -41,43 +43,6 @@ export function DynamicChatGuide() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let isMounted = true;
-
-    // ITEMS: one-shot con filtro WHERE active == true
-    (async () => {
-      try {
-        console.log('🔍 DynamicChatGuide: Starting items fetch...');
-        
-        const itemsRef = collection(db, 'items');
-        const qActive = query(itemsRef, where('active', '==', true));
-        
-        console.log('🔍 DynamicChatGuide: Executing query...');
-        const snap = await getDocs(qActive);
-        
-        console.log('🔍 DynamicChatGuide: Query result - docs count:', snap.docs.length);
-        
-        const loadedItems = snap.docs.map(doc => {
-          const data = doc.data();
-          console.log('🔍 Item data:', doc.id, data);
-          return {
-            id: doc.id,
-            ...(data as Omit<Item, 'id'>),
-          };
-        });
-
-        console.log('🔥 DynamicChatGuide loaded items', loadedItems.length, loadedItems.map(i => ({ id: i.id, title: i.title, category: i.category, active: i.active })));
-
-        if (isMounted) {
-          console.log('🔍 DynamicChatGuide: Setting items state...');
-          setItems(loadedItems);
-        } else {
-          console.log('🔍 DynamicChatGuide: Component unmounted, not setting state');
-        }
-      } catch (err) {
-        console.error('❌ Errore caricamento items:', err);
-      }
-    })();
-
     // DISCOUNTS: se li vuoi realtime, mantieni onSnapshot
     const unsubscribeDiscounts = onSnapshot(
       collection(db, 'discounts'),
@@ -88,7 +53,6 @@ export function DynamicChatGuide() {
     );
 
     return () => {
-      isMounted = false;
       unsubscribeDiscounts();
     };
   }, []);
@@ -180,44 +144,34 @@ export function DynamicChatGuide() {
       typing: true
     });
 
-    // Funzione ricorsiva per aspettare che gli items siano caricati
-    const waitForItemsAndShowServices = (attempts = 0) => {
-      console.log(`🔍 Attempt ${attempts + 1}: Checking items...`, items.length);
+    setTimeout(() => {
+      console.log('🔍 Items from cart hook:', items.length);
       
-      if (items.length > 0) {
-        console.log('✅ Items loaded, showing services:', items.length);
-        
-        const services = items.filter(item => {
-          const isService = item.category === 'servizio';
-          const isActive = item.active !== false;
-          console.log('🔍 Service check - Item:', item.title, 'Category:', item.category, 'active:', item.active, 'isService:', isService, 'isActive:', isActive);
-          return isService && isActive;
-        });
-        
-        console.log('🔍 Filtered services:', services);
-        
+      const services = items.filter(item => {
+        const isService = item.category === 'servizio';
+        const isActive = item.isActive !== false; // Use isActive from cart hook
+        console.log('🔍 Service check - Item:', item.title, 'Category:', item.category, 'isActive:', item.isActive, 'isService:', isService);
+        return isService && isActive;
+      });
+      
+      console.log('🔍 Filtered services:', services);
+      
+      if (services.length > 0) {
         addMessage({
           id: 'services-selection',
           type: 'system',
           text: "Seleziona i servizi che desideri:",
           items: services
         });
-      } else if (attempts < 10) { // Max 10 tentativi (10 secondi)
-        console.log('⏳ Items not loaded yet, retrying in 1 second...');
-        setTimeout(() => waitForItemsAndShowServices(attempts + 1), 1000);
       } else {
-        console.error('❌ Timeout waiting for items to load');
         addMessage({
           id: 'services-error',
           type: 'assistant',
           avatar: 'thoughtful',
-          text: "⚠️ Si è verificato un errore nel caricamento. Ricarica la pagina per riprovare.",
+          text: "⚠️ Caricamento servizi in corso, riprova tra un momento.",
         });
       }
-    };
-
-    // Inizia il controllo dopo 2 secondi
-    setTimeout(() => waitForItemsAndShowServices(), 2000);
+    }, 2000);
   };
 
   const handleItemToggle = (item: Item) => {
