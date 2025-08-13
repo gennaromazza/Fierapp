@@ -14,8 +14,25 @@ import CheckoutModal from '../CheckoutModal';
 import EnhancedSavingsDisplay from '../EnhancedSavingsDisplay';
 import RulesInfoPanel from '../RulesInfoPanel';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
+import { MobileOptimizedGuide } from './MobileOptimizedGuide';
 
 export function ConversationalGuide() {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  if (isMobile) {
+    return <MobileOptimizedGuide />;
+  }
+  
   const guide = useGuideLogic();
   const cart = useCartWithRules();
   const [showTyping, setShowTyping] = useState(true);
@@ -36,9 +53,9 @@ export function ConversationalGuide() {
     <div className="min-h-screen bg-brand-background">
       <Header />
       
-      <div className="flex min-h-screen">
-        {/* Left Side - Chat Assistant */}
-        <div className="w-1/3 bg-gradient-to-br from-blue-50 to-white border-r border-gray-200 flex flex-col">
+      <div className="flex flex-col md:flex-row min-h-screen">
+        {/* Chat Assistant - Full width on mobile, 1/3 on desktop */}
+        <div className="w-full md:w-1/3 bg-gradient-to-br from-blue-50 to-white border-b md:border-r border-gray-200 flex flex-col max-h-[60vh] md:max-h-none">
           {/* Chat Header */}
           <div className="p-6 border-b bg-white">
             <div className="flex items-center gap-3">
@@ -114,8 +131,8 @@ export function ConversationalGuide() {
           </div>
         </div>
 
-        {/* Right Side - Interactive UI */}
-        <div className="flex-1 flex flex-col">
+        {/* Interactive UI - Full width on mobile, 2/3 on desktop */}
+        <div className="flex-1 flex flex-col min-h-[40vh] md:min-h-auto">
           {shouldShowUI ? (
             <main className="flex-1 pb-32">
               {/* Hero Section with Enhanced Savings */}
@@ -170,13 +187,14 @@ export function ConversationalGuide() {
 
           {/* Price Bar - always visible when cart has items */}
           {cart.cart.items.length > 0 && (
-            <PriceBar 
-              onCheckout={() => setIsCheckoutOpen(true)}
+            <div 
               className={cn(
                 currentStep?.uiHint === 'highlight_cart' && 
                 "ring-2 ring-blue-400 ring-opacity-75"
               )}
-            />
+            >
+              <PriceBar onOpenCheckout={() => setIsCheckoutOpen(true)} />
+            </div>
           )}
         </div>
       </div>

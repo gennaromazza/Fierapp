@@ -11,16 +11,14 @@ import EnhancedSavingsDisplay from "../components/EnhancedSavingsDisplay";
 import RulesInfoPanel from "../components/RulesInfoPanel";
 import { ConversationalGuide } from "../components/ConversationalGuide";
 import { useCartWithRules } from "../hooks/useCartWithRules";
+import { useABFlag } from "../hooks/useABFlag";
 import type { Settings } from "../../shared/schema";
 
-interface HomeProps {
-  enableGuide?: boolean;
-}
-
-export default function Home({ enableGuide = false }: HomeProps) {
+export default function Home() {
   const cart = useCartWithRules();
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const { flags } = useABFlag();
 
   useEffect(() => {
     logEvent(analytics, "page_view", {
@@ -43,8 +41,8 @@ export default function Home({ enableGuide = false }: HomeProps) {
     loadSettings();
   }, []);
 
-  // If guide is enabled, render the conversational guide homepage
-  if (enableGuide) {
+  // If guide_v1 flag is enabled, render the conversational guide homepage
+  if (flags.guide_v1) {
     return <ConversationalGuide />;
   }
 

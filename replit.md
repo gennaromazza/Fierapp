@@ -11,9 +11,19 @@ The system enables businesses to display special promotional offers at trade sho
 Preferred communication style: Simple, everyday language.
 User preference: Dislikes flashing/pulsing animation effects - prefers clean, static design without distracting animations.
 
-## Recent Changes (January 12, 2025)
+## Recent Changes (August 13, 2025)
 
-### Session Isolation System (January 12, 2025) - COMPLETED
+### Full-Screen Conversational Guide with Mobile Optimization (August 13, 2025) - COMPLETED
+- **Alternative Homepage**: ✅ IMPLEMENTED - Complete conversational guide homepage that replaces standard homepage when A/B flag "guide_v1" is active
+- **Mobile-First Design**: ✅ OPTIMIZED - Automatic detection and switch to mobile-optimized layout for smartphones (width < 768px)
+- **Multi-Avatar System**: ✅ ENHANCED - 5 different avatar expressions (smiling, explaining, enthusiastic with money, excited, thoughtful) with smooth animations
+- **Detailed Conversations**: ✅ ENRICHED - Highly explanatory conversations covering selection rules, gift conditions, mutual exclusion logic, and pricing breakdown
+- **Split Layout Desktop**: Chat assistant (1/3) + interactive UI (2/3) for desktop users
+- **Collapsible Mobile**: Expandable chat section with progress indicators and touch-friendly navigation for mobile users
+- **Real-time Animations**: Avatar changes expressions based on conversation context with periodic subtle animations
+- **Smart UI Integration**: Shows relevant UI sections (services, products, cart) contextually during conversation steps
+
+### Previous Session Isolation System (January 12, 2025) - COMPLETED
 - **Clean Slate Guarantee**: ✅ IMPLEMENTED - Every page load now starts with completely empty cart
 - **Storage Cleanup**: Cart persistence disabled - localStorage and sessionStorage cleared on each session
 - **Trade Show Ready**: No cached selections between different users/sessions at the kiosk
