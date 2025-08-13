@@ -1,0 +1,109 @@
+Flag: "guide_v1".
+
+Nessuna modifica alla Home attuale.
+
+Rendi effettivo solo dopo mia conferma.
+
+Avatar (usa le 4 immagini che ho creato)
+A1 (Sorridente): benvenuto, raccolta lead, chiusura.
+
+A2 (Neutro/Pro): istruzioni, riepiloghi, sconti.
+
+A3 (Spiega/Pensieroso): regole, blocchi, incompatibilità, sblocchi.
+
+A4 (Entusiasta/Upsell): suggerimenti, offerte, “soldi in mano”.
+
+Ottimizza WebP <100 KB, 1×/2× retina.
+Confetti: anima l’avatar in modalità festa quando si annunciano gli sconti (vedi Step 2).
+
+Dati da backend (leggere dinamicamente)
+studioName (nome studio)
+
+globalDiscount.percent + globalDiscount.endDate
+
+perItemDiscounts[] (mappa sconti su singoli prodotti/servizi)
+
+dependencies (es. per aggiungere Album serve Servizio Fotografico)
+
+conflicts / availability (es. prodotti non combinabili o non disponibili)
+
+unlockedGifts (omaggi legati a selezioni)
+
+Conversazione (testi pronti + azioni UI)
+0) Benvenuto & Nome — A1
+IO: «Ciao, sono Gennaro di {{studioName}} (dal backend). Sono il tuo assistente personale: ti aiuto a compilare il preventivo per il servizio fotografico del tuo matrimonio. Come ti chiami?»
+Cliente: inserisce Nome → salva in stato lead.name.
+UI hint: nessuno (solo chat visibile).
+
+1) Annuncio sconti (confetti) — A1 (avatar in modalità festa + coriandoli)
+IO: «Perfetto, {{lead.name}}! Per l’occasione è attivo uno sconto globale del {{globalDiscount.percent}}% che termina il {{globalDiscount.endDate}}.
+E non solo: abbiamo sconti anche sui singoli prodotti/servizi (controlla i badge rossi nelle card).»
+UI hint: evidenzia banner sconto globale; se perItemDiscounts esiste → highlight badge sconto sulle card.
+Animazione: confetti on screen + micro-bounce avatar.
+
+2) Data nozze (obbligatoria) — A1
+IO: «Iniziamo: mi dici la data delle nozze? Per noi è fondamentale.»
+Cliente: inserisce Data evento (datepicker) → valida formato dd/MM/yyyy → salva lead.date.
+UI hint: nessuno.
+
+3) Selezione Servizi — A2
+IO: «Perfetto, {{lead.name}}. La prima cosa da scegliere sono i Servizi.
+Se selezioni {{X}} (dal backend), sblocchi: {{listaServiziSbloccati}}.»
+UI hint: switch tab SERVIZI; highlight card “Servizio Fotografico” o servizi base configurati.
+Cliente: seleziona servizi → evento service_selected → aggiorna carrello.
+
+4) Vai ai Prodotti — A2
+IO: «Ottimo! Ora passiamo ai Prodotti (album, foto per invitati, ecc.).»
+UI hint: switch tab PRODOTTI; se sblocchi → toast “Prodotti Sbloccati!” con lista.
+
+5) Gestione blocchi & incompatibilità — A3 (mostrare solo quando serve)
+IO: «Vedo che hai scelto {{item}} ma per inserirlo serve prima {{required}}. Vuoi che lo aggiunga ora?»
+Scelte: Sì, aggiungi (aggiunge requisito e riprova) · No, indietro
+Caso conflitto: «{{itemA}} non è compatibile con {{itemB}}. Preferisci tenere {{itemA}} o {{itemB}}?»
+UI hint: highlight card bloccata + card richiesta; eventuale rimozione guidata.
+
+6) Upsell soft — A4
+IO: «Per completare al meglio, ti suggerisco i preferiti dagli sposi: Videomaker, Riprese Drone, Foto per Invitati. Li aggiungo?»
+Scelte: Aggiungi consigliati (aggiunge tutti/alcuni) · Scelgo io
+UI hint: highlight card consigliate; mostra badge sconto per-item.
+
+7) Riepilogo & Sconti — A2
+IO: «Ecco il tuo riepilogo. Hai sconto globale del {{globalDiscount.percent}}% fino al {{globalDiscount.endDate}} + sconti prodotto già conteggiati nel carrello.»
+UI hint: scroll al carrello sticky, espandi “Sconto globale” e “Sconti prodotti/servizi”.
+
+8) Omaggi / Risparmio
+Se omaggio sbloccato — A4
+IO: «Bene! Con i servizi che hai selezionato hai **sbloccato questo omaggio: {{giftName}}.»
+
+Se nessun omaggio — A4 (soldi in mano)
+IO: «Guarda quanto hai risparmiato: €{{savingTotal}} tra sconto globale e sconti prodotto. Niente male! 😄»
+UI hint: flash del pannello risparmi nel carrello.
+
+9) Raccolta lead in stile conversazione (uguale al tuo modal) — A1
+Chiedi in sequenza (validazione immediata). I campi e i testi devono replicare il modal attuale:
+
+Nome (required)
+
+Cognome (required)
+
+Email (required, formato email)
+
+Telefono (required, regex ^\+?\d{7,15}$)
+
+Data evento (required, dd/MM/yyyy — precompilare con lead.date se già inserita)
+
+Note aggiuntive (optional)
+
+GDPR (required, testo identico al modal)
+UI: in alto mostra il RIEPILOGO SELEZIONE come nel modal (lista item, Subtotale, Sconti prodotto/servizio, RISPARMIO TOTALE, TOTALE).
+Bottoni (disabilitati finché formValid && gdpr):
+
+SCARICA PREVENTIVO PDF → generateQuotePdf(cart, lead)
+
+INVIA RICHIESTA → submitLead(lead, cart) + openWhatsApp(deeplink)
+Helper: “La richiesta verrà salvata e si aprirà automaticamente WhatsApp”.
+
+10) Chiusura — A1
+IO: «Grazie, {{lead.name}}! Ti ho inviato il riepilogo. Preferisci scrivermi su WhatsApp o fissare un appuntamento?»
+Azioni: Apri WhatsApp · Prenota appuntamento · Torna alla Home.
+

@@ -9,10 +9,15 @@ import PriceBar from "../components/PriceBar";
 import CheckoutModal from "../components/CheckoutModal";
 import EnhancedSavingsDisplay from "../components/EnhancedSavingsDisplay";
 import RulesInfoPanel from "../components/RulesInfoPanel";
+import { ConversationalGuide } from "../components/ConversationalGuide";
 import { useCartWithRules } from "../hooks/useCartWithRules";
 import type { Settings } from "../../shared/schema";
 
-export default function Home() {
+interface HomeProps {
+  enableGuide?: boolean;
+}
+
+export default function Home({ enableGuide = false }: HomeProps) {
   const cart = useCartWithRules();
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -38,6 +43,12 @@ export default function Home() {
     loadSettings();
   }, []);
 
+  // If guide is enabled, render the conversational guide homepage
+  if (enableGuide) {
+    return <ConversationalGuide />;
+  }
+
+  // Render standard homepage
   return (
     <div className="min-h-screen bg-brand-background">
       <Header />

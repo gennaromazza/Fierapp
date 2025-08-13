@@ -6,21 +6,26 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./hooks/useAuth";
 import { CartProvider } from "./hooks/useCart";
 import { useBrandColors } from "./hooks/useBrandColors";
+import { useABFlag } from "./hooks/useABFlag";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
+  const abFlag = useABFlag();
+  
+  const HomeWithFlags = () => <Home enableGuide={abFlag.isEnabled('guide_v1')} />;
+  
   return (
     <Switch>
       {/* Root routes */}
-      <Route path="/" component={Home} />
+      <Route path="/" component={HomeWithFlags} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={Admin} />
       
       {/* Fiera prefixed routes */}
-      <Route path="/fiera/" component={Home} />
+      <Route path="/fiera/" component={HomeWithFlags} />
       <Route path="/fiera/admin/login" component={AdminLogin} />
       <Route path="/fiera/admin" component={Admin} />
       
