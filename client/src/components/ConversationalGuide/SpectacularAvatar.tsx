@@ -71,8 +71,8 @@ export function SpectacularAvatar({
             damping: 15,
             duration: 0.8 
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+          className="fixed inset-0 z-40 flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)' }}
         >
           {/* Animated Background Gradient */}
           <motion.div
@@ -111,12 +111,12 @@ export function SpectacularAvatar({
             />
           ))}
 
-          {/* Giant Avatar */}
+          {/* Avatar - Responsive Size */}
           <motion.div
             className="relative z-10"
             animate={{
-              scale: [1, 1.1, 1],
-              rotate: [-5, 5, -5],
+              scale: [1, 1.05, 1],
+              rotate: [-2, 2, -2],
             }}
             transition={{
               duration: 2,
@@ -125,11 +125,11 @@ export function SpectacularAvatar({
             }}
           >
             <motion.div
-              className="text-[300px] select-none"
+              className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 select-none"
               initial={{ rotate: 0 }}
               animate={{ 
                 rotate: [0, -10, 10, -10, 0],
-                scale: [1, 1.2, 1]
+                scale: [1, 1.1, 1]
               }}
               transition={{
                 duration: 0.5,
@@ -139,34 +139,34 @@ export function SpectacularAvatar({
               <img 
                 src={avatarImages[type]} 
                 alt="Avatar"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain rounded-full"
               />
             </motion.div>
           </motion.div>
 
-          {/* Cartoon Effects Text */}
+          {/* Cartoon Effects Text - Responsive */}
           {showEffects && (
             <>
               <motion.div
-                className="absolute top-20 left-20 text-8xl font-bold text-yellow-400"
+                className="absolute top-4 left-4 sm:top-10 sm:left-10 lg:top-20 lg:left-20 text-3xl sm:text-5xl lg:text-8xl font-bold text-yellow-400"
                 initial={{ scale: 0, rotate: -45 }}
-                animate={{ scale: [0, 1.5, 1], rotate: 0 }}
+                animate={{ scale: [0, 1.2, 1], rotate: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
               >
                 WOW!
               </motion.div>
               <motion.div
-                className="absolute bottom-20 right-20 text-8xl font-bold text-pink-400"
+                className="absolute bottom-4 right-4 sm:bottom-10 sm:right-10 lg:bottom-20 lg:right-20 text-3xl sm:text-5xl lg:text-8xl font-bold text-pink-400"
                 initial={{ scale: 0, rotate: 45 }}
-                animate={{ scale: [0, 1.5, 1], rotate: 0 }}
+                animate={{ scale: [0, 1.2, 1], rotate: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
               >
                 BOOM!
               </motion.div>
               <motion.div
-                className="absolute top-40 right-40 text-6xl font-bold text-cyan-400"
+                className="absolute top-16 right-8 sm:top-32 sm:right-16 lg:top-40 lg:right-40 text-2xl sm:text-4xl lg:text-6xl font-bold text-cyan-400"
                 initial={{ scale: 0 }}
-                animate={{ scale: [0, 1.2, 1], rotate: [0, 360] }}
+                animate={{ scale: [0, 1.1, 1], rotate: [0, 360] }}
                 transition={{ delay: 0.7, duration: 0.5 }}
               >
                 ✨
@@ -174,23 +174,23 @@ export function SpectacularAvatar({
             </>
           )}
 
-          {/* Message Display */}
+          {/* Message Display - Responsive */}
           {message && (
             <motion.div
-              className="absolute bottom-32 left-1/2 transform -translate-x-1/2 bg-white rounded-3xl p-8 shadow-2xl max-w-2xl"
+              className="absolute bottom-16 sm:bottom-24 lg:bottom-32 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl p-4 sm:p-6 lg:p-8 shadow-2xl max-w-xs sm:max-w-lg lg:max-w-2xl mx-4"
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 1, duration: 0.5 }}
             >
-              <p className="text-2xl font-bold text-gray-800 text-center">
+              <p className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-800 text-center">
                 {message}
               </p>
             </motion.div>
           )}
 
-          {/* Skip Button */}
+          {/* Skip Button - Responsive */}
           <motion.button
-            className="absolute top-8 right-8 bg-white/20 backdrop-blur-md text-white px-6 py-3 rounded-full font-semibold hover:bg-white/30 transition-colors"
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 lg:top-8 lg:right-8 bg-white/20 backdrop-blur-md text-white px-3 py-2 sm:px-4 sm:py-2 lg:px-6 lg:py-3 rounded-full text-sm sm:text-base font-semibold hover:bg-white/30 transition-colors z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 2 }}
