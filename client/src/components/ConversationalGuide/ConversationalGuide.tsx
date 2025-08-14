@@ -1,7 +1,7 @@
-import { DynamicChatGuide } from './DynamicChatGuide';
+import { FullscreenConversationalGuide } from './FullscreenConversationalGuide';
 
 export function ConversationalGuide() {
-  return <DynamicChatGuide />;
+  return <FullscreenConversationalGuide />;
 }
 
 export default ConversationalGuide;

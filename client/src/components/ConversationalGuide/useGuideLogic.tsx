@@ -52,7 +52,7 @@ export function useGuideLogic() {
       {
         id: 'welcome',
         avatar: 'smiling',
-        message: `Ciao! Sono Gennaro di ${studioName}, il tuo assistente virtuale per il matrimonio. Ho creato questo sistema intelligente per aiutarti a scegliere i servizi perfetti per il tuo grande giorno. Ti guiderò passo dopo passo, spiegandoti tutte le opzioni e gli sconti disponibili. Come ti chiami?`,
+        message: `Ciao! Sono l'assistente virtuale di ${studioName} per il matrimonio. Ho creato questo sistema intelligente per aiutarti a scegliere i servizi perfetti per il tuo grande giorno. Ti guiderò passo dopo passo, spiegandoti tutte le opzioni e gli sconti disponibili. Come ti chiami?`,
         actions: [{
           id: 'name',
           label: 'Il tuo nome',

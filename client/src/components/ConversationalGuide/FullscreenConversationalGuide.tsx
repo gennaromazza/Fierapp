@@ -9,7 +9,7 @@ import { ChatProductSelector } from './ChatProductSelector';
 import { format } from 'date-fns';
 import { ActionButtons } from './ActionButtons';
 import { LeadForm } from './LeadForm';
-import { useImprovedGuideLogic } from './ImprovedGuideLogic';
+import { useGuideLogic } from './useGuideLogic';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
 import { collection, onSnapshot, doc } from 'firebase/firestore';
 import { db } from '@/firebase';
@@ -17,7 +17,7 @@ import type { Item, Discounts } from '@shared/schema';
 import CheckoutModal from '../CheckoutModal';
 
 export function FullscreenConversationalGuide() {
-  const guide = useImprovedGuideLogic();
+  const guide = useGuideLogic();
   const cart = useCartWithRules();
   const [showTyping, setShowTyping] = useState(true);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -388,21 +388,16 @@ export function FullscreenConversationalGuide() {
             </Button>
 
             <div className="text-center">
-              {!guide.canProceedToNext() && currentStep?.requiresAction && (
-                <p className="text-sm text-amber-600 font-medium">
-                  ⚠️ Completa l'azione richiesta per continuare
-                </p>
-              )}
+              <p className="text-sm text-gray-500">
+                Passo {guide.guideState.currentStep + 1} di {guide.generateSteps().length}
+              </p>
             </div>
 
             <Button
               variant="outline"
               onClick={guide.nextStep}
-              disabled={guide.guideState.currentStep >= guide.generateSteps().length - 1 || !guide.canProceedToNext()}
-              className={cn(
-                "flex items-center gap-2",
-                !guide.canProceedToNext() && "opacity-50 cursor-not-allowed"
-              )}
+              disabled={guide.guideState.currentStep >= guide.generateSteps().length - 1}
+              className="flex items-center gap-2"
             >
               Avanti
               <ChevronRight className="h-4 w-4" />
