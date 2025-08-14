@@ -3,8 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Download, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -36,7 +34,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     gdprAccepted: false,
     ...initialData
   });
-  const [dateOpen, setDateOpen] = useState(false);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Fetch settings for WhatsApp number
@@ -345,38 +343,24 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         </div>
 
         <div>
-          <Popover open={dateOpen} onOpenChange={setDateOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !formData.eventDate && "text-muted-foreground",
-                  errors.eventDate && "border-red-500"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.eventDate 
-                  ? format(new Date(formData.eventDate), "dd/MM/yyyy")
-                  : "Data nozze *"
+          <div className="relative">
+            <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+            <Input
+              type="date"
+              value={formData.eventDate ? format(new Date(formData.eventDate), "yyyy-MM-dd") : ''}
+              onChange={(e) => {
+                if (e.target.value) {
+                  handleInputChange('eventDate', new Date(e.target.value).toISOString());
                 }
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={formData.eventDate ? new Date(formData.eventDate) : undefined}
-                onSelect={(date) => {
-                  if (date) {
-                    handleInputChange('eventDate', date.toISOString());
-                    setDateOpen(false);
-                  }
-                }}
-                disabled={(date) => date < new Date()}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+              }}
+              min={format(new Date(), "yyyy-MM-dd")}
+              className={cn(
+                "pl-10",
+                errors.eventDate && "border-red-500"
+              )}
+              placeholder="Data nozze *"
+            />
+          </div>
           {errors.eventDate && <p className="text-red-500 text-xs mt-1">{errors.eventDate}</p>}
         </div>
 
