@@ -15,6 +15,8 @@ import { SpectacularAvatar } from './SpectacularAvatar';
 import { getItemDiscountInfo } from '../../lib/discounts';
 import { calculateUnifiedPricing } from '../../lib/unifiedPricing';
 
+type PhaseType = 'welcome' | 'services' | 'products' | 'summary' | 'lead';
+
 interface ChatMessage {
   id: string;
   type: 'assistant' | 'user' | 'system';
@@ -42,7 +44,7 @@ export function DynamicChatGuide() {
   const [itemsReady, setItemsReady] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [userInput, setUserInput] = useState('');
-  const [currentPhase, setCurrentPhase] = useState<'welcome' | 'services' | 'products' | 'summary' | 'lead'>('welcome');
+  const [currentPhase, setCurrentPhase] = useState<PhaseType>('welcome');
   const [leadData, setLeadData] = useState<any>({});
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [messageCounter, setMessageCounter] = useState(0);
@@ -686,12 +688,16 @@ export function DynamicChatGuide() {
     
     // Calculate discounted price using both global and individual discounts
     const originalPrice = item.originalPrice || item.price;
-    let discountInfo = { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
+    
+    let discountInfo: {
+      finalPrice: number;
+      savings: number;
+      discountType: 'individual' | 'global' | null;
+      discountValue: number;
+    } = { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
     
     if (discounts && !isGift) {
       discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
-
-
     }
     
     const hasDiscount = discountInfo.discountType !== null;
@@ -961,8 +967,8 @@ export function DynamicChatGuide() {
   }
 
   // Progress calculation
-  const getProgress = () => {
-    switch (currentPhase) {
+  const getProgress = (): number => {
+    switch (currentPhase as PhaseType) {
       case 'welcome': return 20;
       case 'services': return 40;
       case 'products': return 60;
@@ -972,8 +978,8 @@ export function DynamicChatGuide() {
     }
   };
 
-  const getPhaseLabel = () => {
-    switch (currentPhase) {
+  const getPhaseLabel = (): string => {
+    switch (currentPhase as PhaseType) {
       case 'welcome': return "Benvenuto";
       case 'services': return "Servizi";
       case 'products': return "Prodotti";
@@ -983,7 +989,7 @@ export function DynamicChatGuide() {
     }
   };
 
-  const canGoBack = currentPhase !== 'welcome' && currentPhase !== 'lead';
+  const canGoBack = (currentPhase as PhaseType) !== 'welcome' && (currentPhase as PhaseType) !== 'lead';
   const canSkipForward = currentPhase === 'services' || currentPhase === 'products';
 
   const handleGoBack = () => {
@@ -1112,11 +1118,11 @@ export function DynamicChatGuide() {
             <div>
               <h3 className="font-semibold text-gray-900">Assistente Matrimonio</h3>
               <p className="text-xs text-gray-500">
-                {currentPhase === 'welcome' && "Scegli la data del matrimonio"}
-                {currentPhase === 'services' && "Seleziona i servizi fondamentali"}
-                {currentPhase === 'products' && "Aggiungi prodotti esclusivi"}
-                {currentPhase === 'summary' && "Controlla il preventivo"}
-                {currentPhase === 'lead' && "Completa la prenotazione"}
+                {(currentPhase as PhaseType) === 'welcome' && "Scegli la data del matrimonio"}
+                {(currentPhase as PhaseType) === 'services' && "Seleziona i servizi fondamentali"}
+                {(currentPhase as PhaseType) === 'products' && "Aggiungi prodotti esclusivi"}
+                {(currentPhase as PhaseType) === 'summary' && "Controlla il preventivo"}
+                {(currentPhase as PhaseType) === 'lead' && "Completa la prenotazione"}
               </p>
             </div>
             
