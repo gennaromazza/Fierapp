@@ -1,17 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, ShoppingCart, Gift, Tag, Check, X, Sparkles, MessageCircle } from 'lucide-react';
+import { Send, ShoppingCart, Gift, Tag, Check, X, Sparkles, MessageCircle, ArrowLeft, SkipForward, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
-import { collection, getDocs, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, onSnapshot, getDoc, doc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { Item, Discounts, Settings } from '../../../../shared/schema';
 import CheckoutModal from '@/components/CheckoutModal';
 import { LeadForm } from './LeadForm';
 import { SpectacularAvatar } from './SpectacularAvatar';
-import { calculateDiscountedPrice, getItemDiscountInfo, calculateCartSavings } from '../../lib/discounts';
+import { getItemDiscountInfo } from '../../lib/discounts';
+import { calculateUnifiedPricing } from '../../lib/unifiedPricing';
 
 interface ChatMessage {
   id: string;
@@ -44,7 +46,66 @@ export function DynamicChatGuide() {
   const [leadData, setLeadData] = useState<any>({});
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [messageCounter, setMessageCounter] = useState(0);
+  const [sessionStarted, setSessionStarted] = useState(false);
+  const [conversationData, setConversationData] = useState<{
+    userName?: string;
+    eventDate?: string;
+    selectedServices: string[];
+    selectedProducts: string[];
+    preferences: string[];
+    sessionId: string;
+    startTime: Date;
+  }>({
+    selectedServices: [],
+    selectedProducts: [],
+    preferences: [],
+    sessionId: `session_${Date.now()}`,
+    startTime: new Date()
+  });
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Salva dati conversazione su Firebase
+  const saveChatHistory = async (eventType: string, data: any = {}) => {
+    try {
+      await addDoc(collection(db, 'chat_history'), {
+        sessionId: conversationData.sessionId,
+        eventType,
+        data,
+        conversationData: {
+          ...conversationData,
+          currentPhase,
+          messagesCount: messages.length,
+          cartItemsCount: cart.cart.items.length,
+          totalValue: cart.getPricingWithRules().total,
+          totalSavings: cart.getPricingWithRules().totalSavings
+        },
+        timestamp: serverTimestamp(),
+        createdAt: new Date()
+      });
+      
+      console.log(`💾 Chat history saved: ${eventType}`, data);
+    } catch (error) {
+      console.error('Error saving chat history:', error);
+    }
+  };
+
+  // Reset completo per ogni nuova sessione
+  useEffect(() => {
+    if (!sessionStarted) {
+      // Garantisce reset completo della chat
+      setMessages([]);
+      setCurrentPhase('welcome');
+      setLeadData({});
+      setUserInput('');
+      setMessageCounter(0);
+      setSessionStarted(true);
+      
+      // Reset carrello per nuova sessione
+      cart.clearCart();
+      
+      console.log('🔄 Chat completamente resettata per nuova sessione');
+    }
+  }, [sessionStarted, cart]);
 
   // Track when items are ready
   useEffect(() => {
@@ -137,7 +198,7 @@ export function DynamicChatGuide() {
       
       const services = items.filter(item => {
         const isService = item.category === 'servizio';
-        const isActive = item.isActive !== false;
+        const isActive = item.active !== false;
         return isService && isActive;
       });
       
@@ -215,13 +276,20 @@ export function DynamicChatGuide() {
   };
 
   const handleDateSelection = (date: string) => {
+    const dateText = date === '2025' ? 'Nel 2025' : date === '2026' ? 'Nel 2026' : 'Più avanti';
+    
     addMessage({
       id: `user-date-${Date.now()}`,
       type: 'user',
-      text: date === '2025' ? 'Nel 2025' : date === '2026' ? 'Nel 2026' : 'Più avanti'
+      text: dateText
     });
 
+    // Aggiorna dati conversazione
+    setConversationData(prev => ({ ...prev, eventDate: date }));
     setLeadData((prev: any) => ({ ...prev, eventYear: date }));
+    
+    // Salva selezione data
+    saveChatHistory('date_selected', { eventDate: date, dateText });
     
     // Enhanced welcome with studio information and discount details
     setTimeout(() => {
@@ -238,7 +306,7 @@ export function DynamicChatGuide() {
         `\n\nPer info dirette:\n${contactInfo.join('\n')}` : '';
       
       const hasGlobalDiscount = discounts?.global?.isActive;
-      const discountText = hasGlobalDiscount ? 
+      const discountText = hasGlobalDiscount && discounts?.global ? 
         `\n\n🎯 OFFERTA SPECIALE: Sconto ${discounts.global.type === 'percent' ? discounts.global.value + '%' : '€' + discounts.global.value} attivo su tutti i servizi!` : '';
       
       addMessage({
@@ -254,6 +322,9 @@ export function DynamicChatGuide() {
 
   const startServicesPhase = () => {
     setCurrentPhase('services');
+    
+    // Salva transizione di fase
+    saveChatHistory('phase_started', { phase: 'services', timestamp: new Date() });
     
     addMessage({
       id: 'services-intro',
@@ -303,6 +374,26 @@ export function DynamicChatGuide() {
         type: 'user',
         text: `❌ Rimosso: ${item.title}`
       });
+      
+      // Aggiorna dati conversazione rimuovendo item
+      setConversationData(prev => ({
+        ...prev,
+        selectedServices: item.category === 'servizio' 
+          ? prev.selectedServices.filter(id => id !== item.id)
+          : prev.selectedServices,
+        selectedProducts: item.category === 'prodotto'
+          ? prev.selectedProducts.filter(id => id !== item.id)
+          : prev.selectedProducts
+      }));
+      
+      // Salva rimozione item
+      saveChatHistory('item_removed', { 
+        itemId: item.id, 
+        itemTitle: item.title, 
+        category: item.category,
+        phase: currentPhase 
+      });
+      
     } else {
       // Controlla se posso aggiungere l'item (regole di disponibilità)
       const isAvailable = cart.isItemAvailable(item.id);
@@ -334,6 +425,30 @@ export function DynamicChatGuide() {
         addMessage({
           type: 'user',
           text: message
+        });
+        
+        // Aggiorna dati conversazione aggiungendo item
+        setConversationData(prev => ({
+          ...prev,
+          selectedServices: item.category === 'servizio' && !prev.selectedServices.includes(item.id)
+            ? [...prev.selectedServices, item.id]
+            : prev.selectedServices,
+          selectedProducts: item.category === 'prodotto' && !prev.selectedProducts.includes(item.id)
+            ? [...prev.selectedProducts, item.id]
+            : prev.selectedProducts
+        }));
+        
+        // Salva aggiunta item con dettagli di pricing
+        const pricing = cart.getPricingWithRules();
+        saveChatHistory('item_added', { 
+          itemId: item.id, 
+          itemTitle: item.title, 
+          category: item.category,
+          price: item.price,
+          isGift,
+          phase: currentPhase,
+          cartTotal: pricing.total,
+          cartSavings: pricing.totalSavings
         });
         
         // Controllo per feedback intelligente sui regali sbloccati
@@ -387,6 +502,15 @@ export function DynamicChatGuide() {
 
   const startProductsPhase = () => {
     setCurrentPhase('products');
+    
+    // Salva transizione di fase con stato servizi selezionati
+    const selectedServices = cart.cart.items.filter(i => i.category === 'servizio');
+    saveChatHistory('phase_started', { 
+      phase: 'products', 
+      timestamp: new Date(),
+      selectedServicesCount: selectedServices.length,
+      selectedServices: selectedServices.map(s => ({ id: s.id, title: s.title }))
+    });
     
     const hasPhotoService = cart.cart.items.some(i => i.id === 'bsCHxhOyCn70gtzBAGQQ');
     const hasVideoService = cart.cart.items.some(i => i.id === 'wFwLZdWcjo6tdkhasQbs');
@@ -442,26 +566,47 @@ export function DynamicChatGuide() {
     
     const pricing = cart.getPricingWithRules();
     const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
+    const giftItemIds = giftItems.map(item => item.id);
     
-    // Calculate comprehensive savings using enhanced discount system
+    // Salva transizione a summary con dettagli completi carrello
+    const selectedItems = cart.cart.items.map(item => ({
+      id: item.id,
+      title: item.title,
+      category: item.category,
+      price: item.price
+    }));
+    
+    saveChatHistory('phase_started', { 
+      phase: 'summary', 
+      timestamp: new Date(),
+      cartTotal: pricing.total,
+      cartSavings: pricing.totalSavings,
+      itemsCount: cart.cart.items.length,
+      selectedItems,
+      giftItemsCount: giftItems.length,
+      giftItems: giftItems.map(item => ({ id: item.id, title: item.title }))
+    });
+    
+    // Calculate comprehensive savings using unified pricing system
     const savingsInfo = discounts ? 
-      calculateCartSavings(cart.cart.items, discounts, pricing.giftSavings) :
+      calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds) :
       {
-        originalTotal: pricing.finalTotal,
-        finalTotal: pricing.finalTotal,
+        subtotal: pricing.total,
+        originalSubtotal: pricing.total,
         globalDiscountSavings: 0,
         individualDiscountSavings: 0,
         totalDiscountSavings: 0,
         giftSavings: pricing.giftSavings,
+        finalTotal: pricing.total,
         totalSavings: pricing.giftSavings,
-        savingsDetails: []
+        itemDetails: []
       };
     
     const studioText = settings?.studioName ? ` da ${settings.studioName}` : '';
     let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
     
     if (savingsInfo.totalDiscountSavings > 0 || savingsInfo.giftSavings > 0) {
-      summaryText += `💰 Prezzo originale: €${savingsInfo.originalTotal}\n`;
+      summaryText += `💰 Prezzo originale: €${savingsInfo.originalSubtotal}\n`;
       
       if (savingsInfo.globalDiscountSavings > 0) {
         const globalDiscount = discounts?.global;
@@ -514,7 +659,16 @@ export function DynamicChatGuide() {
             id: 'proceed-checkout',
             label: '📝 Inserisci i tuoi dati',
             value: 'checkout',
-            action: () => setCurrentPhase('lead')
+            action: () => {
+              saveChatHistory('phase_started', { 
+                phase: 'lead', 
+                timestamp: new Date(),
+                finalCartTotal: cart.getPricingWithRules().total,
+                finalCartSavings: cart.getPricingWithRules().totalSavings,
+                readyForCheckout: true
+              });
+              setCurrentPhase('lead');
+            }
           }
         ]
       });
@@ -532,11 +686,14 @@ export function DynamicChatGuide() {
     
     // Calculate discounted price using both global and individual discounts
     const originalPrice = item.originalPrice || item.price;
-    let discountInfo = { finalPrice: originalPrice, hasDiscount: false, discountType: null, discountPercentage: 0, savings: 0 };
+    let discountInfo = { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
     
     if (discounts && !isGift) {
       discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
+
     }
+    
+    const hasDiscount = discountInfo.discountType !== null;
     
     const finalPrice = isGift ? 0 : discountInfo.finalPrice;
 
@@ -598,37 +755,52 @@ export function DynamicChatGuide() {
               </p>
             )}
           </div>
-          <div className="text-right ml-2">
+          {/* Enhanced Pricing Display with Visual Feedback */}
+          <div className="text-right ml-2 flex flex-col items-end">
             {isGift ? (
-              <div>
-                <span className="text-sm font-bold text-green-600">GRATIS</span>
-                <div className="text-xs text-gray-500 line-through">€{item.price}</div>
+              <div className="flex flex-col items-end">
+                <div className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
+                  GRATIS
+                </div>
+                <div className="text-xs text-gray-500 line-through mt-1">€{item.price}</div>
                 {giftSettings?.giftText && (
-                  <div className="text-xs text-green-600 font-medium">
+                  <div className="text-xs text-green-600 font-medium mt-1">
                     {giftSettings.giftText}
                   </div>
                 )}
               </div>
-            ) : (
-              <div>
-                {discountInfo.hasDiscount && (
-                  <span className="text-xs text-gray-400 line-through mr-2">
-                    €{originalPrice}
-                  </span>
-                )}
-                <span className={cn(
-                  "text-sm font-bold",
-                  isUnavailable ? "text-gray-400" : "text-gray-900"
-                )}>
+            ) : hasDiscount ? (
+              <div className="flex flex-col items-end">
+                <div className="text-xs text-gray-400 line-through">
+                  €{originalPrice}
+                </div>
+                <div className="text-sm font-semibold text-green-600 bg-gradient-to-r from-green-50 to-emerald-50 px-2 py-1 rounded-md border border-green-200">
                   €{finalPrice}
-                </span>
-                {discountInfo.hasDiscount && (
-                  <Badge variant="secondary" className="ml-1 text-xs bg-red-100 text-red-800">
-                    <Tag className="w-3 h-3 mr-1" />
-                    -{discountInfo.discountPercentage}%
-                    {discountInfo.discountType === 'individual' ? ' (Special)' : ''}
-                  </Badge>
-                )}
+                </div>
+                <div className="flex items-center gap-1 mt-1">
+                  <div className="text-xs text-green-600 font-medium">
+                    -{Math.round((discountInfo.savings / originalPrice) * 100)}%
+                  </div>
+                  {discountInfo.discountType === 'individual' ? (
+                    <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
+                      Speciale
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                      Globale
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-xs text-green-600 font-medium">
+                  Risparmi €{discountInfo.savings.toFixed(2)}
+                </div>
+              </div>
+            ) : (
+              <div className={cn(
+                "text-sm font-medium",
+                isUnavailable ? "text-gray-400" : "text-gray-900"
+              )}>
+                €{originalPrice}
               </div>
             )}
           </div>
@@ -669,9 +841,11 @@ export function DynamicChatGuide() {
               {message.showCart && cart.cart.items.length > 0 && (() => {
                 // Calculate savings for cart total display
                 const pricing = cart.getPricingWithRules();
+                const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
+                const giftItemIds = giftItems.map(item => item.id);
                 const cartSavingsInfo = discounts ? 
-                  calculateCartSavings(cart.cart.items, discounts, pricing.giftSavings) :
-                  { finalTotal: pricing.total, originalTotal: pricing.total };
+                  calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds) :
+                  { finalTotal: pricing.total, originalSubtotal: pricing.total };
                 
                 return (
                   <div className="mt-4 p-3 bg-white rounded-lg border">
@@ -681,9 +855,9 @@ export function DynamicChatGuide() {
                       const originalPrice = item.originalPrice || item.price;
                       const discountInfo = discounts ? 
                         getItemDiscountInfo(originalPrice, item.id, discounts) : 
-                        { finalPrice: originalPrice, hasDiscount: false };
+                        { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
                       const finalPrice = item.price === 0 ? 0 : discountInfo.finalPrice; // Keep gifts as 0
-                      const hasDiscount = discountInfo.hasDiscount && item.price > 0;
+                      const hasDiscount = discountInfo.discountType !== null && item.price > 0;
                       
                       return (
                         <div key={item.id} className="flex justify-between text-xs mb-1">
@@ -785,22 +959,181 @@ export function DynamicChatGuide() {
     );
   }
 
+  // Progress calculation
+  const getProgress = () => {
+    switch (currentPhase) {
+      case 'welcome': return 20;
+      case 'services': return 40;
+      case 'products': return 60;
+      case 'summary': return 80;
+      case 'lead': return 100;
+      default: return 0;
+    }
+  };
+
+  const getPhaseLabel = () => {
+    switch (currentPhase) {
+      case 'welcome': return "Benvenuto";
+      case 'services': return "Servizi";
+      case 'products': return "Prodotti";
+      case 'summary': return "Riepilogo";
+      case 'lead': return "Prenotazione";
+      default: return "";
+    }
+  };
+
+  const canGoBack = currentPhase !== 'welcome' && currentPhase !== 'lead';
+  const canSkipForward = currentPhase === 'services' || currentPhase === 'products';
+
+  const handleGoBack = () => {
+    if (currentPhase === 'services') {
+      setCurrentPhase('welcome');
+      setMessages([]);
+      setTimeout(() => startWelcomePhase(), 100);
+    } else if (currentPhase === 'products') {
+      setCurrentPhase('services');
+      startServicesPhase();
+    } else if (currentPhase === 'summary') {
+      setCurrentPhase('products');
+      startProductsPhase();
+    }
+  };
+
+  const handleSkipForward = () => {
+    if (currentPhase === 'services' && cart.cart.items.length > 0) {
+      startProductsPhase();
+    } else if (currentPhase === 'products') {
+      startSummaryPhase();
+    }
+  };
+
+  const startWelcomePhase = () => {
+    setCurrentPhase('welcome');
+    // Re-trigger welcome message
+    setTimeout(() => {
+      const studioText = settings?.studioName ? ` di ${settings.studioName}` : '';
+      
+      addMessage({
+        id: 'welcome-message',
+        type: 'assistant',
+        avatar: 'smiling',
+        text: `Ciao! Sono l'assistente virtuale${studioText}! 👋\n\nSono qui per aiutarti a creare il pacchetto perfetto per il tuo matrimonio da sogno.\n\nQuando pensi di sposarti?`,
+        typing: true,
+        options: [
+          {
+            id: 'date-2025',
+            label: '📅 2025',
+            value: '2025',
+            action: () => handleDateSelection('2025')
+          },
+          {
+            id: 'date-2026',
+            label: '📅 2026', 
+            value: '2026',
+            action: () => handleDateSelection('2026')
+          },
+          {
+            id: 'date-later',
+            label: '📅 Più avanti',
+            value: 'later',
+            action: () => handleDateSelection('later')
+          }
+        ]
+      });
+    }, 500);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex flex-col">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-purple-600" />
-            <span className="font-semibold text-gray-800">Assistente Matrimonio</span>
-          </div>
-          {cart.cart.items.length > 0 && (
+      {/* Enhanced Header with Progress Bar and Navigation */}
+      <div className="bg-white border-b flex-shrink-0 shadow-sm">
+        {/* Progress Bar */}
+        <div className="max-w-4xl mx-auto px-4 pt-3">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium">{cart.cart.items.length}</span>
-              <span className="text-sm text-gray-600">€{cart.getPricingWithRules().total}</span>
+              <MessageCircle className="h-4 w-4 text-purple-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {getPhaseLabel()} ({getProgress()}%)
+              </span>
             </div>
-          )}
+            
+            {/* Navigation Controls */}
+            <div className="flex items-center gap-2">
+              {canGoBack && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleGoBack}
+                  className="h-8 px-2 text-xs"
+                >
+                  <ArrowLeft className="h-3 w-3 mr-1" />
+                  Indietro
+                </Button>
+              )}
+              
+              {canSkipForward && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleSkipForward}
+                  className="h-8 px-2 text-xs"
+                  disabled={currentPhase === 'services' && cart.cart.items.length === 0}
+                >
+                  <SkipForward className="h-3 w-3 mr-1" />
+                  Avanti
+                </Button>
+              )}
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  cart.clearCart();
+                  setMessages([]);
+                  setCurrentPhase('welcome');
+                  setLeadData({});
+                  startWelcomePhase();
+                }}
+                className="h-8 px-2 text-xs"
+              >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Reset
+              </Button>
+            </div>
+          </div>
+          
+          <Progress value={getProgress()} className="h-2 mb-3" />
+        </div>
+        
+        {/* Phase Info */}
+        <div className="max-w-4xl mx-auto px-4 pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900">Assistente Matrimonio</h3>
+              <p className="text-xs text-gray-500">
+                {currentPhase === 'welcome' && "Scegli la data del matrimonio"}
+                {currentPhase === 'services' && "Seleziona i servizi fondamentali"}
+                {currentPhase === 'products' && "Aggiungi prodotti esclusivi"}
+                {currentPhase === 'summary' && "Controlla il preventivo"}
+                {currentPhase === 'lead' && "Completa la prenotazione"}
+              </p>
+            </div>
+            
+            {/* Real-time Cart Summary */}
+            {cart.cart.items.length > 0 && (
+              <div className="text-right">
+                <div className="text-xs text-gray-500">Carrello</div>
+                <div className="font-semibold text-green-600">
+                  €{cart.getPricingWithRules().total}
+                </div>
+                {cart.getPricingWithRules().totalSavings > 0 && (
+                  <div className="text-xs text-green-500">
+                    Risparmi: €{cart.getPricingWithRules().totalSavings}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
