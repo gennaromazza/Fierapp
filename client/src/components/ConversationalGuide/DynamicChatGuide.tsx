@@ -15,7 +15,7 @@ import { SpectacularAvatar } from './SpectacularAvatar';
 import { getItemDiscountInfo } from '../../lib/discounts';
 import { calculateUnifiedPricing } from '../../lib/unifiedPricing';
 
-type PhaseType = 'welcome' | 'services' | 'products' | 'summary' | 'lead';
+type PhaseType = 'welcome' | 'collect_name' | 'collect_surname' | 'collect_email' | 'collect_phone' | 'collect_date' | 'services' | 'products' | 'summary' | 'lead';
 
 interface ChatMessage {
   id: string;
@@ -45,7 +45,13 @@ export function DynamicChatGuide() {
   const [isTyping, setIsTyping] = useState(false);
   const [userInput, setUserInput] = useState('');
   const [currentPhase, setCurrentPhase] = useState<PhaseType>('welcome');
-  const [leadData, setLeadData] = useState<any>({});
+  const [leadData, setLeadData] = useState<any>({
+    name: '',
+    surname: '',
+    email: '',
+    phone: '',
+    eventDate: ''
+  });
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [messageCounter, setMessageCounter] = useState(0);
   const [sessionStarted, setSessionStarted] = useState(false);
@@ -293,11 +299,138 @@ export function DynamicChatGuide() {
     // Salva selezione data
     saveChatHistory('date_selected', { eventDate: date, dateText });
     
-    // Enhanced welcome with studio information and discount details
+    // Start data collection phase
+    setTimeout(() => {
+      addMessage({
+        type: 'assistant',
+        avatar: 'smiling',
+        text: "Perfetto! Ora conosciamoci meglio. Come ti chiami? 😊"
+      });
+      setCurrentPhase('collect_name');
+    }, 1000);
+  };
+
+  // Gestione input utente per raccolta dati progressiva
+  const handleUserInput = (input: string) => {
+    const trimmedInput = input.trim();
+    if (!trimmedInput) return;
+
+    switch (currentPhase) {
+      case 'collect_name':
+        handleNameInput(trimmedInput);
+        break;
+      case 'collect_surname':
+        handleSurnameInput(trimmedInput);
+        break;
+      case 'collect_email':
+        handleEmailInput(trimmedInput);
+        break;
+      case 'collect_phone':
+        handlePhoneInput(trimmedInput);
+        break;
+      case 'collect_date':
+        handleEventDateInput(trimmedInput);
+        break;
+      default:
+        // Altri input non gestiti in questa fase
+        break;
+    }
+    setUserInput('');
+  };
+
+  const handleNameInput = (name: string) => {
+    addMessage({
+      type: 'user',
+      text: name
+    });
+    
+    setLeadData((prev: any) => ({ ...prev, name }));
+    
+    setTimeout(() => {
+      addMessage({
+        type: 'assistant',
+        avatar: 'smiling',
+        text: `Piacere di conoscerti, ${name}! 👋 E il tuo cognome?`
+      });
+      setCurrentPhase('collect_surname');
+    }, 800);
+  };
+
+  const handleSurnameInput = (surname: string) => {
+    addMessage({
+      type: 'user',
+      text: surname
+    });
+    
+    setLeadData((prev: any) => ({ ...prev, surname }));
+    
+    setTimeout(() => {
+      addMessage({
+        type: 'assistant',
+        avatar: 'explaining',
+        text: `${leadData.name} ${surname}, per inviarti il preventivo personalizzato in PDF, qual è la tua email? 📧`
+      });
+      setCurrentPhase('collect_email');
+    }, 800);
+  };
+
+  const handleEmailInput = (email: string) => {
+    if (!email.includes('@')) {
+      addMessage({
+        type: 'assistant',
+        avatar: 'thoughtful',
+        text: 'Mi serve un indirizzo email valido per inviarti il preventivo. Riprova! 😊'
+      });
+      return;
+    }
+
+    addMessage({
+      type: 'user',
+      text: email
+    });
+    
+    setLeadData((prev: any) => ({ ...prev, email }));
+    
+    setTimeout(() => {
+      addMessage({
+        type: 'assistant',
+        avatar: 'enthusiastic',
+        text: 'Perfetto! E il tuo numero di telefono per WhatsApp? Così potremo coordinarci meglio! 📱'
+      });
+      setCurrentPhase('collect_phone');
+    }, 800);
+  };
+
+  const handlePhoneInput = (phone: string) => {
+    addMessage({
+      type: 'user',
+      text: phone
+    });
+    
+    setLeadData((prev: any) => ({ ...prev, phone }));
+    
+    setTimeout(() => {
+      addMessage({
+        type: 'assistant',
+        avatar: 'explaining',
+        text: 'Infine, quando è previsto il tuo matrimonio? (puoi scrivere anche solo mese e anno) 💒'
+      });
+      setCurrentPhase('collect_date');
+    }, 800);
+  };
+
+  const handleEventDateInput = (eventDate: string) => {
+    addMessage({
+      type: 'user',
+      text: eventDate
+    });
+    
+    setLeadData((prev: any) => ({ ...prev, eventDate }));
+    
     setTimeout(() => {
       const studioPersonalizedText = settings?.studioName ? 
-        `Perfetto! ${settings.studioName} ha tutto quello che serve per il tuo matrimonio da sogno! 🎉` :
-        "Perfetto! Iniziamo a creare il pacchetto ideale per te! 🎉";
+        `Fantastico, ${leadData.name}! ${settings.studioName} ha tutto quello che serve per il tuo matrimonio da sogno! 🎉` :
+        `Fantastico, ${leadData.name}! Abbiamo tutto quello che serve per il tuo matrimonio da sogno! 🎉`;
       
       const contactInfo = [];
       if (settings?.phoneNumber) contactInfo.push(`📞 ${settings.phoneNumber}`);
@@ -319,7 +452,7 @@ export function DynamicChatGuide() {
       });
       
       startServicesPhase();
-    }, 500);
+    }, 1200);
   };
 
   const startServicesPhase = () => {
@@ -953,7 +1086,15 @@ export function DynamicChatGuide() {
           <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
             <h2 className="text-2xl font-bold mb-4">Completa la prenotazione</h2>
             <LeadForm 
-              initialData={leadData}
+              initialData={{
+                name: leadData.name || '',
+                surname: leadData.surname || '',
+                email: leadData.email || '',
+                phone: leadData.phone || '',
+                eventDate: leadData.eventDate || '',
+                notes: '',
+                gdprAccepted: false
+              }}
               onComplete={(data) => {
                 console.log('Lead data collected:', data);
                 setLeadData(data);
@@ -1175,12 +1316,27 @@ export function DynamicChatGuide() {
         <div className="max-w-4xl mx-auto p-4">
           <div className="flex gap-2">
             <Input 
-              placeholder="Scrivi un messaggio..."
+              placeholder={
+                currentPhase === 'collect_name' ? "Scrivi il tuo nome..." :
+                currentPhase === 'collect_surname' ? "Scrivi il tuo cognome..." :
+                currentPhase === 'collect_email' ? "Scrivi la tua email..." :
+                currentPhase === 'collect_phone' ? "Scrivi il tuo telefono..." :
+                currentPhase === 'collect_date' ? "Quando è il matrimonio?" :
+                "Scrivi un messaggio..."
+              }
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && userInput.trim()) {
+                  handleUserInput(userInput);
+                }
+              }}
               className="flex-1"
             />
-            <Button>
+            <Button
+              onClick={() => handleUserInput(userInput)}
+              disabled={!userInput.trim()}
+            >
               <Send className="h-4 w-4" />
             </Button>
           </div>
