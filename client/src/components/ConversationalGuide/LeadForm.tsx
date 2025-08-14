@@ -14,6 +14,7 @@ import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { LeadData } from './types';
 import { generateClientQuotePDF } from '@/lib/pdf';
+import { generateWhatsAppLink } from '@/lib/whatsapp';
 import { useQuery } from '@tanstack/react-query';
 
 
@@ -210,10 +211,12 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
 
       // Use WhatsApp number from settings if available
       const whatsappNumber = settings?.whatsappNumber;
-      const whatsappUrl = whatsappNumber 
-        ? `https://wa.me/${whatsappNumber.replace(/[^\d+]/g, '')}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`;
+      if (!whatsappNumber) {
+        alert('Numero WhatsApp non configurato. Contatta l\'amministratore.');
+        return;
+      }
       
+      const whatsappUrl = generateWhatsAppLink(whatsappNumber, message);
       window.open(whatsappUrl, '_blank');
       onComplete(formData);
 

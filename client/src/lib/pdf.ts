@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import { db, storage } from "../firebase";
-import { doc, getDoc, runTransaction } from "firebase/firestore";
+import { doc as fireDoc, getDoc, runTransaction } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import type { Lead, Settings } from "@shared/schema";
 import { calculateUnifiedPricing } from "./unifiedPricing";
@@ -87,7 +87,7 @@ async function toDataURLFromStoragePath(storagePath: string): Promise<string | u
 }
 
 async function getBrand(): Promise<PdfBrand> {
-  const snap = await getDoc(doc(db, "settings", "app"));
+  const snap = await getDoc(fireDoc(db, "settings", "app"));
   const data = (snap.exists() ? (snap.data() as Settings) : {}) as Settings;
   const studioName = data.studioName || "Studio Demo";
   const primary = data.brandPrimary || "#7fb0b2";
@@ -306,7 +306,7 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
   const giftItems = leadData.selectedItems?.filter((item: any) => item.price === 0) || [];
   const giftItemIds = giftItems.map((item: any) => item.id);
   // 🔧 FETCH DISCOUNTS: Usa i veri sconti invece di null per consistenza con tutto il sistema
-  const discountsSnapshot = await getDoc(doc(db, "settings", "discounts"));
+  const discountsSnapshot = await getDoc(fireDoc(db, "settings", "discounts"));
   const discounts = discountsSnapshot.exists() ? discountsSnapshot.data() : null;
   
   const unifiedPricing = calculateUnifiedPricing(leadData.selectedItems || [], discounts, giftItemIds);
