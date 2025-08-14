@@ -691,6 +691,7 @@ export function DynamicChatGuide() {
     if (discounts && !isGift) {
       discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
 
+
     }
     
     const hasDiscount = discountInfo.discountType !== null;
