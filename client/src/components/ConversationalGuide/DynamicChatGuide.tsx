@@ -12,6 +12,11 @@ import type { Item, Discounts, Settings } from '../../../../shared/schema';
 import CheckoutModal from '@/components/CheckoutModal';
 import { LeadForm } from './LeadForm';
 import { SpectacularAvatar } from './SpectacularAvatar';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format, addMonths } from 'date-fns';
+import { it } from 'date-fns/locale';
 import { getItemDiscountInfo } from '../../lib/discounts';
 import { calculateUnifiedPricing } from '../../lib/unifiedPricing';
 
@@ -31,6 +36,7 @@ interface ChatMessage {
   items?: Item[];
   showCart?: boolean;
   typing?: boolean;
+  component?: 'service-selector' | 'product-selector' | 'date-selector';
 }
 
 export function DynamicChatGuide() {
@@ -329,7 +335,7 @@ export function DynamicChatGuide() {
         handlePhoneInput(trimmedInput);
         break;
       case 'collect_date':
-        handleEventDateInput(trimmedInput);
+        // Non gestiamo input testuale per la data, usiamo solo il date picker
         break;
       default:
         // Altri input non gestiti in questa fase
@@ -413,19 +419,26 @@ export function DynamicChatGuide() {
       addMessage({
         type: 'assistant',
         avatar: 'explaining',
-        text: 'Infine, quando è previsto il tuo matrimonio? (puoi scrivere anche solo mese e anno) 💒'
+        text: 'Infine, quando è previsto il tuo matrimonio? 💒',
+        component: 'date-selector'
       });
       setCurrentPhase('collect_date');
     }, 800);
   };
 
-  const handleEventDateInput = (eventDate: string) => {
-    addMessage({
-      type: 'user',
-      text: eventDate
+  const handleSpecificDateSelection = (selectedDate: Date) => {
+    const dateText = selectedDate.toLocaleDateString('it-IT', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     });
     
-    setLeadData((prev: any) => ({ ...prev, eventDate }));
+    addMessage({
+      type: 'user', 
+      text: dateText
+    });
+    
+    setLeadData((prev: any) => ({ ...prev, eventDate: selectedDate.toISOString().split('T')[0] }));
     
     setTimeout(() => {
       const studioPersonalizedText = settings?.studioName ? 
@@ -978,6 +991,40 @@ export function DynamicChatGuide() {
                 </div>
               )}
 
+              {message.component === 'date-selector' && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                  <p className="text-sm font-medium mb-3">Seleziona una data specifica:</p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !leadData.eventDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {leadData.eventDate ? format(new Date(leadData.eventDate), "PPP", { locale: it }) : "Seleziona data matrimonio"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={leadData.eventDate ? new Date(leadData.eventDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            handleSpecificDateSelection(date);
+                          }
+                        }}
+                        disabled={(date) => date < new Date()}
+                        locale={it}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
+
               {message.showCart && cart.cart.items.length > 0 && (() => {
                 // Calculate savings for cart total display
                 const pricing = cart.getPricingWithRules();
@@ -1311,37 +1358,39 @@ export function DynamicChatGuide() {
         </div>
       </div>
 
-      {/* Input Area (for future text input) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="flex gap-2">
-            <Input 
-              placeholder={
-                currentPhase === 'collect_name' ? "Scrivi il tuo nome..." :
-                currentPhase === 'collect_surname' ? "Scrivi il tuo cognome..." :
-                currentPhase === 'collect_email' ? "Scrivi la tua email..." :
-                currentPhase === 'collect_phone' ? "Scrivi il tuo telefono..." :
-                currentPhase === 'collect_date' ? "Quando è il matrimonio?" :
-                "Scrivi un messaggio..."
-              }
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && userInput.trim()) {
-                  handleUserInput(userInput);
+      {/* Input Area - Solo durante le fasi di raccolta dati */}
+      {['collect_name', 'collect_surname', 'collect_email', 'collect_phone'].includes(currentPhase) && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
+          <div className="max-w-4xl mx-auto p-4">
+            <div className="flex gap-2">
+              <Input 
+                placeholder={
+                  currentPhase === 'collect_name' ? "Scrivi il tuo nome..." :
+                  currentPhase === 'collect_surname' ? "Scrivi il tuo cognome..." :
+                  currentPhase === 'collect_email' ? "Scrivi la tua email..." :
+                  currentPhase === 'collect_phone' ? "Scrivi il tuo telefono..." :
+                  "Scrivi un messaggio..."
                 }
-              }}
-              className="flex-1"
-            />
-            <Button
-              onClick={() => handleUserInput(userInput)}
-              disabled={!userInput.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && userInput.trim()) {
+                    handleUserInput(userInput);
+                  }
+                }}
+                className="flex-1"
+                autoFocus
+              />
+              <Button
+                onClick={() => handleUserInput(userInput)}
+                disabled={!userInput.trim()}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <CheckoutModal
         isOpen={isCheckoutOpen}
