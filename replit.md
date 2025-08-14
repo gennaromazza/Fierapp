@@ -39,6 +39,11 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **Seamless Experience**: Users can select items without leaving the chat conversation context
 - **Clean Architecture**: Removed duplicate selector rendering that was outside the message bubble
 
+### Progressive Lead Collection Preparation (August 14, 2025 - 12:00 PM) - IN PROGRESS
+- **System Cleanup**: Removed duplicate FullscreenConversationalGuide to prevent confusion
+- **Focus on DynamicChatGuide**: Single chat system maintained for consistent user experience
+- **Progressive Data Collection**: Ready to implement name, surname, email, phone collection within existing chat flow
+
 ## System Architecture
 
 ### Frontend Architecture
