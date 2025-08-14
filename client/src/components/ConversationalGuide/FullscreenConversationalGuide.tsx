@@ -41,7 +41,7 @@ export function FullscreenConversationalGuide() {
     const unsubscribeItems = onSnapshot(collection(db, 'items'), (snapshot) => {
       const itemsData = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as Item))
-        .sort((a, b) => (a.order || 0) - (b.order || 0));
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
       console.log('Loaded all items:', itemsData);
       setItems(itemsData);
     });
@@ -108,7 +108,7 @@ export function FullscreenConversationalGuide() {
     const giftItems = cart.cart.items.filter(item => item.price === 0 && item.originalPrice);
     const giftSavings = giftItems.reduce((sum, item) => sum + (item.originalPrice || 0), 0);
 
-    const finalTotal = cart.getPricingWithRules().finalTotal;
+    const finalTotal = cart.getPricingWithRules().total;
     const globalDiscount = discounts?.global?.isActive ? (discounts.global.value || 0) : 0;
 
     return (
@@ -124,7 +124,7 @@ export function FullscreenConversationalGuide() {
             {cart.cart.items.map(item => (
               <div key={item.id} className="flex justify-between items-center py-1">
                 <div className="flex-1">
-                  <span className="text-sm font-medium">{item.name}</span>
+                  <span className="text-sm font-medium">{item.title}</span>
                   {item.price === 0 && item.originalPrice && (
                     <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800 text-xs">
                       <Gift className="h-3 w-3 mr-1" />

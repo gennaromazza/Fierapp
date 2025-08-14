@@ -87,11 +87,71 @@ export function useGuideLogic() {
         uiHint: 'highlight_global_discount'
       },
 
-      // Step 2: Wedding date
+      // Step 2: Surname collection
+      {
+        id: 'surname',
+        avatar: 'smiling',
+        message: `Piacere di conoscerti, ${guideState.leadData.name}! E il tuo cognome? Mi serve per personalizzare completamente il preventivo che ti preparerò.`,
+        actions: [{
+          id: 'surname',
+          label: 'Il tuo cognome',
+          type: 'input',
+          required: true,
+          action: (value: string) => {
+            setGuideState(prev => ({
+              ...prev,
+              leadData: { ...prev.leadData, surname: value },
+              currentStep: prev.currentStep + 1
+            }));
+          }
+        }]
+      },
+
+      // Step 3: Email collection
+      {
+        id: 'email',
+        avatar: 'explaining',
+        message: `Perfetto ${guideState.leadData.name}! Ora mi serve la tua email. È importante perché ti invierò il preventivo dettagliato in PDF e tutti i documenti relativi al matrimonio. Niente spam, solo informazioni utili per te!`,
+        actions: [{
+          id: 'email',
+          label: 'La tua email',
+          type: 'input',
+          required: true,
+          action: (value: string) => {
+            setGuideState(prev => ({
+              ...prev,
+              leadData: { ...prev.leadData, email: value },
+              currentStep: prev.currentStep + 1
+            }));
+          }
+        }]
+      },
+
+      // Step 4: Phone collection  
+      {
+        id: 'phone',
+        avatar: 'enthusiastic',
+        message: `Ottimo ${guideState.leadData.name}! Un ultimo dato importante: il tuo numero di telefono. Mi serve per poterti contattare rapidamente su WhatsApp e per coordinarci nei giorni prima del matrimonio. È il modo più veloce per risolvere qualsiasi dubbio!`,
+        actions: [{
+          id: 'phone',
+          label: 'Il tuo telefono',
+          type: 'input',
+          required: true,
+          action: (value: string) => {
+            setGuideState(prev => ({
+              ...prev,
+              leadData: { ...prev.leadData, phone: value },
+              currentStep: prev.currentStep + 1
+            }));
+          }
+        }]
+      },
+
+      // Step 5: Wedding date
       {
         id: 'wedding_date',
         avatar: 'explaining',
-        message: `Ora ${guideState.leadData.name}, iniziamo con le informazioni fondamentali. Mi serve la data del matrimonio perché alcuni dei nostri servizi (come le Riprese Drone) dipendono dalla stagione e dalle condizioni meteo. Inoltre, questa data mi aiuterà a verificare la nostra disponibilità e a personalizzare la tua offerta.`,
+        message: `Perfetto ${guideState.leadData.name}! Ora passiamo alla data del matrimonio. Questa informazione è fondamentale perché alcuni servizi (come le Riprese Drone) dipendono dalla stagione e dalle condizioni meteo. Inoltre mi aiuta a verificare la disponibilità e personalizzare la tua offerta.`,
         actions: [{
           id: 'eventDate',
           label: 'Seleziona data nozze',
@@ -107,11 +167,11 @@ export function useGuideLogic() {
         }]
       },
 
-      // Step 3: Service selection with detailed explanation
+      // Step 6: Service selection with detailed explanation
       {
         id: 'services',
         avatar: 'explaining',
-        message: `Perfetto ${guideState.leadData.name}! Ora ti spiego come funziona il nostro sistema intelligente. Iniziamo dai SERVIZI (tab in alto). 
+        message: `Fantastico ${guideState.leadData.name}! Ora che ho i tuoi dati, iniziamo con la parte divertente: scegliere i servizi perfetti per te! Ti spiego come funziona il nostro sistema intelligente. Iniziamo dai SERVIZI (tab in alto). 
         
         🔑 REGOLA FONDAMENTALE: Il "Servizio Fotografico" è la CHIAVE che sblocca tutti i prodotti fotografici (album, foto invitati, ecc.). Senza di esso, vedrai molti prodotti "non disponibili".
         
@@ -129,7 +189,7 @@ export function useGuideLogic() {
         uiHint: 'highlight_services_tab'
       },
 
-      // Step 4: Products with gift rules explanation
+      // Step 7: Products with gift rules explanation
       {
         id: 'products',
         avatar: 'enthusiastic',
@@ -153,7 +213,7 @@ export function useGuideLogic() {
         uiHint: 'highlight_products_tab'
       },
 
-      // Step 5: Smart upsell with detailed benefits
+      // Step 8: Smart upsell with detailed benefits
       {
         id: 'upsell',
         avatar: 'enthusiastic',
@@ -187,7 +247,7 @@ export function useGuideLogic() {
         ]
       },
 
-      // Step 6: Detailed summary with breakdown
+      // Step 9: Detailed summary with breakdown
       {
         id: 'summary',
         avatar: 'explaining',
@@ -216,7 +276,7 @@ export function useGuideLogic() {
         uiHint: 'highlight_cart'
       },
 
-      // Step 7: Celebrate savings with enthusiasm
+      // Step 10: Celebrate savings with enthusiasm
       {
         id: 'savings',
         avatar: 'enthusiastic',
@@ -243,26 +303,26 @@ export function useGuideLogic() {
         uiHint: 'highlight_savings'
       },
 
-      // Step 8: Lead collection with GDPR explanation
+      // Step 11: Lead form (pre-compiled with chat data)
       {
         id: 'lead_collection',
-        avatar: 'explaining',
-        message: `Perfetto ${guideState.leadData.name}! Ora per completare il tuo preventivo personalizzato ho bisogno di alcuni dati. 
+        avatar: 'enthusiastic',
+        message: `Perfetto ${guideState.leadData.name}! Abbiamo già raccolto tutti i tuoi dati durante la nostra conversazione. 
         
         📋 COSA TI INVIERÒ:
         • Preventivo dettagliato in PDF con tutti i servizi scelti
-        • Riepilogo completo degli sconti applicati
+        • Riepilogo completo degli sconti applicati  
         • Condizioni e modalità di pagamento
         • I miei contatti diretti per qualsiasi domanda
         
-        🔒 PRIVACY: I tuoi dati sono protetti secondo il GDPR. Li uso SOLO per questo preventivo e per eventuali comunicazioni relative al matrimonio. Niente spam, promesso!
+        👀 CONTROLLA: Il form qui a destra è già precompilato con le informazioni che mi hai dato in chat. Dai un'occhiata, aggiungi eventuali note e finalizza la richiesta!
         
-        Compila il form qui a destra e ti invio tutto immediatamente:`,
+        🔒 PRIVACY: I tuoi dati sono protetti secondo il GDPR. Niente spam, solo informazioni per il tuo matrimonio!`,
         actions: [], // Will be handled by a special lead form component
         uiHint: 'show_lead_form'
       },
 
-      // Step 9: Warm closure with clear next steps
+      // Step 12: Warm closure with clear next steps
       {
         id: 'closure',
         avatar: 'smiling',
