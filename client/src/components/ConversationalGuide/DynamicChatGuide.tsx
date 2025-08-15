@@ -1349,8 +1349,20 @@ export function DynamicChatGuide() {
             </div>
           </div>
 
-          <LeadForm 
-            initialData={leadData}
+          {/* ✅ Forza il remount quando cambiano i dati precompilati */}
+          <LeadForm
+            key={
+              `lead-${leadData.name || ''}-${leadData.surname || ''}-${leadData.email || ''}-${leadData.phone || ''}-${leadData.eventDate || ''}`
+            }
+            initialData={{
+              name: leadData.name || '',
+              surname: leadData.surname || '',
+              email: leadData.email || '',
+              phone: leadData.phone || '',
+              eventDate: leadData.eventDate || '',
+              notes: leadData.notes || '',
+              gdprAccepted: !!leadData.gdprAccepted
+            }}
             onComplete={(data) => {
               console.log('Lead completato:', data);
               setLeadData(data);
