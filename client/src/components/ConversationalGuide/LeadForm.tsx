@@ -37,31 +37,55 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch settings for WhatsApp number
+  // Fetch settings for WhatsApp number using the same pattern as Header.tsx
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
-    queryKey: ['settings'],
+    queryKey: ['settings', 'app'],
     queryFn: async () => {
       try {
-        console.log('🔄 Fetching settings from Firebase...');
+        console.log('🔄 Fetching settings from Firebase settings/app...');
         const settingsDoc = await getDoc(doc(db, 'settings', 'app'));
-        const data = settingsDoc.exists() ? settingsDoc.data() : null;
-        console.log('✅ Loaded settings from Firebase:', data);
-        console.log('📞 WhatsApp number found:', data?.whatsappNumber);
-        console.log('📞 Phone number found:', data?.phoneNumber);
-        return data;
+        
+        if (!settingsDoc.exists()) {
+          console.warn('⚠️ Settings document does not exist');
+          return null;
+        }
+
+        const data = settingsDoc.data();
+        console.log('✅ Raw settings data loaded:', JSON.stringify(data, null, 2));
+        
+        // Log specific fields we care about
+        console.log('📞 WhatsApp number field value:', data?.whatsappNumber);
+        console.log('📞 Phone number field value:', data?.phoneNumber);
+        console.log('🏢 Studio name:', data?.studioName);
+        console.log('📧 Email:', data?.email);
+        
+        // Type the data correctly as Settings
+        return data as import('@shared/schema').Settings;
       } catch (error) {
         console.error('❌ Error loading settings:', error);
-        return null;
+        throw error; // Let React Query handle the error
       }
     },
+    staleTime: 30000, // Cache for 30 seconds
+    retry: 3, // Retry failed requests
   });
 
-  // Debug settings loading
+  // Debug settings loading with enhanced information
   if (settingsLoading) {
     console.log('⏳ Settings loading...');
   }
   if (settingsError) {
     console.error('❌ Settings error:', settingsError);
+  }
+  if (settings) {
+    console.log('✅ Settings loaded successfully:', {
+      hasWhatsappNumber: !!settings.whatsappNumber,
+      hasPhoneNumber: !!settings.phoneNumber,
+      hasEmail: !!settings.email,
+      hasStudioName: !!settings.studioName,
+      whatsappLength: settings.whatsappNumber?.length || 0,
+      phoneLength: settings.phoneNumber?.length || 0
+    });
   }
   
   // Debug: Log when component mounts
@@ -223,33 +247,78 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
 
       const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${pricingSummary}\n\n${marketingMessages.mainSavings ? `🔥 ${marketingMessages.mainSavings}\n` : ''}${marketingMessages.giftMessage ? `🎁 ${marketingMessages.giftMessage}\n` : ''}\n📝 Lead ID: ${leadDoc.id}`;
 
-      // Use WhatsApp number from settings if available
+      // Enhanced WhatsApp number detection with better debugging
       console.log('🔍 Current settings state:', settings);
-      console.log('📞 WhatsApp number:', settings?.whatsappNumber);
-      console.log('📞 Phone number fallback:', settings?.phoneNumber);
+      console.log('📞 Settings loading:', settingsLoading);
+      console.log('❌ Settings error:', settingsError);
       
       // Check if settings are still loading
       if (settingsLoading) {
         alert('Caricamento impostazioni in corso. Riprova tra un momento.');
         return;
       }
-      
-      const whatsappNumber = settings?.whatsappNumber || settings?.phoneNumber;
-      
-      if (!whatsappNumber) {
-        console.error('❌ No WhatsApp/Phone number found in settings');
-        console.log('Settings complete object:', JSON.stringify(settings, null, 2));
-        alert('Numero WhatsApp non configurato nel pannello admin. Vai in Impostazioni > Informazioni Generali per configurarlo.');
+
+      // Check for errors in settings loading
+      if (settingsError) {
+        console.error('❌ Error loading settings:', settingsError);
+        alert('Errore nel caricamento delle impostazioni. Verifica i permessi Firebase e riprova.');
         return;
       }
       
-      console.log('✅ Using WhatsApp number:', whatsappNumber);
+      // Enhanced number detection with multiple fallback options
+      const whatsappNumber = settings?.whatsappNumber?.trim();
+      const phoneNumber = settings?.phoneNumber?.trim();
+      const studioEmail = settings?.email?.trim();
       
-      console.log('Generating WhatsApp URL with number:', whatsappNumber);
-      console.log('Message content:', message);
+      console.log('📞 WhatsApp number (trimmed):', whatsappNumber);
+      console.log('📞 Phone number (trimmed):', phoneNumber);
+      console.log('📧 Studio email:', studioEmail);
       
-      const whatsappUrl = generateWhatsAppLink(whatsappNumber, message);
+      // Use WhatsApp number if available, otherwise fallback to phone number
+      const contactNumber = whatsappNumber || phoneNumber;
+      
+      if (!contactNumber) {
+        console.error('❌ No contact number found in settings');
+        console.log('Settings complete object:', JSON.stringify(settings, null, 2));
+        
+        // If we have an email, suggest email as alternative
+        if (studioEmail) {
+          const useEmail = confirm(
+            'Numero WhatsApp non configurato. Vuoi inviare una email invece?\n\n' +
+            `Email: ${studioEmail}`
+          );
+          
+          if (useEmail) {
+            // Create email content
+            const emailSubject = encodeURIComponent('Richiesta Informazioni - Matrimonio');
+            const emailBody = encodeURIComponent(message);
+            const emailUrl = `mailto:${studioEmail}?subject=${emailSubject}&body=${emailBody}`;
+            window.open(emailUrl, '_blank');
+            onComplete(formData);
+            return;
+          }
+        }
+        
+        alert(
+          'Configurazione mancante:\n\n' +
+          '• Numero WhatsApp non configurato\n' +
+          '• Numero telefono non configurato\n\n' +
+          'Vai nel pannello admin → Impostazioni → Contatti per configurare almeno uno di questi campi.'
+        );
+        return;
+      }
+      
+      console.log('✅ Using contact number:', contactNumber);
+      
+      console.log('Generating WhatsApp URL with number:', contactNumber);
+      console.log('Message content preview:', message.substring(0, 100) + '...');
+      
+      const whatsappUrl = generateWhatsAppLink(contactNumber, message);
       console.log('Final WhatsApp URL:', whatsappUrl);
+      
+      // Additional debug info
+      console.log('Studio name from settings:', settings?.studioName);
+      console.log('Message length:', message.length);
       
       window.open(whatsappUrl, '_blank');
       onComplete(formData);
@@ -259,6 +328,28 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       alert('Errore nel salvataggio. Riprova.');
     }
   };
+
+  // Test function for WhatsApp integration (for debugging)
+  const testWhatsAppIntegration = () => {
+    console.log('🧪 Testing WhatsApp integration...');
+    console.log('Settings available:', !!settings);
+    console.log('WhatsApp number:', settings?.whatsappNumber);
+    console.log('Phone number:', settings?.phoneNumber);
+    
+    const testMessage = "Test message from lead form";
+    const contactNumber = settings?.whatsappNumber?.trim() || settings?.phoneNumber?.trim();
+    
+    if (contactNumber) {
+      const testUrl = generateWhatsAppLink(contactNumber, testMessage);
+      console.log('Test WhatsApp URL:', testUrl);
+      alert(`WhatsApp URL generated successfully:\n${testUrl}`);
+    } else {
+      alert('No contact number found in settings');
+    }
+  };
+
+  // Add test button in development mode
+  const isDevelopment = import.meta.env.DEV;
 
   // Usa il sistema di pricing unificato
   const pricing = cart.getPricingWithRules();
@@ -442,6 +533,18 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
             <MessageCircle className="mr-2 h-4 w-4" />
             Invia Richiesta
           </Button>
+
+          {/* Development test button */}
+          {isDevelopment && (
+            <Button
+              onClick={testWhatsAppIntegration}
+              variant="outline"
+              size="sm"
+              className="w-full text-xs bg-yellow-50 border-yellow-200 text-yellow-800 hover:bg-yellow-100"
+            >
+              🧪 Test WhatsApp Integration
+            </Button>
+          )}
 
           <p className="text-xs text-gray-500 text-center">
             La richiesta verrà salvata e si aprirà automaticamente WhatsApp
