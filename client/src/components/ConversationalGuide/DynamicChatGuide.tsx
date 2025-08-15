@@ -12,11 +12,7 @@ import type { Item, Discounts, Settings } from '../../../../shared/schema';
 import CheckoutModal from '@/components/CheckoutModal';
 import { LeadForm } from './LeadForm';
 import { SpectacularAvatar } from './SpectacularAvatar';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
-import { format, addMonths } from 'date-fns';
-import { it } from 'date-fns/locale';
 import { getItemDiscountInfo } from '../../lib/discounts';
 import { calculateUnifiedPricing } from '../../lib/unifiedPricing';
 
@@ -994,34 +990,22 @@ export function DynamicChatGuide() {
               {message.component === 'date-selector' && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
                   <p className="text-sm font-medium mb-3">Seleziona una data specifica:</p>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !leadData.eventDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {leadData.eventDate ? format(new Date(leadData.eventDate), "PPP", { locale: it }) : "Seleziona data matrimonio"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={leadData.eventDate ? new Date(leadData.eventDate) : undefined}
-                        onSelect={(date) => {
-                          if (date) {
-                            handleSpecificDateSelection(date);
-                          }
-                        }}
-                        disabled={(date) => date < new Date()}
-                        locale={it}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4 text-gray-500" />
+                    <input
+                      type="date"
+                      value={leadData.eventDate ? new Date(leadData.eventDate).toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const selectedDate = new Date(e.target.value);
+                          handleSpecificDateSelection(selectedDate);
+                        }
+                      }}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Seleziona data matrimonio"
+                    />
+                  </div>
                 </div>
               )}
 
