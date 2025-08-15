@@ -568,11 +568,11 @@ export function DynamicChatGuide() {
       if (success) {
         const isGift = cart.isItemGift(item.id);
         
-        // Usa toast invece di messaggio chat
+        // Toast normali per prodotti, figo solo per regali
         if (isGift) {
           toast.gift("🎁 Regalo Sbloccato!", `${item.title} è ora GRATUITO!`, 4000);
         } else {
-          toast.success("✅ Aggiunto", `${item.title} aggiunto al carrello`, 1500);
+          toast.success("✅ Aggiunto", `${item.title} aggiunto al carrello`, 2000);
         }
         
         // Aggiorna dati conversazione aggiungendo item
