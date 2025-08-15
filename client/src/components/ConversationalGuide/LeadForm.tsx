@@ -534,17 +534,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
             Invia Richiesta
           </Button>
 
-          {/* Development test button */}
-          {isDevelopment && (
-            <Button
-              onClick={testWhatsAppIntegration}
-              variant="outline"
-              size="sm"
-              className="w-full text-xs bg-yellow-50 border-yellow-200 text-yellow-800 hover:bg-yellow-100"
-            >
-              🧪 Test WhatsApp Integration
-            </Button>
-          )}
+          
 
           <p className="text-xs text-gray-500 text-center">
             La richiesta verrà salvata e si aprirà automaticamente WhatsApp
