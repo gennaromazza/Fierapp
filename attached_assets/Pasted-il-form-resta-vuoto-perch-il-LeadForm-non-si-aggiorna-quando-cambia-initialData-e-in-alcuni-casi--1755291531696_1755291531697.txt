@@ -1,0 +1,94 @@
+il form resta vuoto perché il LeadForm non si aggiorna quando cambia initialData e (in alcuni casi) React riusa il componente senza rimontarlo. Ti lascio due fix complementari:
+
+sincronizza gli state interni del form quando cambia initialData
+
+forza il remount del LeadForm passando una key derivata dai dati
+
+Di seguito i diff pronti da incollare.
+
+1) LeadForm.tsx – sincronizza gli state con initialData
+diff --git a/client/src/components/ConversationalGuide/LeadForm.tsx b/client/src/components/ConversationalGuide/LeadForm.tsx
+--- a/client/src/components/ConversationalGuide/LeadForm.tsx
++++ b/client/src/components/ConversationalGuide/LeadForm.tsx
+@@ -1,4 +1,4 @@
+-import { useState } from 'react';
++import { useState, useEffect } from 'react';
+ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+ import { Textarea } from '@/components/ui/textarea';
+@@ -39,6 +39,22 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps)
+   const [gdprAccepted, setGdprAccepted] = useState(initialData.gdprAccepted || false);
+   const [eventDate, setEventDate] = useState<Date | undefined>(
+     initialData.eventDate ? new Date(initialData.eventDate) : undefined
+   );
+ 
++  // ✅ Mantieni il form allineato quando cambiano i dati provenienti dalla chat
++  useEffect(() => {
++    setName(initialData.name || '');
++    setSurname(initialData.surname || '');
++    setEmail(initialData.email || '');
++    setPhone(initialData.phone || '');
++    setNotes(initialData.notes || '');
++    setGdprAccepted(!!initialData.gdprAccepted);
++    setEventDate(
++      initialData.eventDate
++        ? new Date(initialData.eventDate)
++        : undefined
++    );
++  }, [initialData]);
++
+   // Reconstruct formData object for backward compatibility
+   const formData: LeadData = {
+     name,
+
+
+Nota: se initialData.eventDate arriva nel formato "YYYY-MM-DD", va benissimo: new Date('2025-05-10') funziona. Se preferisci, puoi salvare dalla chat in ISO completo (toISOString()).
+
+2) DynamicChatGuide.tsx – forza il remount del LeadForm quando cambiano i dati
+diff --git a/client/src/components/ConversationalGuide/DynamicChatGuide.tsx b/client/src/components/ConversationalGuide/DynamicChatGuide.tsx
+--- a/client/src/components/ConversationalGuide/DynamicChatGuide.tsx
++++ b/client/src/components/ConversationalGuide/DynamicChatGuide.tsx
+@@ -640,7 +640,16 @@ if (currentPhase === 'lead') {
+           </div>
+ 
+-          <LeadForm 
+-            initialData={leadData}
++          {/* ✅ Forza il remount quando cambiano i dati precompilati */}
++          <LeadForm
++            key={
++              `lead-${leadData.name || ''}-${leadData.surname || ''}-${leadData.email || ''}-${leadData.phone || ''}-${leadData.eventDate || ''}`
++            }
++            initialData={{
++              name: leadData.name || '',
++              surname: leadData.surname || '',
++              email: leadData.email || '',
++              phone: leadData.phone || '',
++              eventDate: leadData.eventDate || '',
++              notes: leadData.notes || '',
++              gdprAccepted: !!leadData.gdprAccepted
++            }}
+             onComplete={(data) => {
+               console.log('Lead completato:', data);
+               setLeadData(data);
+
+3) (Facoltativo ma consigliato) Assicurati che la chat salvi davvero la data “completa”
+
+Nel tuo handler hai già:
+
+setLeadData(prev => ({ ...prev, eventDate: selectedDate.toISOString().split('T')[0] }));
+
+
+Va bene. Se vuoi evitare ambiguità timezone, puoi usare direttamente l’ISO completo:
+
+setLeadData(prev => ({ ...prev, eventDate: selectedDate.toISOString() }));
+
+
+(Entrambe le versioni funzionano con il codice sopra.)
+
+Perché prima non vedevi i dati?
+
+Il LeadForm inizializza gli state solo alla prima mount; se entri/esci dalla fase o aggiorni leadData, React può riutilizzare l’istanza esistente → gli state interni restano vuoti.
+
+Con l’useEffect([initialData]) li riallineiamo; con la key forziamo anche un remount “pulito” quando i dati cambiano in modo sostanziale.
+
+Prova questi due patch: vedrai i campi precompilati (nome, cognome, email, telefono, data) quando arrivi alla fase “lead”.
