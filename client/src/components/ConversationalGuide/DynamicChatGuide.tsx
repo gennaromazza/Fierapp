@@ -810,14 +810,17 @@ export function DynamicChatGuide() {
             label: '📝 Inserisci i tuoi dati',
             value: 'checkout',
             action: () => {
-              saveChatHistory('phase_started', { 
-                phase: 'lead', 
-                timestamp: new Date(),
-                finalCartTotal: cart.getPricingWithRules().total,
-                finalCartSavings: cart.getPricingWithRules().totalSavings,
-                readyForCheckout: true
-              });
-              setCurrentPhase('lead');
+              if (currentPhase !== 'lead') {
+                console.log('🔄 Transitioning to lead phase from summary options');
+                saveChatHistory('phase_started', { 
+                  phase: 'lead', 
+                  timestamp: new Date(),
+                  finalCartTotal: cart.getPricingWithRules().total,
+                  finalCartSavings: cart.getPricingWithRules().totalSavings,
+                  readyForCheckout: true
+                });
+                setCurrentPhase('lead');
+              }
             }
           }
         ]
@@ -1362,7 +1365,7 @@ export function DynamicChatGuide() {
             <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
               <p className="text-gray-800 leading-relaxed">
                 Ciao! Sono {settings?.studioName ? `di ${settings.studioName}` : 'il tuo assistente'}! 
-                Ti aiuterò a creare il pacchetto perfetto per il tuo matrimonio. 
+                Ti aiuterò a creare il pacchetto perfetto per il tuo matrimonio da sogno. 
                 Iniziamo con i nostri servizi principali! 📸✨
               </p>
             </div>
@@ -1483,7 +1486,7 @@ export function DynamicChatGuide() {
           totalSavings: pricing.giftSavings,
           itemDetails: []
         };
-      
+
       const studioText = settings?.studioName ? ` da ${settings.studioName}` : '';
       let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
 
@@ -1591,7 +1594,7 @@ export function DynamicChatGuide() {
 
   // Determine if navigation buttons should be visible and enabled
   const canGoBack = (currentPhase as PhaseType) !== 'welcome' && (currentPhase as PhaseType) !== 'lead' && (currentPhase as PhaseType) !== 'collect_name' && (currentPhase as PhaseType) !== 'collect_surname' && (currentPhase as PhaseType) !== 'collect_email' && (currentPhase as PhaseType) !== 'collect_phone';
-  
+
   const handleGoBack = () => {
     if (currentPhase === 'services') {
       setCurrentPhase('welcome');
