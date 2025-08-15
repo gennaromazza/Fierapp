@@ -41,24 +41,30 @@ export function calculateUnifiedPricing(
   let giftSavings = 0;
   
   const itemDetails = cartItems.map(item => {
-    const originalPrice = item.originalPrice || item.price;
+    const originalPrice = typeof item.originalPrice === 'number'
+      ? item.originalPrice
+      : item.price;
     const isGift = giftItemIds.includes(item.id);
     
-    let finalPrice = originalPrice;
+    let discountedPrice = originalPrice;
     let discountType: 'global' | 'individual' | null = null;
     let itemSavings = 0;
     
-    // Se è un regalo, il prezzo finale è 0
-    if (isGift) {
-      giftSavings += originalPrice;
-      finalPrice = 0;
-      itemSavings = originalPrice;
-    } else if (discounts) {
-      // Solo se non è un regalo, applica gli sconti
+    // Calcola il prezzo scontato solo se non è un regalo
+    if (!isGift && discounts) {
       const discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
-      finalPrice = discountInfo.finalPrice;
+      discountedPrice = discountInfo.finalPrice;
       discountType = discountInfo.discountType;
       itemSavings = discountInfo.savings;
+    }
+    
+    // Forza prezzo 0 per i regali
+    const finalPrice = isGift ? 0 : discountedPrice;
+    
+    // Se è un regalo, aggiungi il risparmio
+    if (isGift) {
+      giftSavings += originalPrice;
+      itemSavings = originalPrice;
     }
     
     subtotal += finalPrice;

@@ -175,9 +175,15 @@ export function useCartWithRules() {
       .filter((item) => isItemGift(item.id))
       .map((item) => item.id);
 
+    // Arricchisci gli item del carrello con i dati completi
+    const enrichedItems = cart.cart.items.map(ci => {
+      const fullItem = allItems.find(ai => ai.id === ci.id);
+      return fullItem ? fullItem : ci;
+    });
+
     // Usa il sistema di pricing unificato con i veri sconti
     const unified = calculateUnifiedPricing(
-      cart.cart.items,
+      enrichedItems,
       discounts,
       giftItemIds,
     );
