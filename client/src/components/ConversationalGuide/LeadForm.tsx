@@ -38,20 +38,34 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Fetch settings for WhatsApp number
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
       try {
+        console.log('🔄 Fetching settings from Firebase...');
         const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
         const data = settingsDoc.exists() ? settingsDoc.data() : null;
-        console.log('Loaded settings from Firebase:', data);
+        console.log('✅ Loaded settings from Firebase:', data);
+        console.log('📞 WhatsApp number found:', data?.whatsappNumber);
+        console.log('📞 Phone number found:', data?.phoneNumber);
         return data;
       } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error('❌ Error loading settings:', error);
         return null;
       }
     },
   });
+
+  // Debug settings loading
+  if (settingsLoading) {
+    console.log('⏳ Settings loading...');
+  }
+  if (settingsError) {
+    console.error('❌ Settings error:', settingsError);
+  }
+  
+  // Force immediate fallback number for testing
+  const FALLBACK_WHATSAPP = "+393401234567"; // Numero di test per debugging
 
   const validateField = (field: string, value: any): string => {
     switch (field) {
@@ -210,14 +224,26 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${pricingSummary}\n\n${marketingMessages.mainSavings ? `🔥 ${marketingMessages.mainSavings}\n` : ''}${marketingMessages.giftMessage ? `🎁 ${marketingMessages.giftMessage}\n` : ''}\n📝 Lead ID: ${leadDoc.id}`;
 
       // Use WhatsApp number from settings if available
-      console.log('Settings available:', settings);
-      console.log('WhatsApp number:', settings?.whatsappNumber);
+      console.log('🔍 Current settings state:', settings);
+      console.log('📞 WhatsApp number:', settings?.whatsappNumber);
+      console.log('📞 Phone number fallback:', settings?.phoneNumber);
       
-      const whatsappNumber = settings?.whatsappNumber || settings?.phoneNumber;
-      if (!whatsappNumber) {
-        alert('Numero WhatsApp non configurato. Contatta l\'amministratore per configurare il numero nelle impostazioni.');
+      // Check if settings are still loading
+      if (settingsLoading) {
+        alert('Caricamento impostazioni in corso. Riprova tra un momento.');
         return;
       }
+      
+      let whatsappNumber = settings?.whatsappNumber || settings?.phoneNumber;
+      
+      // Se non c'è numero nelle impostazioni, usa il fallback
+      if (!whatsappNumber) {
+        console.warn('⚠️ No WhatsApp/Phone number found in settings, using fallback');
+        whatsappNumber = FALLBACK_WHATSAPP;
+        console.log('Settings complete object:', JSON.stringify(settings, null, 2));
+      }
+      
+      console.log('✅ Using number:', whatsappNumber);
       
       console.log('Generating WhatsApp URL with number:', whatsappNumber);
       console.log('Message content:', message);
