@@ -1,9 +1,24 @@
 export function generateWhatsAppLink(phoneNumber: string, message: string): string {
   // Clean phone number (remove spaces, dashes, etc.)
-  const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
+  let cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
+  
+  // Se il numero inizia con 0, sostituiscilo con +39 (numeri italiani)
+  if (cleanNumber.startsWith('0')) {
+    cleanNumber = '39' + cleanNumber.substring(1);
+  }
+  
+  // Se non inizia con +, aggiungi il prefisso italia
+  if (!cleanNumber.startsWith('+') && !cleanNumber.startsWith('39')) {
+    cleanNumber = '39' + cleanNumber;
+  }
+  
+  // Rimuovi il + se presente per il link WhatsApp
+  cleanNumber = cleanNumber.replace('+', '');
   
   // Encode message for URL
   const encodedMessage = encodeURIComponent(message);
+  
+  console.log('Generated WhatsApp link for number:', cleanNumber);
   
   // Generate WhatsApp link
   return `https://wa.me/${cleanNumber}?text=${encodedMessage}`;

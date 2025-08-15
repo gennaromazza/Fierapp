@@ -43,7 +43,9 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     queryFn: async () => {
       try {
         const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
-        return settingsDoc.exists() ? settingsDoc.data() : null;
+        const data = settingsDoc.exists() ? settingsDoc.data() : null;
+        console.log('Loaded settings from Firebase:', data);
+        return data;
       } catch (error) {
         console.error('Error loading settings:', error);
         return null;
@@ -208,13 +210,21 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${pricingSummary}\n\n${marketingMessages.mainSavings ? `🔥 ${marketingMessages.mainSavings}\n` : ''}${marketingMessages.giftMessage ? `🎁 ${marketingMessages.giftMessage}\n` : ''}\n📝 Lead ID: ${leadDoc.id}`;
 
       // Use WhatsApp number from settings if available
-      const whatsappNumber = settings?.whatsappNumber;
+      console.log('Settings available:', settings);
+      console.log('WhatsApp number:', settings?.whatsappNumber);
+      
+      const whatsappNumber = settings?.whatsappNumber || settings?.phoneNumber;
       if (!whatsappNumber) {
-        alert('Numero WhatsApp non configurato. Contatta l\'amministratore.');
+        alert('Numero WhatsApp non configurato. Contatta l\'amministratore per configurare il numero nelle impostazioni.');
         return;
       }
       
+      console.log('Generating WhatsApp URL with number:', whatsappNumber);
+      console.log('Message content:', message);
+      
       const whatsappUrl = generateWhatsAppLink(whatsappNumber, message);
+      console.log('Final WhatsApp URL:', whatsappUrl);
+      
       window.open(whatsappUrl, '_blank');
       onComplete(formData);
 
