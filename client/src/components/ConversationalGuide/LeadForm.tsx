@@ -24,16 +24,27 @@ interface LeadFormProps {
 
 export function LeadForm({ initialData, onComplete, className }: LeadFormProps) {
   const cart = useCartWithRules();
-  const [formData, setFormData] = useState<LeadData>({
-    name: '',
-    surname: '',
-    email: '',
-    phone: '',
-    eventDate: '',
-    notes: '',
-    gdprAccepted: false,
-    ...initialData
-  });
+  // Individual form states initialized with initialData
+  const [name, setName] = useState(initialData.name || '');
+  const [surname, setSurname] = useState(initialData.surname || '');
+  const [email, setEmail] = useState(initialData.email || '');
+  const [phone, setPhone] = useState(initialData.phone || '');
+  const [notes, setNotes] = useState(initialData.notes || '');
+  const [gdprAccepted, setGdprAccepted] = useState(initialData.gdprAccepted || false);
+  const [eventDate, setEventDate] = useState<Date | undefined>(
+    initialData.eventDate ? new Date(initialData.eventDate) : undefined
+  );
+
+  // Reconstruct formData object for backward compatibility
+  const formData: LeadData = {
+    name,
+    surname,
+    email,
+    phone,
+    notes,
+    gdprAccepted,
+    eventDate: eventDate ? eventDate.toISOString() : ''
+  };
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -112,7 +123,30 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   };
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Update individual states
+    switch (field) {
+      case 'name':
+        setName(value);
+        break;
+      case 'surname':
+        setSurname(value);
+        break;
+      case 'email':
+        setEmail(value);
+        break;
+      case 'phone':
+        setPhone(value);
+        break;
+      case 'notes':
+        setNotes(value);
+        break;
+      case 'gdprAccepted':
+        setGdprAccepted(value);
+        break;
+      case 'eventDate':
+        setEventDate(value ? new Date(value) : undefined);
+        break;
+    }
 
     // Clear error when user starts typing
     if (errors[field]) {
@@ -135,8 +169,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   };
 
   const isFormValid = () => {
-    return formData.name && formData.surname && formData.email && 
-           formData.phone && formData.eventDate && formData.gdprAccepted;
+    return name && surname && email && phone && eventDate && gdprAccepted;
   };
 
   const handleDownloadPDF = async () => {
@@ -430,7 +463,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
           <div>
             <Input
               placeholder="Nome *"
-              value={formData.name || ''}
+              value={name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               className={errors.name ? 'border-red-500' : ''}
             />
@@ -439,7 +472,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
           <div>
             <Input
               placeholder="Cognome *"
-              value={formData.surname || ''}
+              value={surname}
               onChange={(e) => handleInputChange('surname', e.target.value)}
               className={errors.surname ? 'border-red-500' : ''}
             />
@@ -451,7 +484,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
           <Input
             type="email"
             placeholder="Email *"
-            value={formData.email || ''}
+            value={email}
             onChange={(e) => handleInputChange('email', e.target.value)}
             className={errors.email ? 'border-red-500' : ''}
           />
@@ -462,7 +495,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
           <Input
             type="tel"
             placeholder="Telefono *"
-            value={formData.phone || ''}
+            value={phone}
             onChange={(e) => handleInputChange('phone', e.target.value)}
             className={errors.phone ? 'border-red-500' : ''}
           />
@@ -474,7 +507,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
             <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
             <Input
               type="date"
-              value={formData.eventDate ? format(new Date(formData.eventDate), "yyyy-MM-dd") : ''}
+              value={eventDate ? format(eventDate, "yyyy-MM-dd") : ''}
               onChange={(e) => {
                 if (e.target.value) {
                   handleInputChange('eventDate', new Date(e.target.value).toISOString());
@@ -494,7 +527,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         <div>
           <Textarea
             placeholder="Note aggiuntive (opzionale)"
-            value={formData.notes || ''}
+            value={notes}
             onChange={(e) => handleInputChange('notes', e.target.value)}
             rows={3}
           />
@@ -503,7 +536,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         <div className="flex items-start space-x-2">
           <Checkbox
             id="gdpr"
-            checked={formData.gdprAccepted || false}
+            checked={gdprAccepted}
             onCheckedChange={(checked) => handleInputChange('gdprAccepted', checked)}
             className={errors.gdprAccepted ? 'border-red-500' : ''}
           />
