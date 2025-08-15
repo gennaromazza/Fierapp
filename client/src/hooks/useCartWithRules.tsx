@@ -256,6 +256,11 @@ export function useCartWithRules() {
     }
   };
 
+  // Restituisce tutte le regole applicabili per analisi dettagliate
+  const getApplicableRules = () => {
+    return selectionRules || [];
+  };
+
   return {
     ...cart,
 
@@ -272,6 +277,7 @@ export function useCartWithRules() {
     getItemsWithRuleInfo,
     getAllItemsWithAvailability,
     getRequiredItemIds,
+    getApplicableRules,
 
     // Dati/evaluations
     rulesEvaluation,

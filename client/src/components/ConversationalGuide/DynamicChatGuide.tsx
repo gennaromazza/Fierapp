@@ -838,8 +838,9 @@ export function DynamicChatGuide() {
           rule.targetItems.includes(item.id) &&
           rule.conditions.type === 'mutually_exclusive') {
         
-        const conflictingItemId = rule.conditions.mutuallyExclusiveWith;
-        const conflictingItem = selectedItems.find(si => si.id === conflictingItemId);
+        const conflictingWith = rule.conditions.mutuallyExclusiveWith;
+        const conflictingItemIds = Array.isArray(conflictingWith) ? conflictingWith : [conflictingWith];
+        const conflictingItem = selectedItems.find(si => conflictingItemIds.some(id => id === si.id));
         
         if (conflictingItem) {
           return `Questo prodotto non è disponibile perché hai già scelto "${conflictingItem.title}". I due prodotti sono alternativi tra loro.`;
@@ -876,7 +877,7 @@ export function DynamicChatGuide() {
     }
     
     // Fallback to generic reason
-    return cart.getUnavailableReason(item.id);
+    return cart.getUnavailableReason(item.id) || 'Elemento non disponibile';
   };
 
   const toggleDescription = (itemId: string) => {
