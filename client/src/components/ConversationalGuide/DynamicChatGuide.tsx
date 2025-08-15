@@ -206,6 +206,16 @@ export function DynamicChatGuide() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Auto-open checkout modal when lead phase is active and data is complete
+  useEffect(() => {
+    if (currentPhase === 'lead') {
+      const isLeadDataComplete = leadData.name && leadData.surname && leadData.email && leadData.phone && leadData.eventDate;
+      if (isLeadDataComplete) {
+        setIsCheckoutOpen(true);
+      }
+    }
+  }, [currentPhase, leadData]);
+
   // Show services when items become ready (if we're in services phase and showed loading)
   useEffect(() => {
     if (itemsReady && currentPhase === 'services' && messages.some(m => m.id === 'services-loading')) {
