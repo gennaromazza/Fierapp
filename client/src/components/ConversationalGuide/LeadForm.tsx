@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,6 +34,19 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   const [eventDate, setEventDate] = useState<Date | undefined>(
     initialData.eventDate ? new Date(initialData.eventDate) : undefined
   );
+
+  // 🆕 Sync state with initialData when it changes
+  useEffect(() => {
+    setName(initialData.name || '');
+    setSurname(initialData.surname || '');
+    setEmail(initialData.email || '');
+    setPhone(initialData.phone || '');
+    setNotes(initialData.notes || '');
+    setGdprAccepted(initialData.gdprAccepted || false);
+    setEventDate(
+      initialData.eventDate ? new Date(initialData.eventDate) : undefined
+    );
+  }, [initialData]);
 
   // Reconstruct formData object for backward compatibility
   const formData: LeadData = {
