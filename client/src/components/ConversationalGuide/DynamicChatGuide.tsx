@@ -823,14 +823,78 @@ export function DynamicChatGuide() {
     }, 2000);
   };
 
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
+
+  const getDetailedUnavailableReason = (item: Item): string => {
+    if (cart.isItemAvailable(item.id)) return '';
+    
+    // Check for mutual exclusion rules first
+    const selectedItems = cart.cart.items;
+    const rules = cart.getApplicableRules();
+    
+    for (const rule of rules) {
+      if (rule.type === 'availability' && 
+          rule.action === 'disable' && 
+          rule.targetItems.includes(item.id) &&
+          rule.conditions.type === 'mutually_exclusive') {
+        
+        const conflictingItemId = rule.conditions.mutuallyExclusiveWith;
+        const conflictingItem = selectedItems.find(si => si.id === conflictingItemId);
+        
+        if (conflictingItem) {
+          return `Questo prodotto non è disponibile perché hai già scelto "${conflictingItem.title}". I due prodotti sono alternativi tra loro.`;
+        }
+      }
+    }
+    
+    // Check for required items rules
+    for (const rule of rules) {
+      if (rule.type === 'availability' && 
+          rule.action === 'disable' && 
+          rule.targetItems.includes(item.id) &&
+          rule.conditions.type === 'required_items') {
+        
+        const requiredItems = rule.conditions.requiredItems || [];
+        const selectedItemIds = selectedItems.map(si => si.id);
+        const missingItems = requiredItems.filter(reqId => !selectedItemIds.includes(reqId));
+        
+        if (missingItems.length > 0) {
+          // Get item names for missing items
+          const allItems = cart.getAllItemsWithAvailability();
+          const missingItemNames = missingItems.map(id => {
+            const foundItem = allItems.find(i => i.id === id);
+            return foundItem ? foundItem.title : 'Servizio richiesto';
+          });
+          
+          if (missingItemNames.length === 1) {
+            return `Per sbloccare questo prodotto devi prima selezionare: ${missingItemNames[0]}`;
+          } else {
+            return `Per sbloccare questo prodotto devi prima selezionare: ${missingItemNames.join(', ')}`;
+          }
+        }
+      }
+    }
+    
+    // Fallback to generic reason
+    return cart.getUnavailableReason(item.id);
+  };
+
+  const toggleDescription = (itemId: string) => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
+
   const renderItemCard = (item: Item) => {
     const cartItem = cart.cart.items.find(ci => ci.id === item.id);
     const isSelected = !!cartItem;
     const isAvailable = cart.isItemAvailable(item.id);
     const isGift = cart.isItemGift(item.id);
     const giftSettings = cart.getItemGiftSettings(item.id);
-    const unavailableReason = !isAvailable ? cart.getUnavailableReason(item.id) : null;
+    const unavailableReason = !isAvailable ? getDetailedUnavailableReason(item) : null;
     const isUnavailable = !isAvailable;
+    const isDescriptionExpanded = expandedDescriptions[item.id] || false;
     
     // Calculate discounted price using both global and individual discounts
     const originalPrice = item.originalPrice || item.price;
@@ -894,18 +958,43 @@ export function DynamicChatGuide() {
                 </Badge>
               )}
             </div>
+            
+            {/* Description with expand/collapse */}
             {item.description && (
-              <p className={cn(
-                "text-xs mt-1",
-                isUnavailable ? "text-gray-400" : "text-gray-600"
-              )}>
-                {item.description?.substring(0, 50)}...
-              </p>
+              <div className="mt-1">
+                <p className={cn(
+                  "text-xs",
+                  isUnavailable ? "text-gray-400" : "text-gray-600"
+                )}>
+                  {isDescriptionExpanded 
+                    ? item.description 
+                    : `${item.description.substring(0, 50)}${item.description.length > 50 ? '...' : ''}`
+                  }
+                </p>
+                {item.description.length > 50 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleDescription(item.id);
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800 mt-1 font-medium"
+                  >
+                    {isDescriptionExpanded ? 'Mostra meno' : 'Continua a leggere'}
+                  </button>
+                )}
+              </div>
             )}
+            
+            {/* Enhanced unavailable reason */}
             {unavailableReason && (
-              <p className="text-xs text-red-500 mt-1">
-                {unavailableReason}
-              </p>
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
+                <div className="flex items-start gap-1">
+                  <X className="h-3 w-3 text-red-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-red-700 leading-relaxed">
+                    {unavailableReason}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
           {/* Enhanced Pricing Display with Visual Feedback */}
