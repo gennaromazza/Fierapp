@@ -58,3 +58,43 @@ export function useToast() {
     info,
   };
 }
+import { useState, useCallback } from 'react';
+
+export interface ToastOptions {
+  title: string;
+  description?: string;
+  variant?: 'default' | 'success' | 'destructive' | 'warning';
+  duration?: number;
+}
+
+interface Toast extends ToastOptions {
+  id: string;
+}
+
+export function useToast() {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const toast = useCallback((options: ToastOptions) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newToast: Toast = { ...options, id };
+    
+    setToasts(prev => [...prev, newToast]);
+
+    // Auto remove after duration
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, options.duration || 3000);
+
+    return id;
+  }, []);
+
+  const dismiss = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  return {
+    toasts,
+    toast,
+    dismiss
+  };
+}

@@ -517,9 +517,11 @@ export function DynamicChatGuide() {
     
     if (isSelected) {
       cart.removeItem(item.id);
-      addMessage({
-        type: 'user',
-        text: `❌ Rimosso: ${item.title}`
+      toast({
+        title: "❌ Rimosso",
+        description: `${item.title} rimosso dal carrello`,
+        variant: "destructive",
+        duration: 2000,
       });
       
       // Aggiorna dati conversazione rimuovendo item
@@ -565,14 +567,23 @@ export function DynamicChatGuide() {
       
       if (success) {
         const isGift = cart.isItemGift(item.id);
-        const message = isGift 
-          ? `🎁 Aggiunto GRATIS: ${item.title}!`
-          : `✅ Aggiunto: ${item.title}`;
-          
-        addMessage({
-          type: 'user',
-          text: message
-        });
+        
+        // Usa toast invece di messaggio chat
+        if (isGift) {
+          toast({
+            title: "🎁 Regalo Sbloccato!",
+            description: `${item.title} è ora GRATUITO!`,
+            variant: "success",
+            duration: 4000,
+          });
+        } else {
+          toast({
+            title: "✅ Aggiunto",
+            description: `${item.title} aggiunto al carrello`,
+            variant: "default",
+            duration: 3000,
+          });
+        }
         
         // Aggiorna dati conversazione aggiungendo item
         setConversationData(prev => ({
@@ -1383,6 +1394,9 @@ export function DynamicChatGuide() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
       />
+      
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toast.toasts} onDismiss={toast.dismiss} />
     </div>
   );
 }

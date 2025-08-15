@@ -1,156 +1,149 @@
-import { useState, useEffect } from 'react';
-import { Check, Gift, ShoppingCart, X } from 'lucide-react';
+
+import React, { useEffect, useState } from 'react';
+import { X, CheckCircle, AlertCircle, XCircle, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type ToastType = 'success' | 'gift' | 'info' | 'warning';
-
-export interface Toast {
+interface ToastNotificationProps {
   id: string;
-  type: ToastType;
   title: string;
   description?: string;
+  variant?: 'default' | 'success' | 'destructive' | 'warning';
   duration?: number;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
+  onDismiss: (id: string) => void;
 }
 
-interface ToastNotificationProps {
-  toast: Toast;
-  onClose: (id: string) => void;
-}
-
-export function ToastNotification({ toast, onClose }: ToastNotificationProps) {
+export function ToastNotification({
+  id,
+  title,
+  description,
+  variant = 'default',
+  duration = 3000,
+  onDismiss
+}: ToastNotificationProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
-    // Animate in
-    const timer = setTimeout(() => setIsVisible(true), 50);
-    
-    // Auto close after duration
-    if (toast.duration && toast.duration > 0) {
-      const autoCloseTimer = setTimeout(() => {
-        handleClose();
-      }, toast.duration);
-      
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(autoCloseTimer);
-      };
-    }
-    
-    return () => clearTimeout(timer);
-  }, [toast.duration]);
+    setIsVisible(true);
+  }, []);
 
-  const handleClose = () => {
-    setIsLeaving(true);
-    setTimeout(() => {
-      onClose(toast.id);
-    }, 300);
+  const handleDismiss = () => {
+    setIsVisible(false);
+    setTimeout(() => onDismiss(id), 300);
   };
 
-  const getIcon = () => {
-    switch (toast.type) {
+  const getVariantStyles = () => {
+    switch (variant) {
       case 'success':
-        return <Check className="h-5 w-5 text-green-600" />;
-      case 'gift':
-        return <Gift className="h-5 w-5 text-purple-600" />;
-      case 'info':
-        return <ShoppingCart className="h-5 w-5 text-blue-600" />;
+        return {
+          bg: 'bg-gradient-to-r from-green-500 to-emerald-500',
+          icon: Gift,
+          border: 'border-green-200'
+        };
+      case 'destructive':
+        return {
+          bg: 'bg-gradient-to-r from-red-500 to-rose-500',
+          icon: XCircle,
+          border: 'border-red-200'
+        };
+      case 'warning':
+        return {
+          bg: 'bg-gradient-to-r from-orange-500 to-amber-500',
+          icon: AlertCircle,
+          border: 'border-orange-200'
+        };
       default:
-        return <Check className="h-5 w-5 text-gray-600" />;
+        return {
+          bg: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+          icon: CheckCircle,
+          border: 'border-blue-200'
+        };
     }
   };
 
-  const getStyles = () => {
-    const baseClasses = "relative overflow-hidden rounded-lg shadow-lg border backdrop-blur-sm";
-    
-    switch (toast.type) {
-      case 'success':
-        return `${baseClasses} bg-green-50/95 border-green-200 text-green-900`;
-      case 'gift':
-        return `${baseClasses} bg-gradient-to-r from-purple-50/95 to-pink-50/95 border-purple-200 text-purple-900`;
-      case 'info':
-        return `${baseClasses} bg-blue-50/95 border-blue-200 text-blue-900`;
-      default:
-        return `${baseClasses} bg-white/95 border-gray-200 text-gray-900`;
-    }
-  };
-
-  return (
-    <div
-      className={cn(
-        "transform transition-all duration-300 ease-out",
-        isVisible && !isLeaving ? "translate-x-0 opacity-100 scale-100" : "translate-x-full opacity-0 scale-95",
-        isLeaving && "-translate-x-full opacity-0 scale-95"
-      )}
-    >
-      <div className={cn(getStyles(), "p-4 max-w-sm w-full")}>
-        {/* Shimmer effect for gift toasts */}
-        {toast.type === 'gift' && (
-          <div className="absolute inset-0 -top-2 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 animate-pulse" />
-        )}
-        
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-0.5">
-            {getIcon()}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">
-              {toast.title}
-            </p>
-            {toast.description && (
-              <p className="text-xs mt-1 opacity-80">
-                {toast.description}
-              </p>
-            )}
-            
-            {toast.action && (
-              <button
-                onClick={toast.action.onClick}
-                className="mt-2 text-xs font-medium underline hover:no-underline transition-all"
-              >
-                {toast.action.label}
-              </button>
-            )}
-          </div>
-          
-          <button
-            onClick={handleClose}
-            className="flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface ToastContainerProps {
-  toasts: Toast[];
-  onClose: (id: string) => void;
-}
-
-export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
-  if (toasts.length === 0) return null;
+  const { bg, icon: Icon, border } = getVariantStyles();
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-40 pointer-events-none" />
-      
-      {/* Toast container */}
-      <div className="fixed top-4 right-4 z-50 space-y-2 pointer-events-none">
-        {toasts.map((toast) => (
-          <div key={toast.id} className="pointer-events-auto">
-            <ToastNotification toast={toast} onClose={onClose} />
+      {/* Backdrop with Blur */}
+      <div 
+        className={cn(
+          "fixed inset-0 z-40 transition-all duration-300",
+          isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        style={{ 
+          backdropFilter: isVisible ? 'blur(4px)' : 'blur(0px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.1)'
+        }}
+      />
+
+      {/* Toast Content */}
+      <div 
+        className={cn(
+          "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 transition-all duration-300",
+          isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+        )}
+      >
+        <div className={cn(
+          "min-w-[350px] max-w-md rounded-2xl shadow-2xl text-white p-6 border",
+          bg,
+          border
+        )}>
+          <button
+            onClick={handleDismiss}
+            className="absolute top-3 right-3 text-white/80 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div className="flex items-start gap-4 pr-6">
+            <div className="bg-white/20 rounded-full p-3 animate-pulse">
+              <Icon className="w-6 h-6" />
+            </div>
+            
+            <div className="flex-1">
+              <h3 className="font-bold text-lg mb-1">{title}</h3>
+              {description && (
+                <p className="text-white/90 text-sm">{description}</p>
+              )}
+            </div>
           </div>
-        ))}
+
+          {/* Animated progress bar */}
+          <div className="mt-4 h-1 bg-white/20 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-white/40 rounded-full transition-all ease-linear"
+              style={{
+                animation: `shrink ${duration}ms linear forwards`
+              }}
+            />
+          </div>
+        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes shrink {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+      `}</style>
     </>
+  );
+}
+
+export function ToastContainer({ toasts, onDismiss }: { 
+  toasts: any[], 
+  onDismiss: (id: string) => void 
+}) {
+  if (toasts.length === 0) return null;
+
+  // Show only the most recent toast
+  const latestToast = toasts[toasts.length - 1];
+
+  return (
+    <ToastNotification
+      key={latestToast.id}
+      {...latestToast}
+      onDismiss={onDismiss}
+    />
   );
 }
