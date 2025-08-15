@@ -43,7 +43,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     queryFn: async () => {
       try {
         console.log('🔄 Fetching settings from Firebase...');
-        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        const settingsDoc = await getDoc(doc(db, 'settings', 'app'));
         const data = settingsDoc.exists() ? settingsDoc.data() : null;
         console.log('✅ Loaded settings from Firebase:', data);
         console.log('📞 WhatsApp number found:', data?.whatsappNumber);
@@ -64,8 +64,8 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     console.error('❌ Settings error:', settingsError);
   }
   
-  // Force immediate fallback number for testing
-  const FALLBACK_WHATSAPP = "+393401234567"; // Numero di test per debugging
+  // Debug: Log when component mounts
+  console.log('🔄 LeadForm mounted, fetching settings from settings/app...');
 
   const validateField = (field: string, value: any): string => {
     switch (field) {
@@ -234,16 +234,16 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         return;
       }
       
-      let whatsappNumber = settings?.whatsappNumber || settings?.phoneNumber;
+      const whatsappNumber = settings?.whatsappNumber || settings?.phoneNumber;
       
-      // Se non c'è numero nelle impostazioni, usa il fallback
       if (!whatsappNumber) {
-        console.warn('⚠️ No WhatsApp/Phone number found in settings, using fallback');
-        whatsappNumber = FALLBACK_WHATSAPP;
+        console.error('❌ No WhatsApp/Phone number found in settings');
         console.log('Settings complete object:', JSON.stringify(settings, null, 2));
+        alert('Numero WhatsApp non configurato nel pannello admin. Vai in Impostazioni > Informazioni Generali per configurarlo.');
+        return;
       }
       
-      console.log('✅ Using number:', whatsappNumber);
+      console.log('✅ Using WhatsApp number:', whatsappNumber);
       
       console.log('Generating WhatsApp URL with number:', whatsappNumber);
       console.log('Message content:', message);
