@@ -517,7 +517,7 @@ export function DynamicChatGuide() {
     
     if (isSelected) {
       cart.removeItem(item.id);
-      toast({
+      toast.toast({
         title: "❌ Rimosso",
         description: `${item.title} rimosso dal carrello`,
         variant: "destructive",
@@ -570,19 +570,9 @@ export function DynamicChatGuide() {
         
         // Usa toast invece di messaggio chat
         if (isGift) {
-          toast({
-            title: "🎁 Regalo Sbloccato!",
-            description: `${item.title} è ora GRATUITO!`,
-            variant: "success",
-            duration: 4000,
-          });
+          toast.gift("🎁 Regalo Sbloccato!", `${item.title} è ora GRATUITO!`, 4000);
         } else {
-          toast({
-            title: "✅ Aggiunto",
-            description: `${item.title} aggiunto al carrello`,
-            variant: "default",
-            duration: 3000,
-          });
+          toast.success("✅ Aggiunto", `${item.title} aggiunto al carrello`, 3000);
         }
         
         // Aggiorna dati conversazione aggiungendo item
