@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 // Import user's avatar images
@@ -26,13 +26,17 @@ export function SpectacularAvatar({
   const [showEffects, setShowEffects] = useState(false);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
 
-  // Generate random particles
+  // Generate random particles with window safety check
   useEffect(() => {
-    if (isFullscreen) {
+    if (isFullscreen && typeof window !== 'undefined') {
+      // Safe access to window dimensions with fallbacks
+      const width = window.innerWidth || 1024;
+      const height = window.innerHeight || 768;
+      
       const newParticles = Array.from({ length: 30 }, (_, i) => ({
         id: i,
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
+        x: Math.random() * width,
+        y: Math.random() * height,
       }));
       setParticles(newParticles);
       setShowEffects(true);
@@ -60,10 +64,11 @@ export function SpectacularAvatar({
 
   if (isFullscreen) {
     return (
-      <AnimatePresence>
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
+      <AnimatePresence mode="wait">
+        <MotionConfig reducedMotion="user">
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
           transition={{ 
             type: "spring", 
@@ -96,9 +101,16 @@ export function SpectacularAvatar({
             <motion.div
               key={particle.id}
               className="absolute w-2 h-2 bg-white rounded-full"
-              initial={{ x: particle.x, y: particle.y, opacity: 0 }}
+              initial={{ 
+                x: isFinite(particle.x) ? particle.x : 0, 
+                y: isFinite(particle.y) ? particle.y : 0, 
+                opacity: 0 
+              }}
               animate={{
-                y: [particle.y, particle.y - 200],
+                y: [
+                  isFinite(particle.y) ? particle.y : 0, 
+                  isFinite(particle.y) ? particle.y - 200 : -200
+                ],
                 opacity: [0, 1, 0],
                 scale: [0, 1.5, 0],
               }}
@@ -198,7 +210,8 @@ export function SpectacularAvatar({
           >
             Continua →
           </motion.button>
-        </motion.div>
+          </motion.div>
+        </MotionConfig>
       </AnimatePresence>
     );
   }
