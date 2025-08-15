@@ -78,7 +78,6 @@ export function DynamicChatGuide() {
     startTime: new Date()
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const [currentStep, setCurrentStep] = useState<'intro' | 'selection'>('intro'); // State to manage different views within a phase
 
   // Salva dati conversazione su Firebase
   const saveChatHistory = async (eventType: string, data: any = {}) => {
@@ -472,7 +471,6 @@ export function DynamicChatGuide() {
 
   const startServicesPhase = () => {
     setCurrentPhase('services');
-    setCurrentStep('intro'); // Reset step for services phase
 
     // Salva transizione di fase
     saveChatHistory('phase_started', { phase: 'services', timestamp: new Date() });
@@ -654,7 +652,6 @@ export function DynamicChatGuide() {
 
   const startProductsPhase = () => {
     setCurrentPhase('products');
-    setCurrentStep('intro'); // Reset step for products phase
 
     // Salva transizione di fase con stato servizi selezionati
     const selectedServices = cart.cart.items.filter(i => i.category === 'servizio');
@@ -716,7 +713,6 @@ export function DynamicChatGuide() {
 
   const startSummaryPhase = () => {
     setCurrentPhase('summary');
-    setCurrentStep('intro'); // Reset step for summary phase
 
     const pricing = cart.getPricingWithRules();
     const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
@@ -800,7 +796,7 @@ export function DynamicChatGuide() {
 
     setTimeout(() => {
       const contactText = settings?.studioName ? 
-        `Compila i tuoi dati per ricevere il preventivo dettagliato di ${settings.studioName}:` :
+        "Compila i tuoi dati per ricevere il preventivo dettagliato di " + settings.studioName + ":" :
         "Compila i tuoi dati per ricevere il preventivo dettagliato:";
 
       addMessage({
@@ -822,7 +818,6 @@ export function DynamicChatGuide() {
                 readyForCheckout: true
               });
               setCurrentPhase('lead');
-              setCurrentStep('lead'); // Set step to lead directly
             }
           }
         ]
@@ -1210,10 +1205,10 @@ export function DynamicChatGuide() {
       );
     }
 
-    return null;
+    return null; // Should not happen if currentPhase is handled
   };
 
-  // Dynamically render content based on current phase and step
+  // Dynamically render content based on current phase
   const renderContent = () => {
     // Filter items for main services and categories
     const allServices = items.filter(item => item.category === 'servizio' && item.active !== false);
@@ -1224,6 +1219,105 @@ export function DynamicChatGuide() {
       { key: 'other-services', title: 'Altri Servizi', icon: '✨', items: allServices.filter(item => !item.tags || (!item.tags.includes('photo') && !item.tags.includes('video') && !item.tags.includes('main'))) }
     ].filter(cat => cat.items.length > 0);
 
+    if (currentPhase === 'welcome') {
+      return (
+        <div key="welcome-step" className="space-y-4 text-center">
+          <SpectacularAvatar type="explaining" className="mx-auto w-24 h-24 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Benvenuto/a!
+          </h2>
+          <p className="text-lg text-gray-600 mb-6">
+            Sono qui per aiutarti a creare il pacchetto perfetto per il tuo giorno speciale.
+          </p>
+          <p className="text-lg text-gray-600 mb-6">
+            Per iniziare, quando sarà il grande giorno?
+          </p>
+          <div className="flex flex-col items-center gap-3">
+            <Button onClick={() => handleDateSelection('2025')} className="w-64 py-3 text-lg">📅 2025</Button>
+            <Button onClick={() => handleDateSelection('2026')} className="w-64 py-3 text-lg">📅 2026</Button>
+            <Button onClick={() => handleDateSelection('later')} className="w-64 py-3 text-lg">📅 Più avanti</Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentPhase === 'collect_name') {
+      return (
+        <div key="collect-name-step" className="space-y-4">
+          <div className="flex items-start gap-3 mb-6">
+            <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
+              <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
+              <AvatarFallback className="bg-brand-accent text-white font-bold">
+                {settings?.studioName?.charAt(0) || 'S'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
+              <p className="text-gray-800 leading-relaxed">
+                Perfetto! Ora conosciamoci meglio. Come ti chiami? 😊
+              </p>
+            </div>
+          </div>
+          {/* Input is handled in the input area */}
+        </div>
+      );
+    }
+    if (currentPhase === 'collect_surname') {
+      return (
+        <div key="collect-surname-step" className="space-y-4">
+          <div className="flex items-start gap-3 mb-6">
+            <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
+              <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
+              <AvatarFallback className="bg-brand-accent text-white font-bold">
+                {settings?.studioName?.charAt(0) || 'S'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
+              <p className="text-gray-800 leading-relaxed">
+                {leadData.name} {leadData.surname}, per inviarti il preventivo personalizzato in PDF, qual è la tua email? 📧
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (currentPhase === 'collect_email') {
+      return (
+        <div key="collect-email-step" className="space-y-4">
+          <div className="flex items-start gap-3 mb-6">
+            <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
+              <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
+              <AvatarFallback className="bg-brand-accent text-white font-bold">
+                {settings?.studioName?.charAt(0) || 'S'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
+              <p className="text-gray-800 leading-relaxed">
+                Perfetto! E il tuo numero di telefono per WhatsApp? Così potremo coordinarci meglio! 📱
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (currentPhase === 'collect_phone') {
+      return (
+        <div key="collect-phone-step" className="space-y-4">
+          <div className="flex items-start gap-3 mb-6">
+            <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
+              <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
+              <AvatarFallback className="bg-brand-accent text-white font-bold">
+                {settings?.studioName?.charAt(0) || 'S'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
+              <p className="text-gray-800 leading-relaxed">
+                Infine, quando è previsto il tuo matrimonio? 💒
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
     if (currentPhase === 'lead') {
       return (
         <div key="lead-step" className="space-y-4">
@@ -1256,97 +1350,58 @@ export function DynamicChatGuide() {
 
     if (currentPhase === 'services') {
       return (
-        <>
-          {currentStep === 'intro' && (
-            <div key="intro-step" className="space-y-4">
-              {/* Welcome Message */}
-              <div className="flex items-start gap-3 mb-6">
-                <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
-                  <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
-                  <AvatarFallback className="bg-brand-accent text-white font-bold">
-                    {settings?.studioName?.charAt(0) || 'S'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
-                  <p className="text-gray-800 leading-relaxed">
-                    Ciao! Sono {settings?.studioName ? `di ${settings.studioName}` : 'il tuo assistente'}! 
-                    Ti aiuterò a creare il pacchetto perfetto per il tuo matrimonio. 
-                    Iniziamo con i nostri servizi principali! 📸✨
-                  </p>
-                </div>
-              </div>
+        <div key="services-step" className="space-y-6">
+          {/* Assistant Message */}
+          <div className="flex items-start gap-3 mb-6">
+            <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
+              <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
+              <AvatarFallback className="bg-brand-accent text-white font-bold">
+                {settings?.studioName?.charAt(0) || 'S'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
+              <p className="text-gray-800 leading-relaxed">
+                Ciao! Sono {settings?.studioName ? `di ${settings.studioName}` : 'il tuo assistente'}! 
+                Ti aiuterò a creare il pacchetto perfetto per il tuo matrimonio. 
+                Iniziamo con i nostri servizi principali! 📸✨
+              </p>
+            </div>
+          </div>
 
-              {/* Main Services */}
-              <div className="space-y-4">
-                <div className="text-center mb-4">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    🎯 I nostri servizi principali
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Seleziona quello che ti interessa di più per iniziare
-                  </p>
-                </div>
+          {/* Main Services */}
+          <div className="space-y-4">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">
+                🎯 I nostri servizi principali
+              </h3>
+              <p className="text-sm text-gray-600">
+                Seleziona quello che ti interessa di più per iniziare
+              </p>
+            </div>
 
+            <div className="grid grid-cols-1 gap-3">
+              {mainServices.map((item) => renderItemCard(item))}
+            </div>
+          </div>
+
+          {/* Service Categories */}
+          <div className="space-y-6">
+            {serviceCategories.map((category, categoryIndex) => (
+              <div key={`category-${category.key}-${categoryIndex}`} className="space-y-3">
+                <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  {category.icon} {category.title}
+                </h4>
                 <div className="grid grid-cols-1 gap-3">
-                  {mainServices.map((item) => renderItemCard(item))}
-                </div>
-              </div>
-
-              <div className="text-center pt-4">
-                <Button 
-                  onClick={() => setCurrentStep('selection')}
-                  className="px-8 py-3 text-lg font-semibold"
-                  disabled={cart.cart.items.length === 0}
-                >
-                  Continua →
-                </Button>
-                {cart.cart.items.length === 0 && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    Seleziona almeno un servizio per continuare
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {currentStep === 'selection' && (
-            <div key="selection-step" className="space-y-6">
-              {/* Assistant Message */}
-              <div className="flex items-start gap-3 mb-6">
-                <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
-                  <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
-                  <AvatarFallback className="bg-brand-accent text-white font-bold">
-                    {settings?.studioName?.charAt(0) || 'S'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
-                  <p className="text-gray-800 leading-relaxed">
-                    Ottima scelta! Ora puoi completare il tuo pacchetto aggiungendo altri servizi. 
-                    Alcuni potrebbero diventare gratuiti se aggiungi tutto! 🎁
-                  </p>
-                </div>
-              </div>
-
-              {/* Service Categories */}
-              <div className="space-y-6">
-                {serviceCategories.map((category, categoryIndex) => (
-                  <div key={`category-${category.key}-${categoryIndex}`} className="space-y-3">
-                    <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                      {category.icon} {category.title}
-                    </h4>
-                    <div className="grid grid-cols-1 gap-3">
-                      {category.items.map((item, itemIndex) => (
-                        <div key={`item-${item.id}-${categoryIndex}-${itemIndex}`}>
-                          {renderItemCard(item)}
-                        </div>
-                      ))}
+                  {category.items.map((item, itemIndex) => (
+                    <div key={`item-${item.id}-${categoryIndex}-${itemIndex}`}>
+                      {renderItemCard(item)}
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </>
+            ))}
+          </div>
+        </div>
       );
     }
 
@@ -1356,60 +1411,146 @@ export function DynamicChatGuide() {
       const unavailableProducts = products.filter(item => !cart.isItemAvailable(item.id));
 
       return (
-        <>
-          {currentStep === 'intro' && (
-            <div key="intro-step" className="space-y-4">
-              {/* Assistant Message */}
-              <div className="flex items-start gap-3 mb-6">
-                <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
-                  <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
-                  <AvatarFallback className="bg-brand-accent text-white font-bold">
-                    {settings?.studioName?.charAt(0) || 'S'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
-                  <p className="text-gray-800 leading-relaxed">
-                    Ottima scelta! Ora puoi completare il tuo pacchetto aggiungendo altri servizi. 
-                    Alcuni potrebbero diventare gratuiti se aggiungi tutto! 🎁
-                  </p>
-                </div>
-              </div>
+        <div key="products-step" className="space-y-6">
+          {/* Assistant Message */}
+          <div className="flex items-start gap-3 mb-6">
+            <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
+              <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
+              <AvatarFallback className="bg-brand-accent text-white font-bold">
+                {settings?.studioName?.charAt(0) || 'S'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
+              <p className="text-gray-800 leading-relaxed">
+                Ottima scelta! Ora puoi completare il tuo pacchetto aggiungendo altri servizi. 
+                Alcuni potrebbero diventare gratuiti se aggiungi tutto! 🎁
+              </p>
+            </div>
+          </div>
 
-              {/* Products */}
-              <div className="space-y-6">
-                <div className="text-center mb-4">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    🛍️ Prodotti Esclusivi
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Aggiungi questi articoli speciali per arricchire il tuo pacchetto
-                  </p>
+          {/* Products */}
+          <div className="space-y-6">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">
+                🛍️ Prodotti Esclusivi
+              </h3>
+              <p className="text-sm text-gray-600">
+                Aggiungi questi articoli speciali per arricchire il tuo pacchetto
+              </p>
+            </div>
+            <div className="space-y-3">
+              {availableProducts.map((item, itemIndex) => (
+                <div key={`product-${item.id}-${itemIndex}`}>
+                  {renderItemCard(item)}
                 </div>
+              ))}
+            </div>
+            {unavailableProducts.length > 0 && (
+              <div className="space-y-3 pt-4 border-t">
+                <h4 className="text-lg font-semibold text-gray-500 flex items-center gap-2">
+                  🔒 Prodotti Bloccati
+                </h4>
                 <div className="space-y-3">
-                  {availableProducts.map((item, itemIndex) => (
-                    <div key={`product-${item.id}-${itemIndex}`}>
+                  {unavailableProducts.map((item, itemIndex) => (
+                    <div key={`unavailable-product-${item.id}-${itemIndex}`}>
                       {renderItemCard(item)}
                     </div>
                   ))}
                 </div>
-                {unavailableProducts.length > 0 && (
-                  <div className="space-y-3 pt-4 border-t">
-                    <h4 className="text-lg font-semibold text-gray-500 flex items-center gap-2">
-                      🔒 Prodotti Bloccati
-                    </h4>
-                    <div className="space-y-3">
-                      {unavailableProducts.map((item, itemIndex) => (
-                        <div key={`unavailable-product-${item.id}-${itemIndex}`}>
-                          {renderItemCard(item)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (currentPhase === 'summary') {
+      const pricing = cart.getPricingWithRules();
+      const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
+      const giftItemIds = giftItems.map(item => item.id);
+
+      // Calculate comprehensive savings using unified pricing system
+      const savingsInfo = discounts ? 
+        calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds) :
+        {
+          subtotal: pricing.total,
+          originalSubtotal: pricing.total,
+          globalDiscountSavings: 0,
+          individualDiscountSavings: 0,
+          totalDiscountSavings: 0,
+          giftSavings: pricing.giftSavings,
+          finalTotal: pricing.total,
+          totalSavings: pricing.giftSavings,
+          itemDetails: []
+        };
+      
+      const studioText = settings?.studioName ? ` da ${settings.studioName}` : '';
+      let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
+
+      if (savingsInfo.totalDiscountSavings > 0 || savingsInfo.giftSavings > 0) {
+        summaryText += `💰 Prezzo originale: €${savingsInfo.originalSubtotal}\n`;
+
+        if (savingsInfo.globalDiscountSavings > 0) {
+          const globalDiscount = discounts?.global;
+          const discountText = globalDiscount?.type === 'percent' ? 
+            `${globalDiscount.value}%` : `€${globalDiscount?.value}`;
+          summaryText += `💸 Sconto globale (${discountText}): -€${savingsInfo.globalDiscountSavings}\n`;
+        }
+
+        if (savingsInfo.individualDiscountSavings > 0) {
+          summaryText += `🎯 Sconti speciali prodotti: -€${savingsInfo.individualDiscountSavings}\n`;
+        }
+
+        if (savingsInfo.giftSavings > 0) {
+          summaryText += `🎁 Risparmi con regali: €${savingsInfo.giftSavings}\n`;
+        }
+
+        summaryText += `💰 Totale finale: €${savingsInfo.finalTotal}\n`;
+        summaryText += `✨ RISPARMI TOTALI: €${savingsInfo.totalSavings} 💫\n`;
+      } else {
+        summaryText += `💰 Totale: €${savingsInfo.finalTotal}\n`;
+      }
+
+      if (giftItems.length > 0) {
+        const giftNames = giftItems.map(item => item.title).join(', ');
+        summaryText += `\n🎁 Prodotti GRATUITI: ${giftNames}`;
+      }
+
+      summaryText += "\n\nVuoi procedere con la prenotazione?";
+
+      return (
+        <div key="summary-step" className="space-y-4">
+          <div className="flex items-start gap-3 mb-6">
+            <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
+              <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
+              <AvatarFallback className="bg-brand-accent text-white font-bold">
+                {settings?.studioName?.charAt(0) || 'S'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
+              <p className="text-gray-800 leading-relaxed">
+                {summaryText}
+              </p>
             </div>
-          )}
-        </>
+          </div>
+          <div className="text-center pt-4">
+            <Button 
+              onClick={() => {
+                saveChatHistory('phase_started', { 
+                  phase: 'lead', 
+                  timestamp: new Date(),
+                  finalCartTotal: cart.getPricingWithRules().total,
+                  finalCartSavings: cart.getPricingWithRules().totalSavings,
+                  readyForCheckout: true
+                });
+                setCurrentPhase('lead');
+              }}
+              className="px-8 py-3 text-lg font-semibold bg-green-600 hover:bg-green-700"
+            >
+              📝 Inserisci i tuoi dati
+            </Button>
+          </div>
+        </div>
       );
     }
 
@@ -1421,12 +1562,14 @@ export function DynamicChatGuide() {
   const getProgress = (): number => {
     switch (currentPhase as PhaseType) {
       case 'welcome': return 10; // Increased starting progress
-      case 'services': 
-        return currentStep === 'intro' ? 30 : 50;
-      case 'products': 
-        return currentStep === 'intro' ? 60 : 80;
-      case 'summary': return 90;
+      case 'services': return 40;
+      case 'products': return 60;
+      case 'summary': return 80;
       case 'lead': return 100;
+      case 'collect_name': return 20;
+      case 'collect_surname': return 25;
+      case 'collect_email': return 30;
+      case 'collect_phone': return 35;
       default: return 0;
     }
   };
@@ -1434,6 +1577,10 @@ export function DynamicChatGuide() {
   const getPhaseLabel = (): string => {
     switch (currentPhase as PhaseType) {
       case 'welcome': return "Benvenuto";
+      case 'collect_name': return "Dati Personali";
+      case 'collect_surname': return "Dati Personali";
+      case 'collect_email': return "Dati Personali";
+      case 'collect_phone': return "Dati Personali";
       case 'services': return "Servizi";
       case 'products': return "Prodotti";
       case 'summary': return "Riepilogo";
@@ -1443,41 +1590,34 @@ export function DynamicChatGuide() {
   };
 
   // Determine if navigation buttons should be visible and enabled
-  const canGoBack = (currentPhase as PhaseType) !== 'welcome' && (currentPhase as PhaseType) !== 'lead';
-  const canSkipForward = (currentPhase === 'services' && currentStep === 'intro' && cart.cart.items.length > 0) || (currentPhase === 'products');
-
+  const canGoBack = (currentPhase as PhaseType) !== 'welcome' && (currentPhase as PhaseType) !== 'lead' && (currentPhase as PhaseType) !== 'collect_name' && (currentPhase as PhaseType) !== 'collect_surname' && (currentPhase as PhaseType) !== 'collect_email' && (currentPhase as PhaseType) !== 'collect_phone';
+  
   const handleGoBack = () => {
     if (currentPhase === 'services') {
-      if (currentStep === 'selection') {
-        setCurrentStep('intro'); // Go back to intro for services
-      } else {
-        // Go back to welcome
-        setCurrentPhase('welcome');
-        setMessages([]);
-        setTimeout(() => startWelcomePhase(), 100);
-      }
+      setCurrentPhase('welcome');
+      setMessages([]);
+      setTimeout(() => startWelcomePhase(), 100);
     } else if (currentPhase === 'products') {
-      if (currentStep === 'intro') {
-        setCurrentPhase('services');
-        setCurrentStep('selection'); // Go back to selection step for services
-      }
+      setCurrentPhase('services');
     } else if (currentPhase === 'summary') {
       setCurrentPhase('products');
-      setCurrentStep('intro'); // Go back to intro step for products
-    }
-  };
-
-  const handleSkipForward = () => {
-    if (currentPhase === 'services' && currentStep === 'intro' && cart.cart.items.length > 0) {
-      setCurrentStep('selection'); // Move to selection step within services
-    } else if (currentPhase === 'products' && currentStep === 'intro') {
-      startSummaryPhase(); // Move to summary phase from products
+    } else if (currentPhase === 'lead') {
+      setCurrentPhase('summary');
+    } else if (currentPhase === 'collect_phone') {
+      setCurrentPhase('collect_email');
+    } else if (currentPhase === 'collect_email') {
+      setCurrentPhase('collect_surname');
+    } else if (currentPhase === 'collect_surname') {
+      setCurrentPhase('collect_name');
+    } else if (currentPhase === 'collect_name') {
+      setCurrentPhase('welcome');
+      setMessages([]);
+      setTimeout(() => startWelcomePhase(), 100);
     }
   };
 
   const startWelcomePhase = () => {
     setCurrentPhase('welcome');
-    setCurrentStep('intro'); // Reset step for welcome phase
     // Re-trigger welcome message
     setTimeout(() => {
       const studioText = settings?.studioName ? ` di ${settings.studioName}` : '';
@@ -1540,18 +1680,6 @@ export function DynamicChatGuide() {
                 </Button>
               )}
 
-              {canSkipForward && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleSkipForward}
-                  className="h-8 px-2 text-xs"
-                >
-                  <SkipForward className="h-3 w-3 mr-1" />
-                  Avanti
-                </Button>
-              )}
-
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -1559,7 +1687,6 @@ export function DynamicChatGuide() {
                   cart.clearCart();
                   setMessages([]);
                   setCurrentPhase('welcome');
-                  setCurrentStep('intro'); // Reset step
                   setLeadData({});
                   startWelcomePhase();
                 }}
@@ -1581,10 +1708,14 @@ export function DynamicChatGuide() {
               <h3 className="font-semibold text-gray-900">Assistente Matrimonio</h3>
               <p className="text-xs text-gray-500">
                 {currentPhase === 'welcome' && "Scegli la data del matrimonio"}
-                {currentPhase === 'services' && (currentStep === 'intro' ? "Scopri i nostri servizi principali" : "Seleziona i servizi che desideri")}
-                {currentPhase === 'products' && (currentStep === 'intro' ? "Esplora i prodotti esclusivi" : "Aggiungi prodotti")}
+                {currentPhase === 'services' && "Seleziona i servizi che desideri"}
+                {currentPhase === 'products' && "Aggiungi prodotti al tuo pacchetto"}
                 {currentPhase === 'summary' && "Controlla il preventivo finale"}
                 {currentPhase === 'lead' && "Completa i tuoi dati per il preventivo"}
+                {currentPhase === 'collect_name' && "Inserisci il tuo nome"}
+                {currentPhase === 'collect_surname' && "Inserisci il tuo cognome"}
+                {currentPhase === 'collect_email' && "Inserisci la tua email"}
+                {currentPhase === 'collect_phone' && "Inserisci il tuo numero di telefono"}
               </p>
             </div>
 
