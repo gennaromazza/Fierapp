@@ -1031,14 +1031,17 @@ export function DynamicChatGuide() {
                       const discountInfo = discounts ? 
                         getItemDiscountInfo(originalPrice, item.id, discounts) : 
                         { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
-                      const finalPrice = item.price === 0 ? 0 : discountInfo.finalPrice; // Keep gifts as 0
-                      const hasDiscount = discountInfo.discountType !== null && item.price > 0;
+                      const isGift = cart.isItemGift(item.id);
+                      const finalPrice = isGift ? 0 : discountInfo.finalPrice;
+                      const hasDiscount = discountInfo.discountType !== null && !isGift;
                       
                       return (
                         <div key={item.id} className="flex justify-between text-xs mb-1">
-                          <span>{item.title}</span>
+                          <span className={isGift ? "text-green-600" : ""}>
+                            {item.title} {isGift && "(OMAGGIO)"}
+                          </span>
                           <div className="flex items-center gap-2">
-                            {hasDiscount && (
+                            {(hasDiscount || isGift) && (
                               <span className="line-through text-gray-400 text-xs">
                                 €{originalPrice}
                               </span>
