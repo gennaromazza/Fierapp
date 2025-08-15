@@ -12,6 +12,7 @@ export const itemSchema = z.object({
   active: z.boolean().default(true),
   category: z.enum(["prodotto", "servizio"]),
   sortOrder: z.number().default(0),
+  tags: z.array(z.string()).optional(),
   ruleSettings: z.object({
     canBeGift: z.boolean().default(true),
     canHaveConditions: z.boolean().default(true),
