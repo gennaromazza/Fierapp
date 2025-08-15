@@ -15,6 +15,8 @@ import { SpectacularAvatar } from './SpectacularAvatar';
 import { CalendarIcon } from 'lucide-react';
 import { getItemDiscountInfo } from '../../lib/discounts';
 import { calculateUnifiedPricing } from '../../lib/unifiedPricing';
+import { useToast } from '@/hooks/useToast';
+import { ToastContainer } from '@/components/ui/toast-notification';
 
 type PhaseType = 'welcome' | 'collect_name' | 'collect_surname' | 'collect_email' | 'collect_phone' | 'collect_date' | 'services' | 'products' | 'summary' | 'lead';
 
@@ -37,6 +39,7 @@ interface ChatMessage {
 
 export function DynamicChatGuide() {
   const cart = useCartWithRules();
+  const toast = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
