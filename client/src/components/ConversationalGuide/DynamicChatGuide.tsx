@@ -1230,7 +1230,7 @@ export function DynamicChatGuide() {
             Benvenuto/a!
           </h2>
           <p className="text-lg text-gray-600 mb-6">
-            Sono qui per aiutarti a creare il pacchetto perfetto per il tuo giorno speciale.
+            Sono qui per aiutarti a creare il pacchetto perfetto per il tuo matrimonio.
           </p>
           <p className="text-lg text-gray-600 mb-6">
             Per iniziare, quando sarà il grande giorno?
@@ -1547,6 +1547,12 @@ export function DynamicChatGuide() {
                   readyForCheckout: true
                 });
                 setCurrentPhase('lead');
+
+                // Se i dati del lead sono già completi, apri immediatamente la modale checkout
+                const isLeadDataComplete = leadData.name && leadData.surname && leadData.email && leadData.phone && leadData.eventDate;
+                if (isLeadDataComplete) {
+                  setIsCheckoutOpen(true);
+                }
               }}
               className="px-8 py-3 text-lg font-semibold bg-green-600 hover:bg-green-700"
             >
