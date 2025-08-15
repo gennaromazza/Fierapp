@@ -4,7 +4,14 @@ import { RulesEngine } from "../lib/rulesEngine";
 import { calculateUnifiedPricing } from "../lib/unifiedPricing";
 import { useMemo, useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import type { Item, CartItem, Discounts } from "../../../shared/schema";
 import type {
@@ -97,10 +104,10 @@ export function useCartWithRules() {
    */
   const rulesEvaluation = useMemo<RulesEvaluationResult>(() => {
     const engine = new RulesEngine(selectionRules, allItems);
-    const selectedItems = cart.cart.items.map(ci => 
-      allItems.find(item => item.id === ci.id)
-    ).filter(Boolean) as Item[];
-    
+    const selectedItems = cart.cart.items
+      .map((ci) => allItems.find((item) => item.id === ci.id))
+      .filter(Boolean) as Item[];
+
     return engine.evaluate(selectedItems);
   }, [cart.cart.items, allItems, selectionRules]);
 
@@ -165,12 +172,16 @@ export function useCartWithRules() {
   const getPricingWithRules = () => {
     // Ottieni IDs degli item regalo
     const giftItemIds = cart.cart.items
-      .filter(item => isItemGift(item.id))
-      .map(item => item.id);
-    
+      .filter((item) => isItemGift(item.id))
+      .map((item) => item.id);
+
     // Usa il sistema di pricing unificato con i veri sconti
-    const unified = calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds);
-    
+    const unified = calculateUnifiedPricing(
+      cart.cart.items,
+      discounts,
+      giftItemIds,
+    );
+
     // Mantieni compatibilità con l'interfaccia esistente
     return {
       subtotal: unified.subtotal,
@@ -180,7 +191,7 @@ export function useCartWithRules() {
       total: unified.finalTotal,
       totalSavings: unified.totalSavings,
       // Aggiungi dettagli per uso avanzato
-      detailed: unified
+      detailed: unified,
     };
   };
 
@@ -198,14 +209,13 @@ export function useCartWithRules() {
     if (isItemAvailable(itemId)) return null;
 
     const itemState = rulesEvaluation.itemStates[itemId];
-    if (!itemState || !itemState.appliedRules) return "Elemento non disponibile";
+    if (!itemState || !itemState.appliedRules)
+      return "Elemento non disponibile";
 
-    const disableRule = itemState.appliedRules.find(
-      (ruleName: string) => {
-        const rule = selectionRules.find((r: any) => r.name === ruleName);
-        return rule && rule.action === "disable";
-      }
-    );
+    const disableRule = itemState.appliedRules.find((ruleName: string) => {
+      const rule = selectionRules.find((r: any) => r.name === ruleName);
+      return rule && rule.action === "disable";
+    });
 
     if (disableRule) {
       const rule = selectionRules.find((r: any) => r.name === disableRule);
