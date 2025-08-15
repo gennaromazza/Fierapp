@@ -572,7 +572,7 @@ export function DynamicChatGuide() {
         if (isGift) {
           toast.gift("🎁 Regalo Sbloccato!", `${item.title} è ora GRATUITO!`, 4000);
         } else {
-          toast.success("✅ Aggiunto", `${item.title} aggiunto al carrello`, 3000);
+          toast.success("✅ Aggiunto", `${item.title} aggiunto al carrello`, 1500);
         }
         
         // Aggiorna dati conversazione aggiungendo item
