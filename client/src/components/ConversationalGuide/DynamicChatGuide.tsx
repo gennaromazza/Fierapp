@@ -1365,7 +1365,21 @@ export function DynamicChatGuide() {
             </div>
           </div>
 
-          {/* ✅ Stabile senza forza re-mount, let useEffect handle updates */}
+          {/* ✅ Debug and pass data to LeadForm */}
+          {(() => {
+            console.log('🔍 DynamicChatGuide - leadData al momento di passare a LeadForm:', leadData);
+            const formInitialData = {
+              name: leadData.name || '',
+              surname: leadData.surname || '',
+              email: leadData.email || '',
+              phone: leadData.phone || '',
+              eventDate: leadData.eventDate || '',
+              notes: leadData.notes || '',
+              gdprAccepted: !!leadData.gdprAccepted
+            };
+            console.log('📤 DynamicChatGuide - Data passati a LeadForm:', formInitialData);
+            return null;
+          })()}
           <LeadForm
             key="stable-lead-form"
             initialData={{

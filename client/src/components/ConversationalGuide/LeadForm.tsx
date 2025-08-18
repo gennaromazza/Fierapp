@@ -39,33 +39,34 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   useEffect(() => {
     console.log('📝 LeadForm - Syncing with initialData:', initialData);
     
-    if (initialData.name && initialData.name !== name) {
-      console.log('🔄 Updating name:', initialData.name);
+    // Force update if initialData has values but current state is empty
+    if (initialData.name && initialData.name.trim() !== '') {
+      console.log('🔄 Force updating name:', initialData.name);
       setName(initialData.name);
     }
-    if (initialData.surname && initialData.surname !== surname) {
-      console.log('🔄 Updating surname:', initialData.surname);
+    if (initialData.surname && initialData.surname.trim() !== '') {
+      console.log('🔄 Force updating surname:', initialData.surname);
       setSurname(initialData.surname);
     }
-    if (initialData.email && initialData.email !== email) {
-      console.log('🔄 Updating email:', initialData.email);
+    if (initialData.email && initialData.email.trim() !== '') {
+      console.log('🔄 Force updating email:', initialData.email);
       setEmail(initialData.email);
     }
-    if (initialData.phone && initialData.phone !== phone) {
-      console.log('🔄 Updating phone:', initialData.phone);
+    if (initialData.phone && initialData.phone.trim() !== '') {
+      console.log('🔄 Force updating phone:', initialData.phone);
       setPhone(initialData.phone);
     }
-    if (initialData.eventDate && initialData.eventDate !== eventDate?.toISOString().split('T')[0]) {
-      console.log('🔄 Updating eventDate:', initialData.eventDate);
+    if (initialData.eventDate && initialData.eventDate.trim() !== '') {
+      console.log('🔄 Force updating eventDate:', initialData.eventDate);
       setEventDate(new Date(initialData.eventDate));
     }
-    if (initialData.notes !== notes) {
-      setNotes(initialData.notes || '');
+    if (initialData.notes && initialData.notes !== notes) {
+      setNotes(initialData.notes);
     }
-    if (initialData.gdprAccepted !== gdprAccepted) {
-      setGdprAccepted(initialData.gdprAccepted || false);
+    if (typeof initialData.gdprAccepted === 'boolean' && initialData.gdprAccepted !== gdprAccepted) {
+      setGdprAccepted(initialData.gdprAccepted);
     }
-  }, [initialData, name, surname, email, phone, eventDate, notes, gdprAccepted]);
+  }, [initialData]); // Solo initialData come dipendenza per evitare loop
 
   // Reconstruct formData object for backward compatibility
   const formData: LeadData = {
@@ -282,7 +283,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         gdprConsent: {
           accepted: formData.gdprAccepted,
           text: "Accetto il trattamento dei dati personali",
-          timestamp: new Date()
+          timestamp: new Date().toISOString()
         },
         status: "new",
         source: 'conversational-guide'
