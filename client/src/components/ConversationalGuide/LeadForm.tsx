@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
 import { generateMarketingMessages, formatPricingSummary } from '../../lib/unifiedPricing';
-import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { LeadData } from './types';
 import { generateClientQuotePDF } from '@/lib/pdf';
@@ -283,11 +283,11 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         gdprConsent: {
           accepted: !!formData.gdprAccepted,
           text: "Accetto il trattamento dei dati personali",
-          timestamp: new Date()
+          timestamp: serverTimestamp()
         },
         status: "new",
         source: 'conversational-guide',
-        createdAt: new Date()
+        createdAt: serverTimestamp()
       };
 
       const leadDoc = await addDoc(collection(db, "leads"), leadData);
