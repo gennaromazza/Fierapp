@@ -486,7 +486,6 @@ export function DynamicChatGuide() {
     saveChatHistory('phase_started', { phase: 'services', timestamp: new Date() });
 
     addMessage({
-      id: 'services-intro',
       type: 'assistant',
       avatar: 'enthusiastic',
       text: "Perfetto! Iniziamo con i SERVIZI FONDAMENTALI 🎬📸\n\n💡 SUGGERIMENTO: Scegliendo entrambi i servizi (Foto + Video) sbloccherai prodotti esclusivi e otterrai il massimo risparmio!",
@@ -498,7 +497,6 @@ export function DynamicChatGuide() {
       if (!itemsReady) {
         console.log('⏳ Items not ready yet, showing loading message...');
         addMessage({
-          id: 'services-loading',
           type: 'assistant',
           avatar: 'thoughtful',
           text: "Sto caricando i servizi disponibili... un momento per favore! ⏳",
@@ -516,7 +514,6 @@ export function DynamicChatGuide() {
       console.log('🔍 Filtered services:', services);
 
       addMessage({
-        id: 'services-selection',
         type: 'system',
         text: "Seleziona i servizi che desideri:",
         items: services
@@ -810,7 +807,6 @@ export function DynamicChatGuide() {
         "Compila i tuoi dati per ricevere il preventivo dettagliato:";
 
       addMessage({
-        id: 'final-action',
         type: 'assistant',
         avatar: 'smiling',
         text: contactText,

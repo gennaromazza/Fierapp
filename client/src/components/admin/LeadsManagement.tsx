@@ -92,8 +92,8 @@ export default function LeadsManagement() {
       filtered = filtered.filter(lead => {
         try {
           const leadDate = lead.createdAt instanceof Date ? lead.createdAt : 
-                          lead.createdAt?.seconds ? new Date(lead.createdAt.seconds * 1000) :
-                          new Date(lead.createdAt);
+                          (lead.createdAt as any)?.seconds ? new Date((lead.createdAt as any).seconds * 1000) :
+                          typeof lead.createdAt === 'string' ? new Date(lead.createdAt) : new Date();
           return format(leadDate, "yyyy-MM-dd") === format(dateFilter, "yyyy-MM-dd");
         } catch (e) {
           return false;
@@ -654,8 +654,8 @@ export default function LeadsManagement() {
                     if (lead.createdAt instanceof Date) {
                       leadDate = lead.createdAt;
                       isValidDate = !isNaN(leadDate.getTime());
-                    } else if (lead.createdAt?.seconds) {
-                      leadDate = new Date(lead.createdAt.seconds * 1000);
+                    } else if ((lead.createdAt as any)?.seconds) {
+                      leadDate = new Date((lead.createdAt as any).seconds * 1000);
                       isValidDate = !isNaN(leadDate.getTime());
                     } else if (lead.createdAt) {
                       leadDate = new Date(lead.createdAt);
@@ -686,7 +686,7 @@ export default function LeadsManagement() {
                           {(lead.customer?.email || lead.customer?.Email) && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Mail className="w-3 h-3" />
-                              <TableCell>{lead.customer?.email || lead.email || 'N/A'}</TableCell>
+                              <span>{lead.customer?.email || lead.customer?.Email || 'N/A'}</span>
                             </div>
                           )}
                           {(lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone) && (
@@ -949,21 +949,21 @@ export default function LeadsManagement() {
                 <CardContent>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <Badge variant={selectedLead.gdprConsent.accepted ? "default" : "destructive"}>
-                        {selectedLead.gdprConsent.accepted ? "Accettato" : "Rifiutato"}
+                      <Badge variant={selectedLead.gdprConsent?.accepted ? "default" : "destructive"}>
+                        {selectedLead.gdprConsent?.accepted ? "Accettato" : "Rifiutato"}
                       </Badge>
                       <span className="text-sm text-gray-500">
-                        {format(
+                        {selectedLead.gdprConsent?.timestamp && format(
                           selectedLead.gdprConsent.timestamp instanceof Date 
                             ? selectedLead.gdprConsent.timestamp 
-                            : selectedLead.gdprConsent.timestamp.toDate(),
+                            : new Date(selectedLead.gdprConsent.timestamp),
                           "dd/MM/yyyy HH:mm",
                           { locale: it }
                         )}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                      {selectedLead.gdprConsent.text}
+                      {selectedLead.gdprConsent?.text || 'Nessun testo consenso disponibile'}
                     </p>
                   </div>
                 </CardContent>
