@@ -259,34 +259,35 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       // Save lead to Firebase usando il formato corretto
       const leadData = {
         customer: {
-          nome: formData.name,
-          cognome: formData.surname,
-          email: formData.email,
-          telefono: formData.phone,
-          data_evento: formData.eventDate || null,
+          nome: formData.name || '',
+          cognome: formData.surname || '',
+          email: formData.email || '',
+          telefono: formData.phone || '',
+          data_evento: formData.eventDate || '',
           note: formData.notes || '',
-          gdpr_consent: formData.gdprAccepted
+          gdpr_consent: !!formData.gdprAccepted
         },
         selectedItems: cart.getItemsWithRuleInfo().map(item => ({
-          id: item.id,
-          title: item.title,
-          price: item.isGift ? 0 : item.price, // Usa 0 per i regali
-          originalPrice: item.originalPrice || item.price
+          id: item.id || '',
+          title: item.title || '',
+          price: Number(item.isGift ? 0 : item.price) || 0,
+          originalPrice: Number(item.originalPrice || item.price) || 0
         })),
         pricing: {
-          subtotal: leadPricing.originalSubtotal,
-          discount: leadPricing.discount,
-          total: leadPricing.total,
-          giftSavings: leadPricing.giftSavings || 0,
-          totalSavings: leadPricing.totalSavings || 0
+          subtotal: Number(leadPricing.originalSubtotal) || 0,
+          discount: Number(leadPricing.discount) || 0,
+          total: Number(leadPricing.total) || 0,
+          giftSavings: Number(leadPricing.giftSavings) || 0,
+          totalSavings: Number(leadPricing.totalSavings) || 0
         },
         gdprConsent: {
-          accepted: formData.gdprAccepted,
+          accepted: !!formData.gdprAccepted,
           text: "Accetto il trattamento dei dati personali",
-          timestamp: new Date().toISOString()
+          timestamp: new Date()
         },
         status: "new",
-        source: 'conversational-guide'
+        source: 'conversational-guide',
+        createdAt: new Date()
       };
 
       const leadDoc = await addDoc(collection(db, "leads"), leadData);
