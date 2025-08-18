@@ -125,10 +125,21 @@ export const settingsSchema = z.object({
 export type FormField = z.infer<typeof formFieldSchema>;
 export type Settings = z.infer<typeof settingsSchema>;
 
-// Lead Schema - UNIFIED FORMAT (using only the CheckoutModal structure)
+// Customer Schema - STANDARDIZED on Italian lowercase fields  
+export const customerSchema = z.object({
+  nome: z.string(),
+  cognome: z.string(), 
+  email: z.string().email(),
+  telefono: z.string(),
+  data_evento: z.string().optional(), // Date string or null
+  note: z.string().optional(),
+  gdpr_consent: z.boolean().optional(), // Legacy field compatibility
+});
+
+// Lead Schema - UNIFIED FORMAT with standardized customer fields
 export const leadSchema = z.object({
   id: z.string(),
-  customer: z.record(z.string(), z.any()), // Customer data object (nome, cognome, email, etc.)
+  customer: customerSchema,
   selectedItems: z.array(z.object({
     id: z.string(),
     title: z.string(),
@@ -158,6 +169,7 @@ export const insertLeadSchema = leadSchema.omit({
   createdAt: true,
 });
 
+export type Customer = z.infer<typeof customerSchema>;
 export type Lead = z.infer<typeof leadSchema>;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
 

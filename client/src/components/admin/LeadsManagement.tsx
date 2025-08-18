@@ -68,10 +68,10 @@ export default function LeadsManagement() {
         // Handle only unified structure (lead.customer)
         const customer = lead.customer || {};
         const searchFields = [
-          customer.nome || customer.Nome || '',
-          customer.cognome || customer.Cognome || '',
-          customer.email || customer.Email || '',
-          customer.telefono || customer.Telefono || ''
+          customer.nome || '',
+          customer.cognome || '',
+          customer.email || '',
+          customer.telefono || ''
         ];
 
         return searchFields.some(field => 
@@ -252,7 +252,7 @@ export default function LeadsManagement() {
 
   const openEmailCompose = async (lead: Lead) => {
     const customer = lead.customer || {};
-    const email = customer.email || customer.Email;
+    const email = customer.email;
 
     if (!email) {
       toast({
@@ -275,11 +275,11 @@ export default function LeadsManagement() {
     }
 
     // Crea oggetto email
-    const subject = `Preventivo ${customer.nome || customer.Nome || ''} ${customer.cognome || customer.Cognome || ''} - ${format(new Date(), 'dd/MM/yyyy')}`;
+    const subject = `Preventivo ${customer.nome || ''} ${customer.cognome || ''} - ${format(new Date(), 'dd/MM/yyyy')}`;
 
     // Crea corpo email con dettagli preventivo
     const bodyLines = [
-      `Gentile ${customer.nome || customer.Nome || 'Cliente'},`,
+      `Gentile ${customer.nome || 'Cliente'},`,
       '',
       'La ringraziamo per l\'interesse mostrato nei nostri servizi.',
       'Di seguito trova il dettaglio del preventivo richiesto:',
@@ -295,10 +295,10 @@ export default function LeadsManagement() {
       `   Email: ${studioSettings?.email || 'Email non configurata'}`,
       '',
       '👤 CLIENTE:',
-      `   Nome: ${customer.nome || customer.Nome || 'N/A'}`,
-      `   Cognome: ${customer.cognome || customer.Cognome || 'N/A'}`,
-      `   Email: ${customer.email || customer.Email || 'N/A'}`,
-      `   Telefono: ${customer.telefono || customer.Telefono || 'N/A'}`,
+      `   Nome: ${customer.nome || 'N/A'}`,
+      `   Cognome: ${customer.cognome || 'N/A'}`,
+      `   Email: ${customer.email || 'N/A'}`,
+      `   Telefono: ${customer.telefono || 'N/A'}`,
       '',
       '🛍️ SERVIZI/PRODOTTI SELEZIONATI:',
       ''
@@ -674,7 +674,7 @@ export default function LeadsManagement() {
                       <TableCell>
                         <div>
                           <div className="font-medium">
-                            {(lead.customer?.nome || lead.customer?.Nome || 'Cliente')} {(lead.customer?.cognome || lead.customer?.Cognome || 'Anonimo')}
+                            {(lead.customer?.nome || 'Cliente')} {(lead.customer?.cognome || 'Anonimo')}
                           </div>
                           <div className="text-sm text-gray-500">
                             {lead.selectedItems?.length || 0} item{(lead.selectedItems?.length || 0) !== 1 ? 's' : ''}
@@ -683,25 +683,25 @@ export default function LeadsManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {(lead.customer?.email || lead.customer?.Email) && (
+                          {lead.customer?.email && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Mail className="w-3 h-3" />
-                              <span>{lead.customer?.email || lead.customer?.Email || 'N/A'}</span>
+                              <span>{lead.customer.email}</span>
                             </div>
                           )}
-                          {(lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone) && (
+                          {lead.customer?.telefono && (
                             <div className="flex items-center space-x-1 text-sm">
                               <Phone className="w-3 h-3" />
-                              <span>{lead.customer?.telefono || lead.customer?.Telefono || (lead as any).phone || 'N/A'}</span>
+                              <span>{lead.customer.telefono}</span>
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {(lead.customer?.data_evento || lead.customer?.['Data evento'] || (lead as any).eventDate) && (
+                        {lead.customer?.data_evento && (
                           <div className="flex items-center space-x-1 text-sm">
                             <CalendarDays className="w-3 h-3" />
-                            <span>{lead.customer?.data_evento || lead.customer?.['Data evento'] || (lead as any).eventDate || 'N/A'}</span>
+                            <span>{lead.customer.data_evento}</span>
                           </div>
                         )}
                       </TableCell>
@@ -771,7 +771,7 @@ export default function LeadsManagement() {
                             variant="outline"
                             onClick={() => openEmailCompose(lead)}
                             title="Invia email preventivo"
-                            disabled={!lead.customer?.email && !lead.customer?.Email}
+                            disabled={!lead.customer?.email}
                           >
                             <Send className="w-4 h-4" />
                           </Button>
@@ -864,7 +864,7 @@ export default function LeadsManagement() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--brand-primary)' }}>
           <DialogHeader>
             <DialogTitle>
-              Dettagli Lead - {selectedLead?.customer?.nome || selectedLead?.customer?.Nome || ''} {selectedLead?.customer?.cognome || selectedLead?.customer?.Cognome || ''}
+              Dettagli Lead - {selectedLead?.customer?.nome || ''} {selectedLead?.customer?.cognome || ''}
             </DialogTitle>
           </DialogHeader>
 
@@ -978,7 +978,7 @@ export default function LeadsManagement() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary">
           <DialogHeader>
             <DialogTitle>
-              Modifica Lead - {editingLead?.customer?.nome || editingLead?.customer?.Nome || ''} {editingLead?.customer?.cognome || editingLead?.customer?.Cognome || ''}
+              Modifica Lead - {editingLead?.customer?.nome || ''} {editingLead?.customer?.cognome || ''}
             </DialogTitle>
           </DialogHeader>
 

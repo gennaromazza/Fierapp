@@ -12,32 +12,34 @@
 - **Soluzione**: Cast appropriati per tipi misti, null-safety per gdprConsent
 - **Impatto**: Codice type-safe, nessun runtime error
 
-## 🚨 INCONSISTENZE FIREBASE CRITICHE (DA RISOLVERE)
+## ✅ INCONSISTENZE FIREBASE RISOLTE
 
-### 1. Mismatch Campi Database
-**LeadForm salva:**
+### 1. ✅ Standardizzazione Campi Database COMPLETATA
+**LeadForm salva (COERENTE):**
 ```
 customer: {
   nome: string,
   cognome: string,  
+  email: string,
   telefono: string,
   data_evento: string
 }
 ```
 
-**LeadsManagement cerca:**
+**LeadsManagement cerca (COERENTE):**
 ```
-customer.nome || customer.Nome          // DOPPIO!
-customer.email || customer.Email        // MISTO!
-customer.telefono || customer.Telefono  // INCONSISTENTE!
+customer.nome          // UNIFICATO!
+customer.email         // UNIFICATO!
+customer.telefono      // UNIFICATO!
+customer.data_evento   // UNIFICATO!
 ```
 
-**RISOLUZIONE NECESSARIA**: Standardizzare su campi italiani lowercase:
+**✅ RISOLUZIONE COMPLETATA**: Tutti i campi ora usano standard italiano lowercase:
 - `nome`, `cognome`, `email`, `telefono`, `data_evento`
 
-### 2. Schema Types Inconsistente
-- `shared/schema.ts`: Usa `customer: z.record(z.string(), z.any())`
-- Dovrebbe essere tipizzato per consistency check
+### 2. ✅ Schema Types Tipizzato
+- `shared/schema.ts`: Ora usa `customerSchema` tipizzato  
+- Customer fields validati con Zod per consistency garantita
 
 ## ✅ CALCOLI TOTALI/SCONTI VERIFICATI
 
