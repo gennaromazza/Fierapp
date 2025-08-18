@@ -35,18 +35,37 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     initialData.eventDate ? new Date(initialData.eventDate) : undefined
   );
 
-  // 🆕 Sync state with initialData when it changes
+  // 🆕 Sync state with initialData when it changes - Deep comparison
   useEffect(() => {
-    setName(initialData.name || '');
-    setSurname(initialData.surname || '');
-    setEmail(initialData.email || '');
-    setPhone(initialData.phone || '');
-    setNotes(initialData.notes || '');
-    setGdprAccepted(initialData.gdprAccepted || false);
-    setEventDate(
-      initialData.eventDate ? new Date(initialData.eventDate) : undefined
-    );
-  }, [initialData]);
+    console.log('📝 LeadForm - Syncing with initialData:', initialData);
+    
+    if (initialData.name && initialData.name !== name) {
+      console.log('🔄 Updating name:', initialData.name);
+      setName(initialData.name);
+    }
+    if (initialData.surname && initialData.surname !== surname) {
+      console.log('🔄 Updating surname:', initialData.surname);
+      setSurname(initialData.surname);
+    }
+    if (initialData.email && initialData.email !== email) {
+      console.log('🔄 Updating email:', initialData.email);
+      setEmail(initialData.email);
+    }
+    if (initialData.phone && initialData.phone !== phone) {
+      console.log('🔄 Updating phone:', initialData.phone);
+      setPhone(initialData.phone);
+    }
+    if (initialData.eventDate && initialData.eventDate !== eventDate?.toISOString().split('T')[0]) {
+      console.log('🔄 Updating eventDate:', initialData.eventDate);
+      setEventDate(new Date(initialData.eventDate));
+    }
+    if (initialData.notes !== notes) {
+      setNotes(initialData.notes || '');
+    }
+    if (initialData.gdprAccepted !== gdprAccepted) {
+      setGdprAccepted(initialData.gdprAccepted || false);
+    }
+  }, [initialData, name, surname, email, phone, eventDate, notes, gdprAccepted]);
 
   // Reconstruct formData object for backward compatibility
   const formData: LeadData = {

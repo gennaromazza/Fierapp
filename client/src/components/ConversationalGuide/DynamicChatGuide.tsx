@@ -361,7 +361,11 @@ export function DynamicChatGuide() {
       text: name
     });
 
-    setLeadData((prev: any) => ({ ...prev, name }));
+    setLeadData((prev: any) => {
+      const newData = { ...prev, name };
+      console.log('📝 DynamicChatGuide - Nome aggiornato:', newData);
+      return newData;
+    });
 
     setTimeout(() => {
       addMessage({
@@ -379,7 +383,11 @@ export function DynamicChatGuide() {
       text: surname
     });
 
-    setLeadData((prev: any) => ({ ...prev, surname }));
+    setLeadData((prev: any) => {
+      const newData = { ...prev, surname };
+      console.log('📝 DynamicChatGuide - Cognome aggiornato:', newData);
+      return newData;
+    });
 
     setTimeout(() => {
       addMessage({
@@ -406,7 +414,11 @@ export function DynamicChatGuide() {
       text: email
     });
 
-    setLeadData((prev: any) => ({ ...prev, email }));
+    setLeadData((prev: any) => {
+      const newData = { ...prev, email };
+      console.log('📝 DynamicChatGuide - Email aggiornata:', newData);
+      return newData;
+    });
 
     setTimeout(() => {
       addMessage({
@@ -424,7 +436,11 @@ export function DynamicChatGuide() {
       text: phone
     });
 
-    setLeadData((prev: any) => ({ ...prev, phone }));
+    setLeadData((prev: any) => {
+      const newData = { ...prev, phone };
+      console.log('📝 DynamicChatGuide - Telefono aggiornato:', newData);
+      return newData;
+    });
 
     setTimeout(() => {
       addMessage({
@@ -449,7 +465,11 @@ export function DynamicChatGuide() {
       text: dateText
     });
 
-    setLeadData((prev: any) => ({ ...prev, eventDate: selectedDate.toISOString().split('T')[0] }));
+    setLeadData((prev: any) => {
+      const newData = { ...prev, eventDate: selectedDate.toISOString().split('T')[0] };
+      console.log('📝 DynamicChatGuide - Data evento aggiornata:', newData);
+      return newData;
+    });
 
     setTimeout(() => {
       const studioPersonalizedText = settings?.studioName ? 
@@ -1345,11 +1365,9 @@ export function DynamicChatGuide() {
             </div>
           </div>
 
-          {/* ✅ Forza il remount quando cambiano i dati precompilati */}
+          {/* ✅ Stabile senza forza re-mount, let useEffect handle updates */}
           <LeadForm
-            key={
-              `lead-${leadData.name || ''}-${leadData.surname || ''}-${leadData.email || ''}-${leadData.phone || ''}-${leadData.eventDate || ''}`
-            }
+            key="stable-lead-form"
             initialData={{
               name: leadData.name || '',
               surname: leadData.surname || '',
@@ -1360,7 +1378,7 @@ export function DynamicChatGuide() {
               gdprAccepted: !!leadData.gdprAccepted
             }}
             onComplete={(data) => {
-              console.log('Lead completato:', data);
+              console.log('✅ Lead completato:', data);
               setLeadData(data);
               setIsCheckoutOpen(true); // Open checkout modal on lead completion
             }}
