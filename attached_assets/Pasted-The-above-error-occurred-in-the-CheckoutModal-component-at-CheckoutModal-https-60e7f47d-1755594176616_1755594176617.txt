@@ -1,0 +1,22 @@
+The above error occurred in the <CheckoutModal> component:
+
+    at CheckoutModal (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/src/components/CheckoutModal.tsx:47:41)
+    at div
+    at DynamicChatGuide (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/src/components/ConversationalGuide/DynamicChatGuide.tsx:40:16)
+    at ConversationalGuide
+    at Home (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/src/pages/Home.tsx:34:16)
+    at HomeWithFlags
+    at Route (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=03b71304:323:16)
+    at Switch (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=03b71304:379:17)
+    at Router (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/src/App.tsx?v=Q8d4IYH4l5nwRjjOQA7Vc:33:18)
+    at Provider (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=03b71304:38:15)
+    at TooltipProvider (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=03b71304:62:5)
+    at CartProvider (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/src/hooks/useCart.tsx:20:32)
+    at AuthProvider (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/src/hooks/useAuth.tsx:22:32)
+    at AppContent (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/src/App.tsx?v=Q8d4IYH4l5nwRjjOQA7Vc:87:3)
+    at QueryClientProvider (https://60e7f47d-2d80-49e4-b3b4-a2bde5197095-00-fgh4ijbhvhns.riker.replit.dev/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=03b71304:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+cartWithRules.getUnifiedPricing is not a function
