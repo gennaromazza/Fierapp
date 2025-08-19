@@ -124,7 +124,20 @@ export function DynamicChatGuide() {
 
       const cleanedData = removeUndefinedDeep(rawData);
 
-      console.log('📤 Saving chat history:', cleanedData);
+      // Log dettagliato del JSON che sto per salvare
+      const jsonString = JSON.stringify(cleanedData, null, 2);
+      console.log('📤 JSON completo da salvare su Firebase:', jsonString);
+
+      // Controllo per valori undefined rimasti
+      if (jsonString.includes('undefined')) {
+        console.error('⚠️ ATTENZIONE: Trovati valori "undefined" nel JSON che sto per salvare!');
+        console.error('🔍 Posizioni con undefined:', jsonString.split('\n').map((line, index) => 
+          line.includes('undefined') ? `Riga ${index + 1}: ${line.trim()}` : null
+        ).filter(Boolean));
+      } else {
+        console.log('✅ Nessun valore undefined trovato nel JSON');
+      }
+
       await addDoc(collection(db, 'chat_history'), cleanedData);
 
       console.log(`💾 Chat history saved: ${eventType}`, data);
