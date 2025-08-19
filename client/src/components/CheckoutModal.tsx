@@ -423,12 +423,13 @@ export default function CheckoutModal({
 
                   return (
                     <>
-                      {/* Lista item con prezzi corretti dal sistema unificato */}
+                      {/* Lista item con prezzi dal database (originalPrice e price) */}
                       {itemsWithRules.map((item: any) => {
                         const title = item.title || "Voce";
-                        const originalPrice = item.originalPrice || item.price;
-                        const finalPrice = item.isGift ? 0 : item.price;
+                        const originalPrice = toNum(item.originalPrice || item.price);
+                        const currentPrice = toNum(item.price);
                         const isGift = item.isGift;
+                        const hasDiscount = originalPrice > currentPrice && !isGift;
 
                         return (
                           <div key={item.id} className="flex justify-between text-sm">
@@ -442,13 +443,13 @@ export default function CheckoutModal({
                                   {originalPrice > 0 && <span className="line-through text-gray-400 mr-2">€{formatEUR(originalPrice)}</span>}
                                   <span className="text-green-600 font-bold">GRATIS</span>
                                 </>
-                              ) : originalPrice > finalPrice ? (
+                              ) : hasDiscount ? (
                                 <>
                                   <span className="line-through text-gray-400 mr-2">€{formatEUR(originalPrice)}</span>
-                                  <span className="text-green-600 font-semibold">€{formatEUR(finalPrice)}</span>
+                                  <span className="text-green-600 font-semibold">€{formatEUR(currentPrice)}</span>
                                 </>
                               ) : (
-                                <>€{formatEUR(finalPrice)}</>
+                                <>€{formatEUR(currentPrice)}</>
                               )}
                             </span>
                           </div>
