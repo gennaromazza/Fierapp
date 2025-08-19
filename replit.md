@@ -17,6 +17,14 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **Firebase Error Resolution**: Fixed timestamp handling and data structure issues in lead form submission
 - **Admin Panel Enhancement**: Added "Clear All Leads" functionality with double confirmation for data cleanup
 
+### Sequential Discount Logic Implementation (August 19, 2025 - 11:22 AM) - COMPLETED
+- **CRITICAL FIX**: Implemented sequential discount application - individual discounts now applied before global discounts
+- **Pricing Logic Correction**: Fixed CheckoutModal pricing to show €540 instead of €630 by applying discounts sequentially (700€ → 600€ → 540€)
+- **Enhanced getItemDiscountInfo**: Updated function to calculate individualSavings and globalSavings separately for accurate sequential processing
+- **Unified Pricing System Update**: Modified calculateUnifiedPricing to use sequential discount calculations from enhanced discount info
+- **Comprehensive Testing**: Created verification scripts confirming correct sequential logic: individual discount first, then global discount on reduced price
+- **User Requirement Met**: Sequential discount logic now matches chat system pricing exactly in CheckoutModal
+
 ### Individual Product Discounts & Backend Chat Integration (August 13, 2025 - 2:13 PM) - COMPLETED
 - **Individual Item Discount Support**: Enhanced discount system to handle both global and per-item discounts with priority logic
 - **Comprehensive Savings Summary**: Added detailed savings breakdown showing global discounts, individual item discounts, and gift savings separately
