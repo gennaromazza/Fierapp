@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, orderBy, updateDoc, doc, deleteDoc, where, Timestamp, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import { Lead, Settings } from "@shared/schema";
+import { Lead, Customer, Settings } from "@shared/schema";
 import { useCollection } from "../../hooks/useFirestore";
 import { exportLeadsToExcel } from "../../lib/exportExcel";
 import { generateQuotePDF } from "../../lib/pdf";
@@ -54,7 +54,7 @@ export default function LeadsManagement() {
   // Stato per editing lead
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<Partial<Customer>>({});
   const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
@@ -173,7 +173,7 @@ export default function LeadsManagement() {
 
   const openEditModal = (lead: Lead) => {
     setEditingLead(lead);
-    setEditForm({ ...lead.customer });
+    setEditForm({ ...(lead.customer || {}) });
     setIsEditModalOpen(true);
   };
 
@@ -210,8 +210,8 @@ export default function LeadsManagement() {
     }
   };
 
-  const handleEditFormChange = (field: string, value: string) => {
-    setEditForm((prev: any) => ({
+  const handleEditFormChange = (field: keyof Customer, value: string) => {
+    setEditForm((prev) => ({
       ...prev,
       [field]: value
     }));

@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc, collection, addDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import { useQuery } from "@tanstack/react-query";
 import { db, analytics } from "../firebase";
 import { logEvent } from "firebase/analytics";
-import { Settings, InsertLead } from "@shared/schema";
+import { Settings } from "@shared/schema";
+import { saveLead } from "../lib/leadSaver";
+import { labelToFieldName, mapLeadDataToFormField, formatFieldForDisplay } from "../lib/fieldMappingHelper";
 import { useCartWithRules } from "../hooks/useCartWithRules";
 import { generateWhatsAppLink } from "../lib/whatsapp";
 import { generateClientQuotePDF } from "../lib/pdf";
@@ -36,36 +39,33 @@ interface CheckoutModalProps {
   };
 }
 
-// Utility function to remove undefined values recursively
-function removeUndefinedDeep(obj: any): any {
-  if (obj === null || obj === undefined) {
-    return null;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj
-      .filter(item => item !== undefined)
-      .map(item => removeUndefinedDeep(item));
-  }
-
-  if (typeof obj === 'object') {
-    return Object.entries(obj)
-      .filter(([_, value]) => value !== undefined)
-      .reduce((acc, [key, value]) => {
-        acc[key] = removeUndefinedDeep(value);
-        return acc;
-      }, {} as any);
-  }
-
-  return obj;
-}
+// Utility function moved to centralized leadSaver.ts
 
 export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutModalProps) {
   const cartWithRules = useCartWithRules();
   const { toast } = useToast();
-  const [settings, setSettings] = useState<Settings | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  // Use React Query for cached settings loading
+  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
+    queryKey: ['settings', 'app'],
+    queryFn: async () => {
+      console.log('🔄 CheckoutModal - Fetching settings from Firebase...');
+      const settingsDoc = await getDoc(doc(db, 'settings', 'app'));
+      
+      if (!settingsDoc.exists()) {
+        console.warn('⚠️ Settings document does not exist');
+        return null;
+      }
+
+      const data = settingsDoc.data();
+      console.log('✅ CheckoutModal - Settings loaded successfully');
+      return data as Settings;
+    },
+    staleTime: 30000, // Cache for 30 seconds
+    retry: 3,
+  });
 
   // Dynamic form schema based on settings
   const [formSchema, setFormSchema] = useState<z.ZodSchema<any>>(z.object({}));
@@ -76,87 +76,58 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
     defaultValues: formDefaults,
   });
 
+  // Update form schema when settings are loaded
   useEffect(() => {
-    async function loadSettings() {
-      try {
-        console.log('🔄 CheckoutModal - Received leadData:', leadData);
+    if (!isOpen || !settings) return;
 
-        const settingsDoc = await getDoc(doc(db, "settings", "app"));
-        if (settingsDoc.exists()) {
-          const settingsData = settingsDoc.data() as Settings;
-          setSettings(settingsData);
+    console.log('🔄 CheckoutModal - Creating form schema from cached settings');
 
-          // Create dynamic form schema and defaults
-          const schemaFields: Record<string, any> = {};
-          const defaults: Record<string, any> = {};
+    // Create dynamic form schema and defaults
+    const schemaFields: Record<string, any> = {};
+    const defaults: Record<string, any> = {};
 
-          settingsData.formFields.forEach(field => {
-            const fieldName = field.label.toLowerCase().replace(/\s+/g, '_');
-            let fieldSchema: any;
+    settings.formFields.forEach(field => {
+      const fieldName = labelToFieldName(field.label);
+      let fieldSchema: any;
 
-            switch (field.type) {
-              case "email":
-                fieldSchema = z.string().email("Email non valida");
-                break;
-              case "tel":
-                fieldSchema = z.string().min(1, "Telefono richiesto");
-                break;
-              case "date":
-                fieldSchema = z.string().min(1, "Data richiesta");
-                break;
-              default:
-                fieldSchema = z.string();
-            }
-
-            if (field.required) {
-              fieldSchema = fieldSchema.min(1, `${field.label} richiesto`);
-            }
-
-            // Precompile with leadData if available
-            let defaultValue = "";
-            if (leadData) {
-              // Map common field names to leadData properties
-              if (fieldName.includes('nome') || fieldName.includes('name')) {
-                defaultValue = leadData.name || "";
-              } else if (fieldName.includes('cognome') || fieldName.includes('surname')) {
-                defaultValue = leadData.surname || "";
-              } else if (fieldName.includes('email') || fieldName.includes('mail')) {
-                defaultValue = leadData.email || "";
-              } else if (fieldName.includes('telefono') || fieldName.includes('phone')) {
-                defaultValue = leadData.phone || "";
-              } else if (fieldName.includes('data') || fieldName.includes('date')) {
-                defaultValue = leadData.eventDate || "";
-              } else if (fieldName.includes('note')) {
-                defaultValue = leadData.notes || "";
-              }
-            }
-
-            defaults[fieldName] = defaultValue;
-            schemaFields[fieldName] = fieldSchema;
-          });
-
-          // Add GDPR consent
-          schemaFields.gdpr_consent = z.boolean().refine(val => val === true, {
-            message: "Devi accettare il trattamento dei dati personali"
-          });
-          defaults.gdpr_consent = false;
-
-          const schema = z.object(schemaFields);
-          setFormSchema(schema);
-          setFormDefaults(defaults);
-
-          // Reset form with new schema and defaults
-          form.reset(defaults);
-        }
-      } catch (error) {
-        console.error("Error loading settings:", error);
+      switch (field.type) {
+        case "email":
+          fieldSchema = z.string().email("Email non valida");
+          break;
+        case "tel":
+          fieldSchema = z.string().min(1, "Telefono richiesto");
+          break;
+        case "date":
+          fieldSchema = z.string().min(1, "Data richiesta");
+          break;
+        default:
+          fieldSchema = z.string();
       }
-    }
 
-    if (isOpen) {
-      loadSettings();
-    }
-  }, [isOpen, form]);
+      if (field.required) {
+        fieldSchema = fieldSchema.min(1, `${field.label} richiesto`);
+      }
+
+      // Use centralized mapping for leadData precompilation
+      const defaultValue = leadData ? mapLeadDataToFormField(leadData, fieldName) : "";
+
+      defaults[fieldName] = defaultValue;
+      schemaFields[fieldName] = fieldSchema;
+    });
+
+    // Add GDPR consent
+    schemaFields.gdpr_consent = z.boolean().refine(val => val === true, {
+      message: "Devi accettare il trattamento dei dati personali"
+    });
+    defaults.gdpr_consent = false;
+
+    const schema = z.object(schemaFields);
+    setFormSchema(schema);
+    setFormDefaults(defaults);
+
+    // Reset form with new schema and defaults
+    form.reset(defaults);
+  }, [isOpen, settings, leadData, form]);
 
 
 
@@ -176,8 +147,8 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
         }
       }
 
-      // Prepare lead data with correct schema structure
-      const rawLeadData: InsertLead = {
+      // Use centralized save function
+      const leadId = await saveLead({
         customer: data,
         selectedItems: cartWithRules.cart.items.map(item => ({
           id: item.id,
@@ -191,30 +162,9 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           text: settings.gdprText,
           timestamp: new Date()
         },
+        reCAPTCHAToken: recaptchaToken,
         status: "new"
-      };
-
-      // Only add reCAPTCHA token if it exists
-      if (recaptchaToken) {
-        rawLeadData.reCAPTCHAToken = recaptchaToken;
-      }
-
-      // Clean data to remove undefined values
-      const cleanedLeadData = removeUndefinedDeep(rawLeadData);
-
-      // Log cleaned data for debugging
-      const jsonString = JSON.stringify(cleanedLeadData, null, 2);
-      console.log('📤 JSON lead data da salvare:', jsonString);
-
-      if (jsonString.includes('undefined')) {
-        console.error('⚠️ ATTENZIONE: Trovati valori "undefined" nel lead data!');
-      } else {
-        console.log('✅ Nessun valore undefined nel lead data');
-      }
-
-      // Save to Firestore
-      const docRef = await addDoc(collection(db, "leads"), cleanedLeadData);
-      console.log("Lead saved successfully with ID:", docRef.id);
+      });
 
       // Use unified pricing for analytics
       const unifiedPricing = cartWithRules.getPricingWithRules();
@@ -222,7 +172,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       if (analytics) {
         logEvent(analytics, 'form_submit', {
           form_id: 'checkout_form',
-          lead_id: docRef.id,
+          lead_id: leadId,
           total_value: unifiedPricing.total
         });
       }
@@ -233,15 +183,16 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           `• ${item.title} - €${item.price.toLocaleString('it-IT')}`
         ).join('\n');
 
-        // Format form data for WhatsApp
+        // Format form data for WhatsApp using centralized helper
         const formDataText = Object.entries(data)
           .filter(([key, value]) => key !== 'gdpr_consent' && value)
           .map(([key, value]) => {
-            const label = settings.formFields.find(field => 
-              field.label.toLowerCase().replace(/\s+/g, '_') === key
-            )?.label || key;
-            return `${label}: ${value}`;
+            const field = settings.formFields.find(field => 
+              labelToFieldName(field.label) === key
+            );
+            return formatFieldForDisplay(key, value, field?.label);
           })
+          .filter(Boolean)
           .join('\n');
 
         const pricing = cartWithRules.getPricingWithRules();
@@ -249,7 +200,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           ? `Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.discount.toLocaleString('it-IT')}\nTotale: €${pricing.total.toLocaleString('it-IT')}`
           : `Totale: €${pricing.total.toLocaleString('it-IT')}`;
 
-        const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${cartSummary}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${docRef.id}`;
+        const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${cartSummary}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${leadId}`;
 
         const whatsappUrl = generateWhatsAppLink(settings.whatsappNumber, message);
         window.open(whatsappUrl, '_blank');
@@ -259,7 +210,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           logEvent(analytics, 'whatsapp_contact', {
             items: cartWithRules.cart.items.length,
             total_value: pricing.total,
-            lead_id: docRef.id
+            lead_id: leadId
           });
         }
       }
@@ -339,10 +290,35 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           </DialogDescription>
         </DialogHeader>
 
-        {/* Selected Items Summary */}
-        <div className="bg-brand-primary rounded-lg p-4 mb-6">
-          <h4 className="font-semibold text-brand-accent mb-3">RIEPILOGO SELEZIONE</h4>
-          <div className="space-y-2 text-sm">
+        {/* Loading and Error States */}
+        {settingsLoading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin h-8 w-8 border-4 border-brand-accent border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p>Caricamento configurazione...</p>
+            </div>
+          </div>
+        )}
+
+        {settingsError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-red-600">Errore nel caricamento delle impostazioni. Riprova più tardi.</p>
+          </div>
+        )}
+
+        {!settingsLoading && !settingsError && !settings && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <p className="text-yellow-600">Configurazione non trovata. Contatta l'amministratore.</p>
+          </div>
+        )}
+
+        {/* Main Content - Show only when settings are loaded */}
+        {!settingsLoading && !settingsError && settings && (
+          <>
+            {/* Selected Items Summary */}
+            <div className="bg-brand-primary rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-brand-accent mb-3">RIEPILOGO SELEZIONE</h4>
+              <div className="space-y-2 text-sm">
             {cartWithRules.cart.items.map((item, index) => (
               <div key={index} className="flex justify-between">
                 <span>
@@ -516,7 +492,8 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
             </div>
           </form>
         )}
-
+        </>
+      )}
 
       </DialogContent>
     </Dialog>

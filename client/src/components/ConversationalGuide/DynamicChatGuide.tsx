@@ -48,13 +48,18 @@ export function DynamicChatGuide() {
   const [discounts, setDiscounts] = useState<Discounts | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
 
+  // Loading states for async data
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isLoadingDiscounts, setIsLoadingDiscounts] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+
   // Use items from cart hook instead of loading separately
   const items = cart.getAllItemsWithAvailability() || [];
   const [itemsReady, setItemsReady] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [userInput, setUserInput] = useState('');
   const [currentPhase, setCurrentPhase] = useState<PhaseType>('welcome');
-  const [leadData, setLeadData] = useState<any>({
+  const [leadData, setLeadData] = useState<LeadData>({
     name: '',
     surname: '',
     email: '',
@@ -253,6 +258,11 @@ export function DynamicChatGuide() {
     // Load global discounts and settings from Firebase
     async function loadData() {
       try {
+        console.log('🔄 DynamicChatGuide - Loading settings and discounts...');
+        setIsLoadingDiscounts(true);
+        setIsLoadingSettings(true);
+        setSettingsError(null);
+
         // Load discounts (both global and individual)
         const discountsDoc = await getDoc(doc(db, "settings", "discounts"));
         if (discountsDoc.exists()) {
@@ -304,16 +314,24 @@ export function DynamicChatGuide() {
           }
 
           setDiscounts(discountsData);
+          console.log('✅ DynamicChatGuide - Discounts loaded successfully');
         }
+        setIsLoadingDiscounts(false);
 
         // Load settings (studio name, branding, etc.)
         const settingsDoc = await getDoc(doc(db, "settings", "app"));
         if (settingsDoc.exists()) {
           const settingsData = settingsDoc.data() as Settings;
           setSettings(settingsData);
+          console.log('✅ DynamicChatGuide - Settings loaded successfully');
         }
+        setIsLoadingSettings(false);
+
       } catch (error) {
-        console.error("Error loading data:", error);
+        console.error("❌ DynamicChatGuide - Error loading data:", error);
+        setSettingsError(error instanceof Error ? error.message : 'Errore nel caricamento dei dati');
+        setIsLoadingSettings(false);
+        setIsLoadingDiscounts(false);
       }
     }
 
@@ -435,10 +453,9 @@ export function DynamicChatGuide() {
 
     // Aggiorna dati conversazione
     setConversationData(prev => ({ ...prev, eventDate: validDate }));
-    setLeadData((prev: any) => ({ 
+    setLeadData((prev) => ({ 
       ...prev, 
-      eventYear: date,
-      eventDate: validDate // ✅ Salva in eventDate per il LeadForm
+      eventDate: validDate // ✅ Usa solo eventDate per coerenza con LeadForm
     }));
 
     console.log('📅 Data evento aggiornata:', { date, validDate, dateText });
@@ -491,7 +508,7 @@ export function DynamicChatGuide() {
       text: name
     });
 
-    setLeadData((prev: any) => {
+    setLeadData((prev) => {
       const newData = { ...prev, name };
       console.log('📝 DynamicChatGuide - Nome aggiornato:', newData);
       return newData;
@@ -513,7 +530,7 @@ export function DynamicChatGuide() {
       text: surname
     });
 
-    setLeadData((prev: any) => {
+    setLeadData((prev) => {
       const newData = { ...prev, surname };
       console.log('📝 DynamicChatGuide - Cognome aggiornato:', newData);
       return newData;
@@ -544,7 +561,7 @@ export function DynamicChatGuide() {
       text: email
     });
 
-    setLeadData((prev: any) => {
+    setLeadData((prev) => {
       const newData = { ...prev, email };
       console.log('📝 DynamicChatGuide - Email aggiornata:', newData);
       return newData;
@@ -566,7 +583,7 @@ export function DynamicChatGuide() {
       text: phone
     });
 
-    setLeadData((prev: any) => {
+    setLeadData((prev) => {
       const newData = { ...prev, phone };
       console.log('📝 DynamicChatGuide - Telefono aggiornato:', newData);
       return newData;
@@ -595,7 +612,7 @@ export function DynamicChatGuide() {
       text: dateText
     });
 
-    setLeadData((prev: any) => {
+    setLeadData((prev) => {
       const newData = { ...prev, eventDate: selectedDate.toISOString().split('T')[0] };
       console.log('📝 DynamicChatGuide - Data evento aggiornata:', newData);
       return newData;
@@ -1846,6 +1863,43 @@ export function DynamicChatGuide() {
       });
     }, 500);
   };
+
+  // Show initial loading screen if critical data is still loading
+  if (isLoadingSettings || isLoadingDiscounts || cart.rulesLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center bg-white rounded-xl p-8 shadow-lg border border-gray-200 max-w-md mx-4">
+          <div className="animate-spin h-12 w-12 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-6"></div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-3">Caricamento in corso...</h3>
+          <div className="space-y-2 text-sm text-gray-600">
+            {isLoadingSettings && <p>📋 Caricamento configurazione...</p>}
+            {isLoadingDiscounts && <p>🏷️ Caricamento sconti...</p>}
+            {cart.rulesLoading && <p>⚙️ Caricamento regole...</p>}
+          </div>
+          {!itemsReady && <p className="text-xs text-gray-500 mt-4">Preparazione prodotti e servizi...</p>}
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if there were issues loading critical data
+  if (settingsError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center bg-white rounded-xl p-8 shadow-lg border border-red-200 max-w-md mx-4">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-3">Errore di caricamento</h3>
+          <p className="text-gray-600 mb-4">{settingsError}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            Ricarica pagina
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex flex-col">

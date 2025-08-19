@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,8 +8,10 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useCartWithRules } from '@/hooks/useCartWithRules';
 import { generateMarketingMessages, formatPricingSummary } from '../../lib/unifiedPricing';
-import { collection, addDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { saveLead, leadDataToCustomer } from '../../lib/leadSaver';
+import { getFieldValidation, formatFieldForDisplay } from '../../lib/fieldMappingHelper';
 import type { LeadData } from './types';
 import { generateClientQuotePDF } from '@/lib/pdf';
 import { generateWhatsAppLink } from '@/lib/whatsapp';
@@ -24,6 +26,10 @@ interface LeadFormProps {
 
 export function LeadForm({ initialData, onComplete, className }: LeadFormProps) {
   const cart = useCartWithRules();
+  
+  // Use ref to track the last processed initialData to avoid unnecessary updates
+  const lastInitialDataRef = useRef<LeadData | null>(null);
+  
   // Individual form states initialized with initialData
   const [name, setName] = useState(initialData.name || '');
   const [surname, setSurname] = useState(initialData.surname || '');
@@ -35,55 +41,42 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     initialData.eventDate ? new Date(initialData.eventDate) : undefined
   );
 
-  // Sync state with initialData when it changes
-  useEffect(() => {
-    console.log('📝 LeadForm - Received initialData:', initialData);
+  // Stable sync function using useCallback to prevent recreation on every render
+  const syncWithInitialData = useCallback(() => {
+    // Check if initialData has actually changed
+    const lastData = lastInitialDataRef.current;
+    const hasChanged = !lastData || 
+      lastData.name !== initialData.name ||
+      lastData.surname !== initialData.surname ||
+      lastData.email !== initialData.email ||
+      lastData.phone !== initialData.phone ||
+      lastData.eventDate !== initialData.eventDate ||
+      lastData.notes !== initialData.notes ||
+      lastData.gdprAccepted !== initialData.gdprAccepted;
+
+    if (!hasChanged) return;
+
+    console.log('📝 LeadForm - Syncing with new initialData:', initialData);
     
-    // Update only if initialData has changed values
-    if (initialData.name !== undefined && initialData.name !== name) {
-      console.log('🔄 Updating name from:', name, 'to:', initialData.name);
-      setName(initialData.name);
-    }
-    if (initialData.surname !== undefined && initialData.surname !== surname) {
-      console.log('🔄 Updating surname from:', surname, 'to:', initialData.surname);
-      setSurname(initialData.surname);
-    }
-    if (initialData.email !== undefined && initialData.email !== email) {
-      console.log('🔄 Updating email from:', email, 'to:', initialData.email);
-      setEmail(initialData.email);
-    }
-    if (initialData.phone !== undefined && initialData.phone !== phone) {
-      console.log('🔄 Updating phone from:', phone, 'to:', initialData.phone);
-      setPhone(initialData.phone);
-    }
+    // Update states only if values are defined and different
+    if (initialData.name !== undefined) setName(initialData.name);
+    if (initialData.surname !== undefined) setSurname(initialData.surname);
+    if (initialData.email !== undefined) setEmail(initialData.email);
+    if (initialData.phone !== undefined) setPhone(initialData.phone);
+    if (initialData.notes !== undefined) setNotes(initialData.notes);
+    if (initialData.gdprAccepted !== undefined) setGdprAccepted(initialData.gdprAccepted);
     if (initialData.eventDate !== undefined) {
-      const newDate = initialData.eventDate ? new Date(initialData.eventDate) : undefined;
-      const currentDateStr = eventDate?.toISOString().split('T')[0];
-      const newDateStr = newDate?.toISOString().split('T')[0];
-      if (newDateStr !== currentDateStr) {
-        console.log('🔄 Updating eventDate from:', currentDateStr, 'to:', newDateStr);
-        setEventDate(newDate);
-      }
-    }
-    if (initialData.notes !== undefined && initialData.notes !== notes) {
-      console.log('🔄 Updating notes');
-      setNotes(initialData.notes);
-    }
-    if (initialData.gdprAccepted !== undefined && initialData.gdprAccepted !== gdprAccepted) {
-      console.log('🔄 Updating gdprAccepted from:', gdprAccepted, 'to:', initialData.gdprAccepted);
-      setGdprAccepted(initialData.gdprAccepted);
+      setEventDate(initialData.eventDate ? new Date(initialData.eventDate) : undefined);
     }
     
-    console.log('📊 LeadForm - Current state after sync:', {
-      name,
-      surname, 
-      email,
-      phone,
-      eventDate: eventDate?.toISOString().split('T')[0],
-      notes,
-      gdprAccepted
-    });
-  }, [initialData]); // Solo initialData come dipendenza per evitare loop
+    // Store current initialData as last processed
+    lastInitialDataRef.current = { ...initialData };
+  }, [initialData]);
+
+  // Use effect with stable dependency
+  useEffect(() => {
+    syncWithInitialData();
+  }, [syncWithInitialData]);
 
   // Reconstruct formData object for backward compatibility
   const formData: LeadData = {
@@ -97,6 +90,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   };
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch settings for WhatsApp number using the same pattern as Header.tsx
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
@@ -153,23 +147,17 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   console.log('🔄 LeadForm mounted, fetching settings from settings/app...');
 
   const validateField = (field: string, value: any): string => {
-    switch (field) {
-      case 'name':
-      case 'surname':
-        return !value || value.trim().length < 2 ? 'Questo campo è obbligatorio' : '';
-      case 'email':
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return !value || !emailRegex.test(value) ? 'Inserisci un email valida' : '';
-      case 'phone':
-        const phoneRegex = /^\+?\d{7,15}$/;
-        return !value || !phoneRegex.test(value.replace(/\s/g, '')) ? 'Inserisci un numero valido' : '';
-      case 'eventDate':
-        return !value ? 'La data delle nozze è obbligatoria' : '';
-      case 'gdprAccepted':
-        return !value ? 'Devi accettare la privacy policy' : '';
-      default:
-        return '';
+    const validation = getFieldValidation(field);
+    
+    if (validation.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
+      return validation.message || 'Campo obbligatorio';
     }
+    
+    if (validation.pattern && value && !validation.pattern.test(value.replace ? value.replace(/\s/g, '') : value)) {
+      return validation.message || 'Formato non valido';
+    }
+    
+    return '';
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -223,8 +211,9 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   };
 
   const handleDownloadPDF = async () => {
-    if (!validateForm()) return;
+    if (!validateForm() || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       // Get unified pricing for PDF
       const pdfPricing = cart.getPricingWithRules();
@@ -263,27 +252,22 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     } catch (error) {
       console.error('Errore nella generazione del PDF:', error);
       alert('Errore nella generazione del PDF. Riprova.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleSendRequest = async () => {
-    if (!validateForm()) return;
+    if (!validateForm() || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       // Get unified pricing
       const leadPricing = cart.getPricingWithRules();
       
-      // Save lead to Firebase usando il formato corretto
-      const leadData = {
-        customer: {
-          nome: formData.name || '',
-          cognome: formData.surname || '',
-          email: formData.email || '',
-          telefono: formData.phone || '',
-          data_evento: formData.eventDate || '',
-          note: formData.notes || '',
-          gdpr_consent: !!formData.gdprAccepted
-        },
+      // Use centralized save function
+      const leadId = await saveLead({
+        customer: leadDataToCustomer(formData),
         selectedItems: cart.getItemsWithRuleInfo().map(item => ({
           id: item.id || '',
           title: item.title || '',
@@ -300,15 +284,11 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         gdprConsent: {
           accepted: !!formData.gdprAccepted,
           text: "Accetto il trattamento dei dati personali",
-          timestamp: serverTimestamp()
+          timestamp: new Date()
         },
-        status: "new",
-        source: 'conversational-guide',
-        createdAt: serverTimestamp()
-      };
-
-      const leadDoc = await addDoc(collection(db, "leads"), leadData);
-      console.log('Lead salvato con ID:', leadDoc.id);
+        status: "new"
+      });
+      console.log('Lead salvato con ID:', leadId);
 
       // Crea messaggio WhatsApp professionale
       const itemsList = cart.getItemsWithRuleInfo().map(item => {
@@ -329,7 +309,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       const marketingMessages = generateMarketingMessages(leadPricing.detailed);
       const pricingSummary = formatPricingSummary(leadPricing.detailed);
 
-      const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${pricingSummary}\n\n${marketingMessages.mainSavings ? `🔥 ${marketingMessages.mainSavings}\n` : ''}${marketingMessages.giftMessage ? `🎁 ${marketingMessages.giftMessage}\n` : ''}\n📝 Lead ID: ${leadDoc.id}`;
+      const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${pricingSummary}\n\n${marketingMessages.mainSavings ? `🔥 ${marketingMessages.mainSavings}\n` : ''}${marketingMessages.giftMessage ? `🎁 ${marketingMessages.giftMessage}\n` : ''}\n📝 Lead ID: ${leadId}`;
 
       // Enhanced WhatsApp number detection with better debugging
       console.log('🔍 Current settings state:', settings);
@@ -410,6 +390,8 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     } catch (error) {
       console.error('Errore nel salvataggio del lead:', error);
       alert('Errore nel salvataggio. Riprova.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -601,21 +583,21 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         <div className="space-y-3 pt-4">
           <Button
             onClick={handleDownloadPDF}
-            disabled={!isFormValid()}
+            disabled={!isFormValid() || isSubmitting}
             className="w-full"
             variant="outline"
           >
             <Download className="mr-2 h-4 w-4" />
-            Scarica Preventivo PDF
+            {isSubmitting ? 'Generando PDF...' : 'Scarica Preventivo PDF'}
           </Button>
 
           <Button
             onClick={handleSendRequest}
-            disabled={!isFormValid()}
+            disabled={!isFormValid() || isSubmitting}
             className="w-full"
           >
             <MessageCircle className="mr-2 h-4 w-4" />
-            Invia Richiesta
+            {isSubmitting ? 'Invio in corso...' : 'Invia Richiesta'}
           </Button>
 
           
