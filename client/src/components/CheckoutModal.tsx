@@ -427,10 +427,21 @@ export default function CheckoutModal({
                     ?? cartWithRules.cart.items;
 
                   const toNum = (n: unknown) => {
-                    const v = typeof n === "string" ? Number(n) : (n as number);
-                    return Number.isFinite(v) ? (v as number) : 0;
+                    if (typeof n === "number") return Number.isFinite(n) ? n : 0;
+                    if (typeof n === "string") {
+                      const parsed = Number(n);
+                      return Number.isFinite(parsed) ? parsed : 0;
+                    }
+                    return 0;
                   };
                   const formatEUR = (n: unknown) => toNum(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                  console.log('🔍 CheckoutModal - Discount check:', {
+                    'p.discount': p.discount,
+                    'typeof p.discount': typeof p.discount,
+                    'toNum(p.discount)': toNum(p.discount),
+                    'toNum(p.discount) > 0': toNum(p.discount) > 0
+                  });
 
                   return (
                     <>
