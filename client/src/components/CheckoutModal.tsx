@@ -250,14 +250,20 @@ export default function CheckoutModal({
           .join("\n");
 
         const lines = [
-          `Subtotale: €${formatEUR(p.originalSubtotal)}`,
-          ...(toNum(p.discount) > 0
-            ? [`Sconti: -€${formatEUR(p.discount)}`]
+          `Subtotale servizi/prodotti: €${formatEUR(p.subtotal)}`,
+          ...(toNum(p.individualDiscountSavings) > 0
+            ? [`Sconti per prodotto/servizio: -€${formatEUR(p.individualDiscountSavings)}`]
+            : []),
+          ...(toNum(p.globalDiscountSavings) > 0
+            ? [`Sconto globale (-10%): -€${formatEUR(p.globalDiscountSavings)}`]
             : []),
           ...(toNum(p.giftSavings) > 0
-            ? [`Servizi gratuiti: -€${formatEUR(p.giftSavings)}`]
+            ? [`Servizi in omaggio: -€${formatEUR(p.giftSavings)}`]
             : []),
-          `Totale: €${formatEUR(p.total)}`,
+          `TOTALE: €${formatEUR(p.total)}`,
+          ...(toNum(p.totalSavings) > 0
+            ? [`💰 Totale risparmiato: €${formatEUR(p.totalSavings)}!`]
+            : []),
         ];
         const totalText = lines.join("\n");
 
