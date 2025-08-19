@@ -460,7 +460,7 @@ export default function CheckoutModal({
                       {/* Totali dal sistema unificato */}
                       <div className="flex justify-between text-sm text-gray-600">
                         <span>Subtotale servizi/prodotti:</span>
-                        <span>€{formatEUR(p.originalSubtotal)}</span>
+                        <span>€{formatEUR(p.subtotal)}</span>
                       </div>
 
                       {toNum(p.discount) > 0 && (
