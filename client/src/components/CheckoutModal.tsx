@@ -373,7 +373,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
                   <hr className="border-brand-secondary" />
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotale servizi/prodotti:</span>
-                    <span>€{unifiedPricing.originalSubtotal.toLocaleString('it-IT')}</span>
+                    <span>€{Math.round(unifiedPricing.originalSubtotal).toLocaleString('it-IT')}</span>
                   </div>
 
                   {unifiedPricing.discount > 0 && (
@@ -392,7 +392,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
                   <div className="flex justify-between font-bold text-lg text-brand-accent">
                     <span>TOTALE</span>
-                    <span>€{Math.max(0, unifiedPricing.originalSubtotal - unifiedPricing.discount - unifiedPricing.giftSavings).toLocaleString('it-IT')}</span>
+                    <span>€{Math.round(Math.max(0, unifiedPricing.originalSubtotal - unifiedPricing.discount - unifiedPricing.giftSavings)).toLocaleString('it-IT')}</span>
                   </div>
                 </>
               );
