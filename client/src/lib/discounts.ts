@@ -73,6 +73,7 @@ export function getDiscountPercentage(
 
 /**
  * Ottiene informazioni dettagliate sugli sconti applicati a un item
+ * Applica prima lo sconto individuale, poi quello globale sul prezzo già scontato
  */
 export function getItemDiscountInfo(originalPrice: number, itemId: string, discounts: Discounts | null) {
   if (!discounts) {
@@ -80,55 +81,64 @@ export function getItemDiscountInfo(originalPrice: number, itemId: string, disco
       finalPrice: originalPrice,
       savings: 0,
       discountType: null,
-      discountValue: 0
+      discountValue: 0,
+      individualSavings: 0,
+      globalSavings: 0
     };
   }
 
-  // Check item-specific discount first
+  let currentPrice = originalPrice;
+  let individualSavings = 0;
+  let globalSavings = 0;
+  let primaryDiscountType: 'individual' | 'global' | null = null;
+
+  // STEP 1: Applica sconto individuale se presente
   const itemDiscount = discounts.perItemOverrides?.[itemId];
   if (itemDiscount && isDiscountActive(itemDiscount)) {
-    let finalPrice = originalPrice;
+    let discountedPrice = currentPrice;
     
     if (itemDiscount.type === "percent") {
-      const discountAmount = (originalPrice * itemDiscount.value) / 100;
-      finalPrice = Math.max(0, originalPrice - discountAmount);
+      const discountAmount = (currentPrice * itemDiscount.value) / 100;
+      discountedPrice = Math.max(0, currentPrice - discountAmount);
     } else if (itemDiscount.type === "fixed") {
-      finalPrice = Math.max(0, originalPrice - itemDiscount.value);
+      discountedPrice = Math.max(0, currentPrice - itemDiscount.value);
     }
     
-    return {
-      finalPrice,
-      savings: originalPrice - finalPrice,
-      discountType: 'individual' as const,
-      discountValue: itemDiscount.value
-    };
+    individualSavings = currentPrice - discountedPrice;
+    currentPrice = discountedPrice;
+    primaryDiscountType = 'individual';
   }
 
-  // Apply global discount
+  // STEP 2: Applica sconto globale sul prezzo già scontato individualmente
   const globalDiscount = discounts.global;
   if (globalDiscount && isDiscountActive(globalDiscount)) {
-    let finalPrice = originalPrice;
+    let discountedPrice = currentPrice;
     
     if (globalDiscount.type === "percent") {
-      const discountAmount = (originalPrice * globalDiscount.value) / 100;
-      finalPrice = Math.max(0, originalPrice - discountAmount);
+      const discountAmount = (currentPrice * globalDiscount.value) / 100;
+      discountedPrice = Math.max(0, currentPrice - discountAmount);
     } else if (globalDiscount.type === "fixed") {
-      finalPrice = Math.max(0, originalPrice - globalDiscount.value);
+      discountedPrice = Math.max(0, currentPrice - globalDiscount.value);
     }
     
-    return {
-      finalPrice,
-      savings: originalPrice - finalPrice,
-      discountType: 'global' as const,
-      discountValue: globalDiscount.value
-    };
+    globalSavings = currentPrice - discountedPrice;
+    currentPrice = discountedPrice;
+    
+    // Se non c'era sconto individuale, il globale diventa primario
+    if (!primaryDiscountType) {
+      primaryDiscountType = 'global';
+    }
   }
 
+  const totalSavings = individualSavings + globalSavings;
+
   return {
-    finalPrice: originalPrice,
-    savings: 0,
-    discountType: null,
-    discountValue: 0
+    finalPrice: currentPrice,
+    savings: totalSavings,
+    discountType: primaryDiscountType,
+    discountValue: primaryDiscountType === 'individual' ? itemDiscount?.value ?? 0 : globalDiscount?.value ?? 0,
+    individualSavings,
+    globalSavings
   };
 }
 

@@ -418,8 +418,6 @@ export default function CheckoutModal({
               <div className="space-y-2 text-sm">
                 {(() => {
                   const p = cartWithRules.getPricingWithRules();
-                  console.log('🔍 CheckoutModal - Pricing data:', p);
-                  console.log('🔍 CheckoutModal - Discount value:', p.discount);
                   
                   // preferisci le righe "vere" dell'engine; fallback agli item con rule info includendo nascosti
                   const lineItems = (p?.detailed as any)?.items 
@@ -435,13 +433,6 @@ export default function CheckoutModal({
                     return 0;
                   };
                   const formatEUR = (n: unknown) => toNum(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-                  console.log('🔍 CheckoutModal - Discount check:', {
-                    'p.discount': p.discount,
-                    'typeof p.discount': typeof p.discount,
-                    'toNum(p.discount)': toNum(p.discount),
-                    'toNum(p.discount) > 0': toNum(p.discount) > 0
-                  });
 
                   return (
                     <>
