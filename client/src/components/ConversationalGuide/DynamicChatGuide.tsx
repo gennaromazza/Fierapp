@@ -428,12 +428,23 @@ export function DynamicChatGuide() {
       text: dateText
     });
 
+    // Crea una data valida per Firebase - usa 1 gennaio dell'anno selezionato
+    const validDate = date === '2025' || date === '2026' 
+      ? `${date}-01-01` 
+      : new Date().toISOString().split('T')[0];
+
     // Aggiorna dati conversazione
-    setConversationData(prev => ({ ...prev, eventDate: date }));
-    setLeadData((prev: any) => ({ ...prev, eventYear: date }));
+    setConversationData(prev => ({ ...prev, eventDate: validDate }));
+    setLeadData((prev: any) => ({ 
+      ...prev, 
+      eventYear: date,
+      eventDate: validDate // ✅ Salva in eventDate per il LeadForm
+    }));
+
+    console.log('📅 Data evento aggiornata:', { date, validDate, dateText });
 
     // Salva selezione data
-    saveChatHistory('date_selected', { eventDate: date, dateText });
+    saveChatHistory('date_selected', { eventDate: validDate, dateText, originalSelection: date });
 
     // Start data collection phase
     setTimeout(() => {
