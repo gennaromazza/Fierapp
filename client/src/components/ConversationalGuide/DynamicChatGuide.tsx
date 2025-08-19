@@ -1437,13 +1437,8 @@ export function DynamicChatGuide() {
               )}
 
               {message.showCart && cart.cart.items.length > 0 && (() => {
-                // Calculate savings for cart total display
-                const pricing = cart.getPricingWithRules();
-                const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
-                const giftItemIds = giftItems.map(item => item.id);
-                const cartSavingsInfo = discounts ? 
-                  calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds) :
-                  { finalTotal: pricing.total, originalSubtotal: pricing.total };
+                // Use the same unified pricing as CheckoutModal
+                const cartSavingsInfo = cart.getPricingWithRules();
 
                 return (
                   <div className="mt-4 p-3 bg-white rounded-lg border">
@@ -1480,7 +1475,7 @@ export function DynamicChatGuide() {
                       <div className="flex justify-between font-bold">
                         <span>Totale:</span>
                         <span className="text-green-600">
-                          €{Math.round(cartSavingsInfo.finalTotal)}
+                          €{Math.round(cartSavingsInfo.total)}
                         </span>
                       </div>
                     </div>
@@ -1826,50 +1821,28 @@ export function DynamicChatGuide() {
     }
 
     if (currentPhase === 'summary') {
-      const pricing = cart.getPricingWithRules();
+      // Use the same unified pricing as CheckoutModal
+      const savingsInfo = cart.getPricingWithRules();
       const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
-      const giftItemIds = giftItems.map(item => item.id);
-
-      // Calculate comprehensive savings using unified pricing system
-      const savingsInfo = discounts ? 
-        calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds) :
-        {
-          subtotal: pricing.total,
-          originalSubtotal: pricing.total,
-          globalDiscountSavings: 0,
-          individualDiscountSavings: 0,
-          totalDiscountSavings: 0,
-          giftSavings: pricing.giftSavings,
-          finalTotal: pricing.total,
-          totalSavings: pricing.giftSavings,
-          itemDetails: []
-        };
 
       const studioText = settings?.studioName ? ` da ${settings.studioName}` : '';
       let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
 
-      if (savingsInfo.totalDiscountSavings > 0 || savingsInfo.giftSavings > 0) {
+      if (savingsInfo.discount > 0 || savingsInfo.giftSavings > 0) {
         summaryText += `💰 Prezzo originale: €${Math.round(savingsInfo.originalSubtotal)}\n`;
 
-        if (savingsInfo.globalDiscountSavings > 0) {
-          const globalDiscount = discounts?.global;
-          const discountText = globalDiscount?.type === 'percent' ? 
-            `${globalDiscount.value}%` : `€${globalDiscount?.value}`;
-          summaryText += `💸 Sconto globale (${discountText}): -€${Math.round(savingsInfo.globalDiscountSavings)}\n`;
-        }
-
-        if (savingsInfo.individualDiscountSavings > 0) {
-          summaryText += `🎯 Sconti speciali prodotti: -€${Math.round(savingsInfo.individualDiscountSavings)}\n`;
+        if (savingsInfo.discount > 0) {
+          summaryText += `💸 Sconto applicato: -€${Math.round(savingsInfo.discount)}\n`;
         }
 
         if (savingsInfo.giftSavings > 0) {
           summaryText += `🎁 Risparmi con regali: €${Math.round(savingsInfo.giftSavings)}\n`;
         }
 
-        summaryText += `💰 Totale finale: €${Math.round(savingsInfo.finalTotal)}\n`;
+        summaryText += `💰 Totale finale: €${Math.round(savingsInfo.total)}\n`;
         summaryText += `✨ RISPARMI TOTALI: €${Math.round(savingsInfo.totalSavings)} 💫\n`;
       } else {
-        summaryText += `💰 Totale: €${Math.round(savingsInfo.finalTotal)}\n`;
+        summaryText += `💰 Totale: €${Math.round(savingsInfo.total)}\n`;
       }
 
       if (giftItems.length > 0) {
