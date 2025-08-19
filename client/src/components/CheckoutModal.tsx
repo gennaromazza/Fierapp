@@ -185,15 +185,33 @@ export default function CheckoutModal({
         }
       }
 
+      // DEBUG: Log CheckoutModal save values
+      console.log('🔍 CHECKOUT DEBUG - Dati che vengono salvati dal CheckoutModal:');
+      console.log('cartWithRules.cart.items:', cartWithRules.cart.items);
+      console.log('cartWithRules.getPricingWithRules():', cartWithRules.getPricingWithRules());
+      console.log('cartWithRules.getItemsWithRuleInfo():', cartWithRules.getItemsWithRuleInfo());
+      
+      // CORRETTO: Usa items processati dal sistema rules, non dal carrello grezzo
+      const processedItems = cartWithRules.getItemsWithRuleInfo();
+      const allItemsDB = cartWithRules.getAllItemsWithAvailability();
+      
+      const selectedItems = processedItems.map(item => {
+        // Trova i dati dal database per avere originalPrice corretto
+        const dbItem = allItemsDB.find(dbItem => dbItem.id === item.id);
+        return {
+          id: item.id,
+          title: item.title,
+          price: toNum(item.isGift ? 0 : item.price), // Prezzo finale (con sconti + gift)
+          originalPrice: toNum(dbItem?.originalPrice || dbItem?.price || item.price) // Prezzo originale dal database
+        };
+      });
+      
+      console.log('🔍 CHECKOUT DEBUG - selectedItems processati:', selectedItems);
+      
       // Use centralized save function
       const leadId = await saveLead({
         customer: data,
-        selectedItems: cartWithRules.cart.items.map((item) => ({
-          id: item.id,
-          title: item.title,
-          price: toNum(item.price),
-          originalPrice: toNum(item.originalPrice),
-        })),
+        selectedItems: selectedItems,
         pricing: cartWithRules.getPricingWithRules(),
         gdprConsent: {
           accepted: data.gdpr_consent || false,

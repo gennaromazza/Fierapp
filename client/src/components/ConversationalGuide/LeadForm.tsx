@@ -305,7 +305,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         customer: leadDataToCustomer(formData),
         selectedItems: cart.getItemsWithRuleInfo().map(item => {
           // Trova l'item originale nel database per ottenere i prezzi corretti
-          const dbItem = cart.items.find(dbItem => dbItem.id === item.id);
+          const dbItem = (cart as any).items?.find((dbItem: any) => dbItem.id === item.id);
           return {
             id: item.id || '',
             title: item.title || '',
