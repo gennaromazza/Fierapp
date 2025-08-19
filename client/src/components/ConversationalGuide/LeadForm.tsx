@@ -35,37 +35,54 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     initialData.eventDate ? new Date(initialData.eventDate) : undefined
   );
 
-  // 🆕 Sync state with initialData when it changes - Deep comparison
+  // Sync state with initialData when it changes
   useEffect(() => {
-    console.log('📝 LeadForm - Syncing with initialData:', initialData);
+    console.log('📝 LeadForm - Received initialData:', initialData);
     
-    // Force update if initialData has values but current state is empty
-    if (initialData.name && initialData.name.trim() !== '') {
-      console.log('🔄 Force updating name:', initialData.name);
+    // Update only if initialData has changed values
+    if (initialData.name !== undefined && initialData.name !== name) {
+      console.log('🔄 Updating name from:', name, 'to:', initialData.name);
       setName(initialData.name);
     }
-    if (initialData.surname && initialData.surname.trim() !== '') {
-      console.log('🔄 Force updating surname:', initialData.surname);
+    if (initialData.surname !== undefined && initialData.surname !== surname) {
+      console.log('🔄 Updating surname from:', surname, 'to:', initialData.surname);
       setSurname(initialData.surname);
     }
-    if (initialData.email && initialData.email.trim() !== '') {
-      console.log('🔄 Force updating email:', initialData.email);
+    if (initialData.email !== undefined && initialData.email !== email) {
+      console.log('🔄 Updating email from:', email, 'to:', initialData.email);
       setEmail(initialData.email);
     }
-    if (initialData.phone && initialData.phone.trim() !== '') {
-      console.log('🔄 Force updating phone:', initialData.phone);
+    if (initialData.phone !== undefined && initialData.phone !== phone) {
+      console.log('🔄 Updating phone from:', phone, 'to:', initialData.phone);
       setPhone(initialData.phone);
     }
-    if (initialData.eventDate && initialData.eventDate.trim() !== '') {
-      console.log('🔄 Force updating eventDate:', initialData.eventDate);
-      setEventDate(new Date(initialData.eventDate));
+    if (initialData.eventDate !== undefined) {
+      const newDate = initialData.eventDate ? new Date(initialData.eventDate) : undefined;
+      const currentDateStr = eventDate?.toISOString().split('T')[0];
+      const newDateStr = newDate?.toISOString().split('T')[0];
+      if (newDateStr !== currentDateStr) {
+        console.log('🔄 Updating eventDate from:', currentDateStr, 'to:', newDateStr);
+        setEventDate(newDate);
+      }
     }
-    if (initialData.notes && initialData.notes !== notes) {
+    if (initialData.notes !== undefined && initialData.notes !== notes) {
+      console.log('🔄 Updating notes');
       setNotes(initialData.notes);
     }
-    if (typeof initialData.gdprAccepted === 'boolean' && initialData.gdprAccepted !== gdprAccepted) {
+    if (initialData.gdprAccepted !== undefined && initialData.gdprAccepted !== gdprAccepted) {
+      console.log('🔄 Updating gdprAccepted from:', gdprAccepted, 'to:', initialData.gdprAccepted);
       setGdprAccepted(initialData.gdprAccepted);
     }
+    
+    console.log('📊 LeadForm - Current state after sync:', {
+      name,
+      surname, 
+      email,
+      phone,
+      eventDate: eventDate?.toISOString().split('T')[0],
+      notes,
+      gdprAccepted
+    });
   }, [initialData]); // Solo initialData come dipendenza per evitare loop
 
   // Reconstruct formData object for backward compatibility

@@ -211,12 +211,12 @@ export function DynamicChatGuide() {
       }
 
       console.log(`💾 Chat history saved successfully: ${eventType}`, data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error saving chat history:', error);
       console.error('📊 Error details:', {
-        message: error.message,
-        code: error.code,
-        stack: error.stack
+        message: error?.message || 'Unknown error',
+        code: error?.code || 'N/A',
+        stack: error?.stack || 'No stack trace'
       });
     }
   };
@@ -1465,6 +1465,15 @@ export function DynamicChatGuide() {
       );
     }
     if (currentPhase === 'lead') {
+      // Log the data being passed to form
+      console.log('🎯 DynamicChatGuide - Entering lead phase with data:', {
+        name: leadData.name,
+        surname: leadData.surname,
+        email: leadData.email,
+        phone: leadData.phone,
+        eventDate: leadData.eventDate
+      });
+      
       return (
         <div key="lead-step" className="space-y-4">
           <div className="flex items-start gap-3 mb-6">
@@ -1482,21 +1491,7 @@ export function DynamicChatGuide() {
             </div>
           </div>
 
-          {/* ✅ Debug and pass data to LeadForm */}
-          {(() => {
-            console.log('🔍 DynamicChatGuide - leadData al momento di passare a LeadForm:', leadData);
-            const formInitialData = {
-              name: leadData.name || '',
-              surname: leadData.surname || '',
-              email: leadData.email || '',
-              phone: leadData.phone || '',
-              eventDate: leadData.eventDate || '',
-              notes: leadData.notes || '',
-              gdprAccepted: !!leadData.gdprAccepted
-            };
-            console.log('📤 DynamicChatGuide - Data passati a LeadForm:', formInitialData);
-            return null;
-          })()}
+          {/* ✅ Pass collected data to LeadForm */}
           <LeadForm
             key="stable-lead-form"
             initialData={{
@@ -1509,7 +1504,8 @@ export function DynamicChatGuide() {
               gdprAccepted: !!leadData.gdprAccepted
             }}
             onComplete={(data) => {
-              console.log('✅ Lead completato:', data);
+              console.log('✅ Lead form completed with data:', data);
+              console.log('📊 Previous leadData state:', leadData);
               setLeadData(data);
               setIsCheckoutOpen(true); // Open checkout modal on lead completion
             }}
