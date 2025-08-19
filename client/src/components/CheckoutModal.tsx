@@ -41,13 +41,23 @@ interface CheckoutModalProps {
 
 // Utility function moved to centralized leadSaver.ts
 
+const formatEUR = (n?: number) =>
+  (Number.isFinite(n as number) ? (n as number) : 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutModalProps) {
   const cartWithRules = useCartWithRules();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [allowEmptyCart, setAllowEmptyCart] = useState(false);
-  
+
+  const pricing = cartWithRules.getPricingWithRules?.() ?? {
+    originalSubtotal: 0,
+    discount: 0,
+    giftSavings: 0,
+    total: 0,
+  };
+
   // Reset allowEmptyCart when modal opens with items
   useEffect(() => {
     if (isOpen && cartWithRules.cart.itemCount > 0) {
@@ -61,7 +71,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
     queryFn: async () => {
       console.log('🔄 CheckoutModal - Fetching settings from Firebase...');
       const settingsDoc = await getDoc(doc(db, 'settings', 'app'));
-      
+
       if (!settingsDoc.exists()) {
         console.warn('⚠️ Settings document does not exist');
         return null;
@@ -164,7 +174,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           price: item.price,
           originalPrice: item.originalPrice
         })),
-        pricing: cartWithRules.getPricingWithRules(),
+        pricing: pricing,
         gdprConsent: {
           accepted: data.gdpr_consent || false,
           text: settings.gdprText,
@@ -175,24 +185,23 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       });
 
       // Use unified pricing for analytics
-      const unifiedPricing = cartWithRules.getPricingWithRules();
       // Analytics
       if (analytics) {
         logEvent(analytics, 'form_submit', {
           form_id: 'checkout_form',
           lead_id: leadId,
-          total_value: unifiedPricing.total
+          total_value: pricing.total
         });
       }
 
       // Create detailed WhatsApp message with form data
       if (settings.whatsappNumber) {
-        const items = cartWithRules.getItemsWithRuleInfo();
+        const items = cartWithRules.getItemsWithRuleInfo ? cartWithRules.getItemsWithRuleInfo() : cartWithRules.cart.items ?? [];
         const itemsList = items.map(it => {
-          const priceText = it.isGift
-            ? 'GRATIS'
-            : `€${it.price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-          return `• ${it.title} - ${priceText}`;
+          const priceNum = (it as any).finalPrice ?? (it as any).price ?? 0;
+          const priceText = (it as any).isGift ? 'GRATIS' : `€${formatEUR(priceNum)}`;
+          const title = (it as any).title ?? 'Voce';
+          return `• ${title} - ${priceText}`;
         }).join('\n');
 
         // Format form data for WhatsApp using centralized helper
@@ -207,20 +216,20 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           .filter(Boolean)
           .join('\n');
 
-        const p = cartWithRules.getPricingWithRules();
-        const lines = [
-          `Subtotale: €${p.originalSubtotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        // Riepilogo per WhatsApp
+        const lines: string[] = [
+          `Subtotale: €${formatEUR(pricing.originalSubtotal)}`
         ];
-        if (p.discount > 0) {
-          lines.push(`Sconti: -€${p.discount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        if (pricing.discount > 0) {
+          lines.push(`Sconti: -€${formatEUR(pricing.discount)}`);
         }
-        if (p.giftSavings > 0) {
-          lines.push(`Servizi gratuiti: -€${p.giftSavings.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        if (pricing.giftSavings > 0) {
+          lines.push(`Servizi gratuiti: -€${formatEUR(pricing.giftSavings)}`);
         }
-        lines.push(`Totale: €${p.total.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        lines.push(`Totale: €${formatEUR(pricing.total)}`);
         const totalText = lines.join('\n');
 
-        const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${leadId}`;
+        const message = `🎬 PREVENTIVO MATRIMONIO\n\n📋 SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Grazie per averci scelto!`;
 
         const whatsappUrl = generateWhatsAppLink(settings.whatsappNumber, message);
         window.open(whatsappUrl, '_blank');
@@ -243,7 +252,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       // Allow modal to stay open with empty cart momentarily for confirmation
       setAllowEmptyCart(true);
       cartWithRules.clearCart();
-      
+
       // Close modal after a brief delay to show the success message
       setTimeout(() => {
         setAllowEmptyCart(false);
@@ -263,7 +272,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
   const handleDownloadPDF = async () => {
     if (!settings) return;
-    
+
     // Prevent PDF generation if cart is empty
     if (cartWithRules.cart.itemCount === 0) {
       toast({
@@ -287,7 +296,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           price: item.price,
           originalPrice: item.originalPrice
         })),
-        pricing: cartWithRules.getPricingWithRules()
+        pricing: pricing
       };
 
       const customerName = formData.nome || formData.Nome || 'cliente';
@@ -357,29 +366,30 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
               <h4 className="font-semibold text-brand-accent mb-3">RIEPILOGO SELEZIONE</h4>
               <div className="space-y-2 text-sm">
             {(() => {
-              const items = cartWithRules.getItemsWithRuleInfo();
+              const items = cartWithRules.getItemsWithRuleInfo ? cartWithRules.getItemsWithRuleInfo() : cartWithRules.cart.items ?? [];
               return items.map((item, index) => {
+                const priceNum = (item as any).finalPrice ?? (item as any).price ?? 0;
                 return (
                   <div key={index} className="flex justify-between">
                     <span>
                       {item.title}
-                      {item.isGift && (
+                      {(item as any).isGift && (
                         <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
                       )}
                     </span>
                     <span>
-                      {item.isGift ? (
+                      {(item as any).isGift ? (
                         <>
-                          <span className="line-through text-gray-400 mr-2">€{item.originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span className="line-through text-gray-400 mr-2">€{formatEUR((item as any).originalPrice)}</span>
                           <span className="text-green-600 font-bold">GRATIS</span>
                         </>
-                      ) : item.originalPrice !== item.price ? (
+                      ) : (item as any).originalPrice !== priceNum ? (
                         <>
-                          <span className="line-through text-gray-400 mr-2">€{item.originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          <span className="text-green-600 font-semibold">€{item.price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span className="line-through text-gray-400 mr-2">€{formatEUR((item as any).originalPrice)}</span>
+                          <span className="text-green-600 font-semibold">€{formatEUR(priceNum)}</span>
                         </>
                       ) : (
-                        `€${item.price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        `€${formatEUR(priceNum)}`
                       )}
                     </span>
                   </div>
@@ -388,33 +398,31 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
             })()}
 
             {(() => {
-              const unifiedPricing = cartWithRules.getPricingWithRules();
-
               return (
                 <>
                   <hr className="border-brand-secondary" />
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotale servizi/prodotti:</span>
-                    <span>€{unifiedPricing.originalSubtotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>€{formatEUR(pricing.originalSubtotal)}</span>
                   </div>
 
-                  {unifiedPricing.discount > 0 && (
-                    <div className="flex justify-between text-orange-600 font-semibold">
+                  {pricing.discount > 0 && (
+                    <div className="flex justify-between text-sm text-red-600">
                       <span>Sconto applicato:</span>
-                      <span>-€{unifiedPricing.discount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span>-€{formatEUR(pricing.discount)}</span>
                     </div>
                   )}
 
-                  {unifiedPricing.giftSavings > 0 && (
-                    <div className="flex justify-between text-green-600 font-semibold">
-                      <span>Servizi in omaggio:</span>
-                      <span>-€{unifiedPricing.giftSavings.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  {pricing.giftSavings > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Servizi gratuiti:</span>
+                      <span>-€{formatEUR(pricing.giftSavings)}</span>
                     </div>
                   )}
 
                   <div className="flex justify-between font-bold text-lg text-brand-accent">
                     <span>TOTALE</span>
-                    <span>€{unifiedPricing.total.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>€{formatEUR(pricing.total)}</span>
                   </div>
                 </>
               );
