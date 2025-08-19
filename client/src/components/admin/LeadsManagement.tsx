@@ -308,31 +308,58 @@ export default function LeadsManagement() {
       ''
     ];
 
-    // Aggiungi items
+    // Aggiungi items con logica regalo
     lead.selectedItems.forEach((item, index) => {
       bodyLines.push(`${index + 1}. ${item.title}`);
-      if (item.originalPrice && item.originalPrice !== item.price) {
+      
+      // Determina se è un regalo (prezzo 0)
+      const isGift = item.price === 0;
+      
+      if (isGift) {
+        // Item regalo: mostra prezzo originale e "GRATIS"
+        bodyLines.push(`   Prezzo originale: €${item.originalPrice.toLocaleString('it-IT')}`);
+        bodyLines.push(`   🎁 GRATIS (Servizio in omaggio)`);
+      } else if (item.originalPrice && item.originalPrice !== item.price) {
+        // Item scontato: mostra prezzo originale e scontato
         bodyLines.push(`   Prezzo originale: €${item.originalPrice.toLocaleString('it-IT')}`);
         bodyLines.push(`   Prezzo scontato: €${item.price.toLocaleString('it-IT')}`);
         bodyLines.push(`   Risparmio: €${(item.originalPrice - item.price).toLocaleString('it-IT')}`);
       } else {
+        // Item normale: solo prezzo
         bodyLines.push(`   Prezzo: €${item.price.toLocaleString('it-IT')}`);
       }
       bodyLines.push('');
     });
 
-    // Aggiungi totali
+    // Aggiungi totali con nuova struttura dettagliata
     bodyLines.push('═══════════════════════════════════════════════');
     bodyLines.push('💰 RIEPILOGO PREZZI:');
     bodyLines.push('');
-    bodyLines.push(`Subtotale: €${lead.pricing.subtotal.toLocaleString('it-IT')}`);
+    bodyLines.push(`Subtotale servizi/prodotti: €${(lead.pricing.subtotal || 0).toLocaleString('it-IT')}`);
 
-    if (lead.pricing.discount > 0) {
-      bodyLines.push(`Sconto applicato: -€${lead.pricing.discount.toLocaleString('it-IT')}`);
+    // Sconti individuali per prodotto/servizio
+    if ((lead.pricing.individualDiscountSavings || 0) > 0) {
+      bodyLines.push(`Sconti per prodotto/servizio: -€${lead.pricing.individualDiscountSavings.toLocaleString('it-IT')}`);
+    }
+
+    // Sconto globale
+    if ((lead.pricing.globalDiscountSavings || 0) > 0) {
+      bodyLines.push(`Sconto globale (-10%): -€${lead.pricing.globalDiscountSavings.toLocaleString('it-IT')}`);
+    }
+
+    // Servizi in omaggio
+    if ((lead.pricing.giftSavings || 0) > 0) {
+      bodyLines.push(`Servizi in omaggio: -€${lead.pricing.giftSavings.toLocaleString('it-IT')}`);
     }
 
     bodyLines.push('');
-    bodyLines.push(`🎯 TOTALE FINALE: €${lead.pricing.total.toLocaleString('it-IT')}`);
+    bodyLines.push(`🎯 TOTALE FINALE: €${(lead.pricing.total || 0).toLocaleString('it-IT')}`);
+    
+    // Totale risparmiato
+    if ((lead.pricing.totalSavings || 0) > 0) {
+      bodyLines.push(`💰 Totale risparmiato: €${lead.pricing.totalSavings.toLocaleString('it-IT')}!`);
+    }
+    
     bodyLines.push('═══════════════════════════════════════════════');
     bodyLines.push('');
     bodyLines.push('📝 Note:');
@@ -380,11 +407,11 @@ export default function LeadsManagement() {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedLeads = filteredLeads.slice(startIndex, endIndex);
 
-  // Calculate stats from filtered leads
+  // Calculate stats from filtered leads con nuova struttura
   const stats = {
     total: filteredLeads.length,
     totalValue: filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.total || 0), 0),
-    totalDiscount: filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.discount || 0), 0),
+    totalSavings: filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.totalSavings || 0), 0),
     avgValue: filteredLeads.length > 0 ? filteredLeads.reduce((sum, lead) => sum + (lead.pricing?.total || 0), 0) / filteredLeads.length : 0
   };
 
@@ -520,9 +547,9 @@ export default function LeadsManagement() {
         <Card className="card-premium hover-lift">
           <CardContent className="pt-6">
             <div className="text-3xl font-bold text-gradient">
-              €{stats.totalDiscount.toLocaleString('it-IT')}
+              €{stats.totalSavings.toLocaleString('it-IT')}
             </div>
-            <p className="text-sm font-semibold mt-2" style={{ color: 'var(--brand-accent)' }}>Sconti Totali</p>
+            <p className="text-sm font-semibold mt-2" style={{ color: 'var(--brand-accent)' }}>Risparmi Totali</p>
           </CardContent>
         </Card>
         <Card className="card-premium hover-lift">

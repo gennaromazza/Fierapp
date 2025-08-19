@@ -17,18 +17,20 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **Firebase Error Resolution**: Fixed timestamp handling and data structure issues in lead form submission
 - **Admin Panel Enhancement**: Added "Clear All Leads" functionality with double confirmation for data cleanup
 
-### Complete System Alignment: PDF & WhatsApp Integration (August 19, 2025 - 1:12 PM) - COMPLETED
+### Full System Pricing Alignment Complete (August 19, 2025 - 1:25 PM) - COMPLETED
 - **PDF System Update**: Updated PDF generation to use database-driven pricing structure matching CheckoutModal exactly
 - **Gift Items in PDF**: PDF shows crossed-out original prices with green "GRATIS" text for gift items, identical to CheckoutModal display
 - **WhatsApp Message Integration**: Updated WhatsApp message generation to use new pricing structure with detailed savings breakdown
-- **Unified Pricing Display**: All three outputs (CheckoutModal, PDF, WhatsApp) now show identical pricing information:
+- **LeadsManagement Email System**: Updated admin email generation to use new detailed pricing structure with gift item handling
+- **Admin Dashboard Statistics**: Updated stats calculations to use totalSavings instead of legacy discount field
+- **Unified Pricing Display**: All outputs (CheckoutModal, PDF, WhatsApp, Admin Emails, Dashboard) now show identical pricing information:
   - Subtotale servizi/prodotti (only paid items)
   - Sconti per prodotto/servizio (individual database discounts)
   - Sconto globale (-10%) (applied to subtotal after individual discounts)
   - Servizi in omaggio (gift item values)
   - TOTALE (final amount to pay)
   - Total savings summary
-- **Complete Consistency**: Perfect alignment between what user sees, PDF they download, and WhatsApp message they send
+- **Complete System Consistency**: Perfect alignment across all system outputs - user interface, PDF downloads, WhatsApp messages, admin emails, and dashboard statistics
 - **Database-Driven Logic**: All pricing calculations based on real originalPrice and price fields from Firebase database
 
 ### Sequential Discount Logic Implementation (August 19, 2025 - 11:22 AM) - COMPLETED
