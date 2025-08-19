@@ -979,7 +979,7 @@ export default function LeadsManagement() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span>Subtotale servizi/prodotti:</span>
-                        <span>€{selectedLead.pricing.subtotal.toLocaleString('it-IT')}</span>
+                        <span>€{(selectedLead.pricing?.subtotal || 0).toLocaleString('it-IT')}</span>
                       </div>
                       
                       {/* Sconti individuali */}
@@ -999,23 +999,23 @@ export default function LeadsManagement() {
                       )}
                       
                       {/* Servizi in omaggio */}
-                      {(selectedLead.pricing.giftSavings || 0) > 0 && (
+                      {(selectedLead.pricing?.giftSavings || 0) > 0 && (
                         <div className="flex justify-between text-green-600">
                           <span>Servizi in omaggio:</span>
-                          <span>-€{(selectedLead.pricing.giftSavings || 0).toLocaleString('it-IT')}</span>
+                          <span>-€{(selectedLead.pricing?.giftSavings || 0).toLocaleString('it-IT')}</span>
                         </div>
                       )}
                       
                       <div className="flex justify-between font-bold text-lg border-t pt-2">
                         <span>TOTALE:</span>
-                        <span>€{selectedLead.pricing.total.toLocaleString('it-IT')}</span>
+                        <span>€{(selectedLead.pricing?.total || 0).toLocaleString('it-IT')}</span>
                       </div>
                       
                       {/* Totale risparmiato */}
-                      {(selectedLead.pricing.totalSavings || 0) > 0 && (
+                      {(selectedLead.pricing?.totalSavings || 0) > 0 && (
                         <div className="flex justify-between text-green-700 font-semibold">
                           <span>💰 Totale risparmiato:</span>
-                          <span>€{(selectedLead.pricing.totalSavings || 0).toLocaleString('it-IT')}!</span>
+                          <span>€{(selectedLead.pricing?.totalSavings || 0).toLocaleString('it-IT')}!</span>
                         </div>
                       )}
                     </div>
