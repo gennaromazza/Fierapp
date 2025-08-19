@@ -420,19 +420,23 @@ export default function CheckoutModal({
                   // Usa il sistema unificato come la chat
                   const p = cartWithRules.getPricingWithRules();
                   const itemsWithRules = cartWithRules.getItemsWithRuleInfo();
+                  const allItemsWithAvailability = cartWithRules.getAllItemsWithAvailability();
 
                   return (
                     <>
                       {/* Lista item con prezzi dal database (originalPrice e price) */}
-                      {itemsWithRules.map((item: any) => {
-                        const title = item.title || "Voce";
-                        const originalPrice = toNum(item.originalPrice || item.price);
-                        const currentPrice = toNum(item.price);
-                        const isGift = item.isGift;
+                      {itemsWithRules.map((cartItem: any) => {
+                        // Trova i dati completi dal database
+                        const fullItem = allItemsWithAvailability.find(dbItem => dbItem.id === cartItem.id);
+                        
+                        const title = fullItem?.title || cartItem.title || "Voce";
+                        const originalPrice = toNum(fullItem?.originalPrice || fullItem?.price || cartItem.price);
+                        const currentPrice = toNum(fullItem?.price || cartItem.price);
+                        const isGift = cartItem.isGift;
                         const hasDiscount = originalPrice > currentPrice && !isGift;
 
                         return (
-                          <div key={item.id} className="flex justify-between text-sm">
+                          <div key={cartItem.id} className="flex justify-between text-sm">
                             <span>
                               {title}
                               {isGift && <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>}
@@ -458,44 +462,71 @@ export default function CheckoutModal({
 
                       <hr className="border-brand-secondary" />
 
-                      {/* Totali dal sistema unificato */}
-                      <div className="flex justify-between text-sm text-gray-600">
-                        <span>Subtotale servizi/prodotti:</span>
-                        <span>€{formatEUR(p.subtotal)}</span>
-                      </div>
+                      {(() => {
+                        // Calcola manualmente i totali basati sui prezzi dal database
+                        let subtotalFromDB = 0;
+                        let totalIndividualDiscounts = 0;
+                        
+                        itemsWithRules.forEach(cartItem => {
+                          const fullItem = allItemsWithAvailability.find(dbItem => dbItem.id === cartItem.id);
+                          const originalPrice = toNum(fullItem?.originalPrice || fullItem?.price || cartItem.price);
+                          const currentPrice = toNum(fullItem?.price || cartItem.price);
+                          
+                          if (!cartItem.isGift) {
+                            subtotalFromDB += currentPrice;
+                            if (originalPrice > currentPrice) {
+                              totalIndividualDiscounts += (originalPrice - currentPrice);
+                            }
+                          }
+                        });
+                        
+                        // Sconto globale solo sui prezzi già scontati dal database
+                        const globalDiscountRate = 0.1; // 10%
+                        const globalDiscountAmount = subtotalFromDB * globalDiscountRate;
+                        const finalTotal = subtotalFromDB - globalDiscountAmount;
+                        
+                        return (
+                          <>
+                            <div className="flex justify-between text-sm text-gray-600">
+                              <span>Subtotale servizi/prodotti:</span>
+                              <span>€{formatEUR(subtotalFromDB)}</span>
+                            </div>
 
-                      {toNum(p.detailed.globalDiscountSavings) > 0 && (
-                        <div className="flex justify-between text-orange-600 font-semibold">
-                          <span>Sconto globale (-10%):</span>
-                          <span>-€{formatEUR(p.detailed.globalDiscountSavings)}</span>
-                        </div>
-                      )}
+                            {totalIndividualDiscounts > 0 && (
+                              <div className="flex justify-between text-blue-600 font-semibold">
+                                <span>Sconti per prodotto/servizio:</span>
+                                <span>-€{formatEUR(totalIndividualDiscounts)}</span>
+                              </div>
+                            )}
 
-                      {toNum(p.detailed.individualDiscountSavings) > 0 && (
-                        <div className="flex justify-between text-blue-600 font-semibold">
-                          <span>Sconti per prodotto/servizio:</span>
-                          <span>-€{formatEUR(p.detailed.individualDiscountSavings)}</span>
-                        </div>
-                      )}
+                            {globalDiscountAmount > 0 && (
+                              <div className="flex justify-between text-orange-600 font-semibold">
+                                <span>Sconto globale (-10%):</span>
+                                <span>-€{formatEUR(globalDiscountAmount)}</span>
+                              </div>
+                            )}
 
-                      {toNum(p.discount) > 0 && (
-                        <div className="flex justify-between text-gray-600 text-sm border-t border-gray-200 pt-2 mt-2">
-                          <span>Totale sconti applicati:</span>
-                          <span className="font-semibold">-€{formatEUR(p.discount)}</span>
-                        </div>
-                      )}
+                            {(totalIndividualDiscounts + globalDiscountAmount) > 0 && (
+                              <div className="flex justify-between text-gray-600 text-sm border-t border-gray-200 pt-2 mt-2">
+                                <span>Totale sconti applicati:</span>
+                                <span className="font-semibold">-€{formatEUR(totalIndividualDiscounts + globalDiscountAmount)}</span>
+                              </div>
+                            )}
 
-                      {toNum(p.giftSavings) > 0 && (
-                        <div className="flex justify-between text-green-600 font-semibold">
-                          <span>Servizi in omaggio:</span>
-                          <span>-€{formatEUR(p.giftSavings)}</span>
-                        </div>
-                      )}
+                            {toNum(p.giftSavings) > 0 && (
+                              <div className="flex justify-between text-green-600 font-semibold">
+                                <span>Servizi in omaggio:</span>
+                                <span>-€{formatEUR(p.giftSavings)}</span>
+                              </div>
+                            )}
 
-                      <div className="flex justify-between font-bold text-lg text-brand-accent">
-                        <span>TOTALE</span>
-                        <span>€{formatEUR(p.total)}</span>
-                      </div>
+                            <div className="flex justify-between font-bold text-lg text-brand-accent">
+                              <span>TOTALE</span>
+                              <span>€{formatEUR(finalTotal)}</span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </>
                   );
                 })()}
