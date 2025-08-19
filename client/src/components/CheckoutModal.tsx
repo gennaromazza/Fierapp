@@ -185,13 +185,7 @@ export default function CheckoutModal({
         }
       }
 
-      // DEBUG: Log CheckoutModal save values
-      console.log('🔍 CHECKOUT DEBUG - Dati che vengono salvati dal CheckoutModal:');
-      console.log('cartWithRules.cart.items:', cartWithRules.cart.items);
-      console.log('cartWithRules.getPricingWithRules():', cartWithRules.getPricingWithRules());
-      console.log('cartWithRules.getItemsWithRuleInfo():', cartWithRules.getItemsWithRuleInfo());
-      
-      // CORRETTO: Usa items processati dal sistema rules, non dal carrello grezzo
+      // Use processed items from rules system, not raw cart items
       const processedItems = cartWithRules.getItemsWithRuleInfo();
       const allItemsDB = cartWithRules.getAllItemsWithAvailability();
       
@@ -205,8 +199,6 @@ export default function CheckoutModal({
           originalPrice: toNum(dbItem?.originalPrice || dbItem?.price || item.price) // Prezzo originale dal database
         };
       });
-      
-      console.log('🔍 CHECKOUT DEBUG - selectedItems processati:', selectedItems);
       
       // Use centralized save function
       const leadId = await saveLead({

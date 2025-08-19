@@ -288,18 +288,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       // Get unified pricing
       const leadPricing = cart.getPricingWithRules();
       
-      // DEBUG: Log i valori che stiamo salvando
-      console.log('🔍 DEBUG - Dati che vengono salvati nel lead:');
-      console.log('leadPricing completo:', leadPricing);
-      console.log('leadPricing.detailed:', leadPricing.detailed);
-      console.log('Items dal carrello:', cart.getItemsWithRuleInfo().map(item => ({
-        id: item.id,
-        title: item.title,
-        price: item.price,
-        originalPrice: item.originalPrice,
-        isGift: item.isGift
-      })));
-      
+
       // Use centralized save function
       const leadId = await saveLead({
         customer: leadDataToCustomer(formData),

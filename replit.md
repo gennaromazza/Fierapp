@@ -33,6 +33,15 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **Complete System Consistency**: Perfect alignment across all system outputs - user interface, PDF downloads, WhatsApp messages, admin emails, and dashboard statistics
 - **Database-Driven Logic**: All pricing calculations based on real originalPrice and price fields from Firebase database
 
+### CheckoutModal Pricing Fix - Final Resolution (August 19, 2025 - 3:20 PM) - COMPLETED
+- **CRITICAL BUG RESOLUTION**: Fixed CheckoutModal lines 191-218 that were causing incorrect lead data saves when users clicked WhatsApp or PDF buttons
+- **Root Cause Identified**: CheckoutModal was saving `cartWithRules.cart.items` (raw cart data) while using `cartWithRules.getPricingWithRules()` (processed pricing) causing data inconsistency
+- **Unified Item Processing**: Updated CheckoutModal to use `getItemsWithRuleInfo()` + `getAllItemsWithAvailability()` for consistent item data aligned with pricing system
+- **Database-Driven Lead Saves**: All lead saves now use processed items with correct finalPrice + originalPrice from database, ensuring perfect alignment with display logic
+- **WhatsApp & PDF Consistency**: Both WhatsApp message generation and PDF creation now receive correctly processed lead data matching the checkout interface
+- **User Confirmation**: System now correctly saves leads with €1,305 total instead of incorrect €1,485 for typical Fotografico + Videomaker selection
+- **Legacy Data Note**: Previous leads (UGK364jLorlwW0yXJcvL, b0ii10OxMFuW9KhEqEoh) retain incorrect data but all new leads save with accurate pricing
+
 ### Complete Pricing Alignment Verification System (August 19, 2025 - 1:45 PM) - COMPLETED
 - **Comprehensive Code Analysis**: Created automated script that analyzes all pricing components in codebase to identify inconsistencies
 - **Critical Bug Fix**: Corrected LeadForm.tsx to save `pricing.subtotal` instead of `pricing.originalSubtotal` - eliminating €3,150 vs €2,750 discrepancy
