@@ -155,7 +155,7 @@ export function MobileOptimizedGuide() {
                   </p>
                   
                   <EnhancedSavingsDisplay 
-                    discount={cart.cart.discount}
+                    discount={cart.getPricingWithRules().totalSavings}
                     className={cn(
                       "mx-auto max-w-sm sm:max-w-none",
                       currentStep?.uiHint === 'highlight_global_discount' && 
