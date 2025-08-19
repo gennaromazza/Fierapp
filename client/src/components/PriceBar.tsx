@@ -36,75 +36,8 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
     return () => unsubscribe();
   }, []);
 
-  // Calculate discount breakdown
-  const calculateDiscountBreakdown = () => {
-    let globalDiscount = 0;
-    let itemSpecificDiscount = 0;
-
-    // Controlla se c'è uno sconto globale attivo
-    const hasGlobalDiscount = discounts?.global?.isActive;
-
-
-
-    // Calcola lo sconto globale se attivo
-    if (hasGlobalDiscount && discounts.global) {
-      if (discounts.global.type === 'fixed') {
-        // Sconto fisso
-        globalDiscount = discounts.global.value || 0;
-      } else if (discounts.global.type === 'percent') {
-        // Sconto percentuale sul totale
-        const subtotal = cart.cart.items.reduce((sum, item) => {
-          if (item.price === 0) return sum; // Salta gli omaggi
-          return sum + (item.originalPrice || item.price);
-        }, 0);
-        globalDiscount = Math.round(subtotal * ((discounts.global.value || 0) / 100));
-      }
-    }
-
-    // Calcola gli sconti specifici per item
-    cart.cart.items.forEach(item => {
-      // Se è un regalo (price = 0), salta
-      if (item.price === 0) return;
-
-      const originalPrice = item.originalPrice || item.price;
-
-      // Se l'item ha già uno sconto applicato (originalPrice > price), aggiungilo al totale sconti
-      if (item.originalPrice && item.originalPrice > item.price) {
-        itemSpecificDiscount += (item.originalPrice - item.price);
-      }
-
-      // Controlla anche se ci sono sconti configurati in discounts.perItemOverrides
-      const hasItemDiscount = discounts?.perItemOverrides?.[item.id];
-      if (hasItemDiscount && hasItemDiscount.isActive) {
-        if (hasItemDiscount.type === 'fixed') {
-          itemSpecificDiscount += (hasItemDiscount.value || 0);
-        } else if (hasItemDiscount.type === 'percent') {
-          const itemDiscountAmount = Math.round(originalPrice * ((hasItemDiscount.value || 0) / 100));
-          itemSpecificDiscount += itemDiscountAmount;
-        }
-      }
-    });
-
-
-    return { globalDiscount, itemSpecificDiscount };
-  };
-
-  const { globalDiscount, itemSpecificDiscount } = calculateDiscountBreakdown();
-
-  // Get pricing with rules applied
-  const basePricing = cart.getPricingWithRules();
-
-  // Calcola il subtotale originale (senza sconti globali)
-  const originalSubtotal = cart.cart.items.reduce((sum, item) => {
-    if (item.price === 0) return sum; // Salta gli omaggi
-    return sum + (item.originalPrice || item.price);
-  }, 0);
-
-  const pricing = {
-    originalSubtotal: originalSubtotal,
-    totalDiscountValue: globalDiscount + itemSpecificDiscount,
-    total: Math.max(0, originalSubtotal - globalDiscount - itemSpecificDiscount)
-  };
+  // Usa esclusivamente il sistema di pricing unificato
+  const pricing = cart.getPricingWithRules();
 
   if (cart.cart.itemCount === 0) return null;
 
@@ -145,44 +78,32 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
 
                 {/* Totale servizi/prodotti senza sconti */}
                 <div className="flex items-center text-sm text-gray-700">
-                  <span>Totale servizi/prodotti: </span>
-                  <span className="font-semibold ml-1">€{pricing.originalSubtotal.toLocaleString('it-IT')}</span>
+                  <span>Subtotale servizi/prodotti: </span>
+                  <span className="font-semibold ml-1">€{pricing.subtotal.toLocaleString('it-IT')}</span>
                 </div>
 
                 {/* Sconti breakdown */}
-                {pricing.totalDiscountValue > 0 && (
+                {pricing.totalSavings > 0 && (
                   <div className="space-y-1">
-                    {globalDiscount > 0 && (
+                    {pricing.detailed?.globalDiscountSavings > 0 && (
                       <div className="flex items-center text-sm bg-green-50 border border-green-200 rounded-lg px-3 py-2 shadow-md">
                         <Globe className="w-4 h-4 mr-2 text-green-600" />
-                        <span className="text-green-800">Sconto globale: </span>
-                        <span className="font-bold ml-1 text-green-700 text-lg">-€{Math.round(globalDiscount).toLocaleString('it-IT')}</span>
-                        {discounts?.global?.endDate && (
-                          <span className="text-xs text-green-600 ml-2 bg-green-100 px-2 py-1 rounded-full">
-                            fino al {(() => {
-                              try {
-                                let endDate: Date;
-                                if (discounts.global.endDate && typeof discounts.global.endDate === 'object' && 'toDate' in discounts.global.endDate) {
-                                  endDate = (discounts.global.endDate as any).toDate();
-                                } else if (discounts.global.endDate instanceof Date) {
-                                  endDate = discounts.global.endDate;
-                                } else {
-                                  endDate = new Date(discounts.global.endDate);
-                                }
-                                return endDate.toLocaleDateString('it-IT');
-                              } catch {
-                                return 'data non valida';
-                              }
-                            })()}
-                          </span>
-                        )}
+                        <span className="text-green-800">Sconto globale (-10%): </span>
+                        <span className="font-bold ml-1 text-green-700 text-lg">-€{pricing.detailed.globalDiscountSavings.toLocaleString('it-IT')}</span>
                       </div>
                     )}
-                    {itemSpecificDiscount > 0 && (
+                    {pricing.detailed?.individualDiscountSavings > 0 && (
                       <div className="flex items-center text-sm bg-green-50 border border-green-200 rounded-lg px-3 py-2 shadow-md">
                         <Tag className="w-4 h-4 mr-2 text-green-600" />
                         <span className="text-green-800">Sconti prodotti/servizi: </span>
-                        <span className="font-bold ml-1 text-green-700 text-lg">-€{Math.round(itemSpecificDiscount).toLocaleString('it-IT')}</span>
+                        <span className="font-bold ml-1 text-green-700 text-lg">-€{pricing.detailed.individualDiscountSavings.toLocaleString('it-IT')}</span>
+                      </div>
+                    )}
+                    {pricing.detailed?.giftSavings > 0 && (
+                      <div className="flex items-center text-sm bg-green-50 border border-green-200 rounded-lg px-3 py-2 shadow-md">
+                        <Tag className="w-4 h-4 mr-2 text-green-600" />
+                        <span className="text-green-800">Servizi in omaggio: </span>
+                        <span className="font-bold ml-1 text-green-700 text-lg">-€{pricing.detailed.giftSavings.toLocaleString('it-IT')}</span>
                       </div>
                     )}
                   </div>
