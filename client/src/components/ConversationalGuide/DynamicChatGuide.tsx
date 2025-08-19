@@ -40,6 +40,8 @@ interface ChatMessage {
 }
 
 export function DynamicChatGuide() {
+  console.log('🚀 DynamicChatGuide component loaded');
+  
   const cart = useCartWithRules();
   const toast = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
