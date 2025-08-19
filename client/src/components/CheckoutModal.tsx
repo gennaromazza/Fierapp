@@ -418,6 +418,9 @@ export default function CheckoutModal({
               <div className="space-y-2 text-sm">
                 {(() => {
                   const p = cartWithRules.getPricingWithRules();
+                  console.log('🔍 CheckoutModal - Pricing data:', p);
+                  console.log('🔍 CheckoutModal - Discount value:', p.discount);
+                  
                   // preferisci le righe "vere" dell'engine; fallback agli item con rule info includendo nascosti
                   const lineItems = (p?.detailed as any)?.items 
                     ?? cartWithRules.getItemsWithRuleInfo() 
