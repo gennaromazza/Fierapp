@@ -1,0 +1,715 @@
+ 🚀 DynamicChatGuide component loaded
+ 📡 Loading selection rules...
+ 🔄 Chat completamente resettata per nuova sessione
+ 🔄 DynamicChatGuide - Loading settings and discounts...
+ 📡 Loading selection rules...
+ 🧹 Cart cleared for new session
+ 🚀 DynamicChatGuide component loaded
+ 🔥 DynamicChatGuide loaded items 9 Array(9)
+ 🔥 Selection Rules loaded: 6 documents
+ 📋 Raw rule data: QOSeSJBGmePBREFdnZ1G Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: ZsLbbssQa5RI6x6udeGI Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: el38igHkHZsRShMV8mDV Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: jUzTD7CHRBucbylXvmCR Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: pdntGOmSMYhmawa0DZQC Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: whyv50pw65dEYINF7zBZ Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ ✅ Processed rules: Array(6)
+ 🔥 Selection Rules loaded: 6 documents
+ 📋 Raw rule data: QOSeSJBGmePBREFdnZ1G Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: ZsLbbssQa5RI6x6udeGI Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: el38igHkHZsRShMV8mDV Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: jUzTD7CHRBucbylXvmCR Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: pdntGOmSMYhmawa0DZQC Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: whyv50pw65dEYINF7zBZ Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ ✅ Processed rules: Array(6)
+ 📊 Loaded discounts: Object
+ ✅ DynamicChatGuide - Discounts loaded successfully
+ 🚀 DynamicChatGuide component loaded
+ ✅ Items are ready: 9
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 🚀 DynamicChatGuide component loaded
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ ✅ DynamicChatGuide - Settings loaded successfully
+ 🚀 DynamicChatGuide component loaded
+ 📡 Loading selection rules...
+ 🔄 CheckoutModal - Fetching settings from Firebase...
+ ✅ CheckoutModal - Settings loaded successfully
+ 🔥 Selection Rules loaded: 6 documents
+ 📋 Raw rule data: QOSeSJBGmePBREFdnZ1G Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: ZsLbbssQa5RI6x6udeGI Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: el38igHkHZsRShMV8mDV Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: jUzTD7CHRBucbylXvmCR Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: pdntGOmSMYhmawa0DZQC Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: whyv50pw65dEYINF7zBZ Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ ✅ Processed rules: Array(6)
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+manifest.webmanifest:1 Manifest: Line: 1, column: 1, Syntax error.
+ 🚀 DynamicChatGuide component loaded
+ 📅 Data evento aggiornata: Object
+ ✅ Data cleaning completed successfully
+ 🔍 === FIREBASE SAVE DEBUG ===
+ 📦 Raw data BEFORE cleaning: Object
+ 🧹 Cleaned data AFTER cleaning: Object
+ 📤 JSON serializzato che verrà salvato: {
+  "sessionId": "session_1755601642692",
+  "eventType": "date_selected",
+  "data": {
+    "eventDate": "2025-08-19",
+    "dateText": "Più avanti",
+    "originalSelection": "later"
+  },
+  "conversationData": {
+    "userName": null,
+    "eventDate": null,
+    "selectedServices": [],
+    "selectedProducts": [],
+    "preferences": [],
+    "sessionId": "session_1755601642692",
+    "startTime": "2025-08-19T11:07:22.692Z",
+    "currentPhase": "welcome",
+    "messagesCount": 0,
+    "cartItemsCount": 0,
+    "totalValue": 0,
+    "totalSavings": 0
+  },
+  "timestamp": {
+    "_methodName": "serverTimestamp"
+  },
+  "createdAt": "2025-08-19T11:07:25.048Z"
+}
+ ✅ Nessun valore problematico trovato, procedo con il salvataggio
+ 🚀 DynamicChatGuide component loaded
+ 💾 Chat history saved successfully: date_selected Object
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 📝 DynamicChatGuide - Nome aggiornato: Object
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 📝 DynamicChatGuide - Cognome aggiornato: Object
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 📝 DynamicChatGuide - Email aggiornata: Object
+ 🚀 DynamicChatGuide component loaded
+ 📡 Loading selection rules...
+ 📡 Loading selection rules...
+ 🔥 Selection Rules loaded: 6 documents
+ 📋 Raw rule data: QOSeSJBGmePBREFdnZ1G Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: ZsLbbssQa5RI6x6udeGI Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: el38igHkHZsRShMV8mDV Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: jUzTD7CHRBucbylXvmCR Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: pdntGOmSMYhmawa0DZQC Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: whyv50pw65dEYINF7zBZ Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ ✅ Processed rules: Array(6)
+ 🔥 Selection Rules loaded: 6 documents
+ 📋 Raw rule data: QOSeSJBGmePBREFdnZ1G Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: ZsLbbssQa5RI6x6udeGI Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: el38igHkHZsRShMV8mDV Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: jUzTD7CHRBucbylXvmCR Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: pdntGOmSMYhmawa0DZQC Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: whyv50pw65dEYINF7zBZ Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ ✅ Processed rules: Array(6)
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 🚀 DynamicChatGuide component loaded
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 📡 Loading selection rules...
+ 🚀 DynamicChatGuide component loaded
+ 🔥 Selection Rules loaded: 6 documents
+ 📋 Raw rule data: QOSeSJBGmePBREFdnZ1G Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: ZsLbbssQa5RI6x6udeGI Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: el38igHkHZsRShMV8mDV Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: jUzTD7CHRBucbylXvmCR Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: pdntGOmSMYhmawa0DZQC Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: whyv50pw65dEYINF7zBZ Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ ✅ Processed rules: Array(6)
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 📝 DynamicChatGuide - Telefono aggiornato: Object
+ 🚀 DynamicChatGuide component loaded
+ 🚀 DynamicChatGuide component loaded
+ 📝 DynamicChatGuide - Data evento aggiornata: Object
+ ✅ Data cleaning completed successfully
+ 🔍 === FIREBASE SAVE DEBUG ===
+ 📦 Raw data BEFORE cleaning: Object
+ 🧹 Cleaned data AFTER cleaning: Object
+ 📤 JSON serializzato che verrà salvato: {
+  "sessionId": "session_1755601642692",
+  "eventType": "phase_started",
+  "data": {
+    "phase": "services",
+    "timestamp": "2025-08-19T11:07:59.050Z"
+  },
+  "conversationData": {
+    "userName": null,
+    "eventDate": "2025-08-19",
+    "selectedServices": [],
+    "selectedProducts": [],
+    "preferences": [],
+    "sessionId": "session_1755601642692",
+    "startTime": "2025-08-19T11:07:22.692Z",
+    "currentPhase": "collect_date",
+    "messagesCount": 13,
+    "cartItemsCount": 0,
+    "totalValue": 0,
+    "totalSavings": 0
+  },
+  "timestamp": {
+    "_methodName": "serverTimestamp"
+  },
+  "createdAt": "2025-08-19T11:07:59.050Z"
+}
+ ✅ Nessun valore problematico trovato, procedo con il salvataggio
+ 🚀 DynamicChatGuide component loaded
+ 💾 Chat history saved successfully: phase_started Object
+ 🚀 DynamicChatGuide component loaded
+ 🔍 Service check - Item: Servizio Fotografico Category: servizio active: true isService: true
+ 🔍 Service check - Item: Videomaker Category: servizio active: true isService: true
+ 🔍 Service check - Item: Album Sposi Big 30x40 Category: prodotto active: true isService: false
+ 🔍 Service check - Item: Album Sposi 25x35 Category: prodotto active: true isService: false
+ 🔍 Service check - Item: VideoProiezione Category: prodotto active: true isService: false
+ 🔍 Service check - Item: Foto per Invitati  Category: prodotto active: true isService: false
+ 🔍 Service check - Item: Foto Invitati Classic Category: prodotto active: true isService: false
+ 🔍 Service check - Item: Riprese Drone Category: prodotto active: true isService: false
+ 🔍 Service check - Item: Album Gentiori Category: prodotto active: true isService: false
+ 🔍 Filtered services: Array(2)
+ 🚀 DynamicChatGuide component loaded
+ ✅ Data cleaning completed successfully
+ 🔍 === FIREBASE SAVE DEBUG ===
+ 📦 Raw data BEFORE cleaning: Object
+ 🧹 Cleaned data AFTER cleaning: Object
+ 📤 JSON serializzato che verrà salvato: {
+  "sessionId": "session_1755601642692",
+  "eventType": "item_added",
+  "data": {
+    "itemId": "bsCHxhOyCn70gtzBAGQQ",
+    "itemTitle": "Servizio Fotografico",
+    "category": "servizio",
+    "price": 600,
+    "isGift": false,
+    "phase": "services",
+    "cartTotal": 0,
+    "cartSavings": 0
+  },
+  "conversationData": {
+    "userName": null,
+    "eventDate": "2025-08-19",
+    "selectedServices": [],
+    "selectedProducts": [],
+    "preferences": [],
+    "sessionId": "session_1755601642692",
+    "startTime": "2025-08-19T11:07:22.692Z",
+    "currentPhase": "services",
+    "messagesCount": 17,
+    "cartItemsCount": 0,
+    "totalValue": 0,
+    "totalSavings": 0
+  },
+  "timestamp": {
+    "_methodName": "serverTimestamp"
+  },
+  "createdAt": "2025-08-19T11:08:01.916Z"
+}
+ ✅ Nessun valore problematico trovato, procedo con il salvataggio
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 🚀 DynamicChatGuide component loaded
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 💾 Chat history saved successfully: item_added Object
+ ✅ Data cleaning completed successfully
+ 🔍 === FIREBASE SAVE DEBUG ===
+ 📦 Raw data BEFORE cleaning: Object
+ 🧹 Cleaned data AFTER cleaning: Object
+ 📤 JSON serializzato che verrà salvato: {
+  "sessionId": "session_1755601642692",
+  "eventType": "phase_started",
+  "data": {
+    "phase": "products",
+    "timestamp": "2025-08-19T11:08:02.939Z",
+    "selectedServicesCount": 1,
+    "selectedServices": [
+      {
+        "id": "bsCHxhOyCn70gtzBAGQQ",
+        "title": "Servizio Fotografico"
+      }
+    ]
+  },
+  "conversationData": {
+    "userName": null,
+    "eventDate": "2025-08-19",
+    "selectedServices": [
+      "bsCHxhOyCn70gtzBAGQQ"
+    ],
+    "selectedProducts": [],
+    "preferences": [],
+    "sessionId": "session_1755601642692",
+    "startTime": "2025-08-19T11:07:22.692Z",
+    "currentPhase": "services",
+    "messagesCount": 17,
+    "cartItemsCount": 1,
+    "totalValue": 630,
+    "totalSavings": 70
+  },
+  "timestamp": {
+    "_methodName": "serverTimestamp"
+  },
+  "createdAt": "2025-08-19T11:08:02.939Z"
+}
+ ✅ Nessun valore problematico trovato, procedo con il salvataggio
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 💾 Chat history saved successfully: phase_started Object
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ ✅ Data cleaning completed successfully
+ 🔍 === FIREBASE SAVE DEBUG ===
+ 📦 Raw data BEFORE cleaning: Object
+ 🧹 Cleaned data AFTER cleaning: Object
+ 📤 JSON serializzato che verrà salvato: {
+  "sessionId": "session_1755601642692",
+  "eventType": "phase_started",
+  "data": {
+    "phase": "summary",
+    "timestamp": "2025-08-19T11:08:06.313Z",
+    "cartTotal": 630,
+    "cartSavings": 70,
+    "itemsCount": 1,
+    "selectedItems": [
+      {
+        "id": "bsCHxhOyCn70gtzBAGQQ",
+        "title": "Servizio Fotografico",
+        "category": "servizio",
+        "price": 600
+      }
+    ],
+    "giftItemsCount": 0,
+    "giftItems": []
+  },
+  "conversationData": {
+    "userName": null,
+    "eventDate": "2025-08-19",
+    "selectedServices": [
+      "bsCHxhOyCn70gtzBAGQQ"
+    ],
+    "selectedProducts": [],
+    "preferences": [],
+    "sessionId": "session_1755601642692",
+    "startTime": "2025-08-19T11:07:22.692Z",
+    "currentPhase": "products",
+    "messagesCount": 19,
+    "cartItemsCount": 1,
+    "totalValue": 630,
+    "totalSavings": 70
+  },
+  "timestamp": {
+    "_methodName": "serverTimestamp"
+  },
+  "createdAt": "2025-08-19T11:08:06.313Z"
+}
+ ✅ Nessun valore problematico trovato, procedo con il salvataggio
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 💾 Chat history saved successfully: phase_started Object
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 🔄 Transitioning to lead phase from summary options
+ ✅ Data cleaning completed successfully
+ 🔍 === FIREBASE SAVE DEBUG ===
+ 📦 Raw data BEFORE cleaning: Object
+ 🧹 Cleaned data AFTER cleaning: Object
+ 📤 JSON serializzato che verrà salvato: {
+  "sessionId": "session_1755601642692",
+  "eventType": "phase_started",
+  "data": {
+    "phase": "lead",
+    "timestamp": "2025-08-19T11:08:09.397Z",
+    "finalCartTotal": 630,
+    "finalCartSavings": 70,
+    "readyForCheckout": true
+  },
+  "conversationData": {
+    "userName": null,
+    "eventDate": "2025-08-19",
+    "selectedServices": [
+      "bsCHxhOyCn70gtzBAGQQ"
+    ],
+    "selectedProducts": [],
+    "preferences": [],
+    "sessionId": "session_1755601642692",
+    "startTime": "2025-08-19T11:07:22.692Z",
+    "currentPhase": "products",
+    "messagesCount": 19,
+    "cartItemsCount": 1,
+    "totalValue": 630,
+    "totalSavings": 70
+  },
+  "timestamp": {
+    "_methodName": "serverTimestamp"
+  },
+  "createdAt": "2025-08-19T11:08:09.397Z"
+}
+ ✅ Nessun valore problematico trovato, procedo con il salvataggio
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 🔄 CheckoutModal - Creating form schema from cached settings
+hook.js:608 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. Error Component Stack
+    at DescriptionWarning (chunk-4NEZVVY5.js:329:29)
+    at chunk-4NEZVVY5.js:233:13
+    at chunk-4NEZVVY5.js:156:58
+    at Presence (/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VCJEE5DL.js?v=03b71304:24:11)
+    at chunk-4NEZVVY5.js:147:64
+    at /fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js?v=03b71304:79:13
+    at /fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js?v=03b71304:56:13
+    at /fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js?v=03b71304:42:13
+    at /fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5VYKCIW7.js?v=03b71304:260:22
+    at Presence (/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VCJEE5DL.js?v=03b71304:24:11)
+    at Provider (/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=03b71304:38:15)
+    at DialogPortal (chunk-4NEZVVY5.js:109:11)
+    at _c3 (/fiera/src/components/ui/dialog.tsx:52:12)
+    at Provider (/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=03b71304:38:15)
+    at Dialog (chunk-4NEZVVY5.js:50:5)
+    at CheckoutModal (/fiera/src/components/CheckoutModal.tsx:54:3)
+    at div (<anonymous>)
+    at DynamicChatGuide (/fiera/src/components/ConversationalGuide/DynamicChatGuide.tsx:40:23)
+    at ConversationalGuide (<anonymous>)
+    at Home (/fiera/src/pages/Home.tsx:34:16)
+    at HomeWithFlags (<anonymous>)
+    at Route (/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=03b71304:323:16)
+    at Switch (/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=03b71304:379:17)
+    at Router (App.tsx:16:18)
+    at Provider (/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=03b71304:38:15)
+    at TooltipProvider (/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=03b71304:62:5)
+    at CartProvider (/fiera/src/hooks/useCart.tsx:20:32)
+    at AuthProvider (/fiera/src/hooks/useAuth.tsx:22:32)
+    at AppContent (App.tsx:39:3)
+    at QueryClientProvider (/fiera/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=03b71304:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 💾 Chat history saved successfully: phase_started Object
+ 🚀 DynamicChatGuide component loaded
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 🔄 Transitioning to lead phase from summary options
+ ✅ Data cleaning completed successfully
+ 🔍 === FIREBASE SAVE DEBUG ===
+ 📦 Raw data BEFORE cleaning: Object
+ 🧹 Cleaned data AFTER cleaning: Object
+ 📤 JSON serializzato che verrà salvato: {
+  "sessionId": "session_1755601642692",
+  "eventType": "phase_started",
+  "data": {
+    "phase": "lead",
+    "timestamp": "2025-08-19T11:08:14.387Z",
+    "finalCartTotal": 630,
+    "finalCartSavings": 70,
+    "readyForCheckout": true
+  },
+  "conversationData": {
+    "userName": null,
+    "eventDate": "2025-08-19",
+    "selectedServices": [
+      "bsCHxhOyCn70gtzBAGQQ"
+    ],
+    "selectedProducts": [],
+    "preferences": [],
+    "sessionId": "session_1755601642692",
+    "startTime": "2025-08-19T11:07:22.692Z",
+    "currentPhase": "products",
+    "messagesCount": 19,
+    "cartItemsCount": 1,
+    "totalValue": 630,
+    "totalSavings": 70
+  },
+  "timestamp": {
+    "_methodName": "serverTimestamp"
+  },
+  "createdAt": "2025-08-19T11:08:14.387Z"
+}
+ ✅ Nessun valore problematico trovato, procedo con il salvataggio
+ 💾 Chat history saved successfully: phase_started Object
+ 📡 Loading selection rules...
+ 📡 Loading selection rules...
+ 📡 Loading selection rules...
+ 🔥 Selection Rules loaded: 6 documents
+ 📋 Raw rule data: QOSeSJBGmePBREFdnZ1G Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: ZsLbbssQa5RI6x6udeGI Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: el38igHkHZsRShMV8mDV Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: jUzTD7CHRBucbylXvmCR Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: pdntGOmSMYhmawa0DZQC Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: whyv50pw65dEYINF7zBZ Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ ✅ Processed rules: Array(6)
+ 🔥 Selection Rules loaded: 6 documents
+ 📋 Raw rule data: QOSeSJBGmePBREFdnZ1G Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: ZsLbbssQa5RI6x6udeGI Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: el38igHkHZsRShMV8mDV Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: jUzTD7CHRBucbylXvmCR Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: pdntGOmSMYhmawa0DZQC Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: whyv50pw65dEYINF7zBZ Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ ✅ Processed rules: Array(6)
+ 🔥 Selection Rules loaded: 6 documents
+ 📋 Raw rule data: QOSeSJBGmePBREFdnZ1G Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: ZsLbbssQa5RI6x6udeGI Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: el38igHkHZsRShMV8mDV Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: jUzTD7CHRBucbylXvmCR Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: pdntGOmSMYhmawa0DZQC Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ 📋 Raw rule data: whyv50pw65dEYINF7zBZ Object
+ 🔄 Converting admin rule: Object
+ ✅ Rule already in engine format
+ ✅ Processed rules: Array(6)
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 🚀 DynamicChatGuide component loaded
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto invitati Gratis": condition=false
+ 📊 Required Items Check: Object
+ 🎁 Gift rule "Foto Invitati Classic Regalo": condition=false
+ 🔍 CheckoutModal - Pricing data: Object
+ 🔍 CheckoutModal - Discount value: 70
+ 🚀 DynamicChatGuide component loaded
