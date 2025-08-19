@@ -417,34 +417,21 @@ export default function CheckoutModal({
               </h4>
               <div className="space-y-2 text-sm">
                 {(() => {
+                  // Usa il sistema unificato come la chat
                   const p = cartWithRules.getPricingWithRules();
-                  
-                  // preferisci le righe "vere" dell'engine; fallback agli item con rule info includendo nascosti
-                  const lineItems = (p?.detailed as any)?.items 
-                    ?? cartWithRules.getItemsWithRuleInfo() 
-                    ?? cartWithRules.cart.items;
-
-                  const toNum = (n: unknown) => {
-                    if (typeof n === "number") return Number.isFinite(n) ? n : 0;
-                    if (typeof n === "string") {
-                      const parsed = Number(n);
-                      return Number.isFinite(parsed) ? parsed : 0;
-                    }
-                    return 0;
-                  };
-                  const formatEUR = (n: unknown) => toNum(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  const itemsWithRules = cartWithRules.getItemsWithRuleInfo();
 
                   return (
                     <>
-                      {/* Lista righe coerente con il totale */}
-                      {lineItems.map((it: any, idx: number) => {
-                        const title = it.title ?? "Voce";
-                        const orig = toNum(it.originalPrice ?? it.original ?? it.basePrice);
-                        const final = toNum(it.price ?? it.finalPrice);
-                        const isGift = !!(it.isGift ?? it.gift);
+                      {/* Lista item con prezzi corretti dal sistema unificato */}
+                      {itemsWithRules.map((item: any) => {
+                        const title = item.title || "Voce";
+                        const originalPrice = item.originalPrice || item.price;
+                        const finalPrice = item.isGift ? 0 : item.price;
+                        const isGift = item.isGift;
 
                         return (
-                          <div key={idx} className="flex justify-between text-sm">
+                          <div key={item.id} className="flex justify-between text-sm">
                             <span>
                               {title}
                               {isGift && <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>}
@@ -452,16 +439,16 @@ export default function CheckoutModal({
                             <span>
                               {isGift ? (
                                 <>
-                                  {orig > 0 && <span className="line-through text-gray-400 mr-2">€{formatEUR(orig)}</span>}
+                                  {originalPrice > 0 && <span className="line-through text-gray-400 mr-2">€{formatEUR(originalPrice)}</span>}
                                   <span className="text-green-600 font-bold">GRATIS</span>
                                 </>
-                              ) : orig > final ? (
+                              ) : originalPrice > finalPrice ? (
                                 <>
-                                  <span className="line-through text-gray-400 mr-2">€{formatEUR(orig)}</span>
-                                  <span className="text-green-600 font-semibold">€{formatEUR(final)}</span>
+                                  <span className="line-through text-gray-400 mr-2">€{formatEUR(originalPrice)}</span>
+                                  <span className="text-green-600 font-semibold">€{formatEUR(finalPrice)}</span>
                                 </>
                               ) : (
-                                <>€{formatEUR(final)}</>
+                                <>€{formatEUR(finalPrice)}</>
                               )}
                             </span>
                           </div>
@@ -470,7 +457,7 @@ export default function CheckoutModal({
 
                       <hr className="border-brand-secondary" />
 
-                      {/* Totali presi dallo stesso oggetto dell'engine */}
+                      {/* Totali dal sistema unificato */}
                       <div className="flex justify-between text-sm text-gray-600">
                         <span>Subtotale servizi/prodotti:</span>
                         <span>€{formatEUR(p.originalSubtotal)}</span>
