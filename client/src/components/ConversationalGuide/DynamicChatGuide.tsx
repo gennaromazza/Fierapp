@@ -1846,32 +1846,24 @@ export function DynamicChatGuide() {
       const studioText = settings?.studioName ? ` da ${settings.studioName}` : '';
       let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
 
-      // Calcola il totale corretto usando il pricing unificato
-      const actualTotal = cart.cart.items.reduce((sum, item) => {
-        const isGift = cart.isItemGift(item.id);
-        const originalPrice = item.originalPrice || item.price;
-        const discountInfo = discounts ? 
-          getItemDiscountInfo(originalPrice, item.id, discounts) : 
-          { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
-        const finalPrice = isGift ? 0 : discountInfo.finalPrice;
-        return sum + finalPrice;
-      }, 0);
+      // Usa lo stesso calcolo del totale della chat per coerenza
+      const actualTotal = Math.max(0, savingsInfo.originalSubtotal - savingsInfo.discount - savingsInfo.giftSavings);
 
       if (savingsInfo.discount > 0 || savingsInfo.giftSavings > 0) {
-        summaryText += `💰 Prezzo originale: €${Math.round(savingsInfo.originalSubtotal)}\n`;
+        summaryText += `💰 Prezzo originale: €${savingsInfo.originalSubtotal.toLocaleString('it-IT')}\n`;
 
         if (savingsInfo.discount > 0) {
-          summaryText += `💸 Sconto applicato: -€${Math.round(savingsInfo.discount)}\n`;
+          summaryText += `💸 Sconto globale: -€${savingsInfo.discount.toLocaleString('it-IT')}\n`;
         }
 
         if (savingsInfo.giftSavings > 0) {
-          summaryText += `🎁 Risparmi con regali: €${Math.round(savingsInfo.giftSavings)}\n`;
+          summaryText += `🎁 Servizi gratuiti: -€${savingsInfo.giftSavings.toLocaleString('it-IT')}\n`;
         }
 
-        summaryText += `💰 Totale finale: €${Math.round(actualTotal)}\n`;
-        summaryText += `✨ RISPARMI TOTALI: €${Math.round(savingsInfo.originalSubtotal - actualTotal)} 💫\n`;
+        summaryText += `💰 Totale finale: €${actualTotal.toLocaleString('it-IT')}\n`;
+        summaryText += `✨ RISPARMI TOTALI: €${(savingsInfo.discount + savingsInfo.giftSavings).toLocaleString('it-IT')} 💫\n`;
       } else {
-        summaryText += `💰 Totale: €${Math.round(actualTotal)}\n`;
+        summaryText += `💰 Totale: €${actualTotal.toLocaleString('it-IT')}\n`;
       }
 
       if (giftItems.length > 0) {
