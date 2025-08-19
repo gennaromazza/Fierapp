@@ -291,16 +291,20 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       // Use centralized save function
       const leadId = await saveLead({
         customer: leadDataToCustomer(formData),
-        selectedItems: cart.getItemsWithRuleInfo().map(item => ({
-          id: item.id || '',
-          title: item.title || '',
-          price: Number(item.isGift ? 0 : item.price) || 0,
-          originalPrice: Number(item.originalPrice || item.price) || 0
-        })),
+        selectedItems: cart.getItemsWithRuleInfo().map(item => {
+          // Trova l'item originale nel database per ottenere i prezzi corretti
+          const dbItem = cart.items.find(dbItem => dbItem.id === item.id);
+          return {
+            id: item.id || '',
+            title: item.title || '',
+            price: Number(item.isGift ? 0 : item.price) || 0, // Prezzo finale (con sconti applicati)
+            originalPrice: Number(dbItem?.originalPrice || dbItem?.price || 0) // Prezzo originale dal database
+          };
+        }),
         pricing: {
-          subtotal: Number(leadPricing.subtotal) || 0,  // Subtotal solo servizi a pagamento
+          subtotal: Number(leadPricing.detailed?.subtotal) || 0,  // CORRETTO: Usa subtotal dopo sconti individuali
           discount: Number(leadPricing.discount) || 0,
-          total: Number(leadPricing.total) || 0,
+          total: Number(leadPricing.detailed?.finalTotal) || 0,   // CORRETTO: Usa total finale dopo tutti gli sconti
           giftSavings: Number(leadPricing.giftSavings) || 0,
           totalSavings: Number(leadPricing.totalSavings) || 0,
           // Includi la struttura detailed per admin e WhatsApp
@@ -652,7 +656,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         <div className="space-y-3 pt-4">
           <Button
             onClick={handleDownloadPDF}
-            disabled={!isFormValid() || isSubmitting}
+            disabled={!isFormValid || isSubmitting}
             className="w-full"
             variant="outline"
           >
@@ -662,7 +666,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
 
           <Button
             onClick={handleSendRequest}
-            disabled={!isFormValid() || isSubmitting}
+            disabled={!isFormValid || isSubmitting}
             className="w-full"
           >
             <MessageCircle className="mr-2 h-4 w-4" />
