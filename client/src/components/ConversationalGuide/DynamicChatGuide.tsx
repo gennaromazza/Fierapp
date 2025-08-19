@@ -1480,7 +1480,7 @@ export function DynamicChatGuide() {
                       <div className="flex justify-between font-bold">
                         <span>Totale:</span>
                         <span className="text-green-600">
-                          €{cartSavingsInfo.finalTotal}
+                          €{Math.round(cartSavingsInfo.finalTotal)}
                         </span>
                       </div>
                     </div>
@@ -1849,27 +1849,27 @@ export function DynamicChatGuide() {
       let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
 
       if (savingsInfo.totalDiscountSavings > 0 || savingsInfo.giftSavings > 0) {
-        summaryText += `💰 Prezzo originale: €${savingsInfo.originalSubtotal}\n`;
+        summaryText += `💰 Prezzo originale: €${Math.round(savingsInfo.originalSubtotal)}\n`;
 
         if (savingsInfo.globalDiscountSavings > 0) {
           const globalDiscount = discounts?.global;
           const discountText = globalDiscount?.type === 'percent' ? 
             `${globalDiscount.value}%` : `€${globalDiscount?.value}`;
-          summaryText += `💸 Sconto globale (${discountText}): -€${savingsInfo.globalDiscountSavings}\n`;
+          summaryText += `💸 Sconto globale (${discountText}): -€${Math.round(savingsInfo.globalDiscountSavings)}\n`;
         }
 
         if (savingsInfo.individualDiscountSavings > 0) {
-          summaryText += `🎯 Sconti speciali prodotti: -€${savingsInfo.individualDiscountSavings}\n`;
+          summaryText += `🎯 Sconti speciali prodotti: -€${Math.round(savingsInfo.individualDiscountSavings)}\n`;
         }
 
         if (savingsInfo.giftSavings > 0) {
-          summaryText += `🎁 Risparmi con regali: €${savingsInfo.giftSavings}\n`;
+          summaryText += `🎁 Risparmi con regali: €${Math.round(savingsInfo.giftSavings)}\n`;
         }
 
-        summaryText += `💰 Totale finale: €${savingsInfo.finalTotal}\n`;
-        summaryText += `✨ RISPARMI TOTALI: €${savingsInfo.totalSavings} 💫\n`;
+        summaryText += `💰 Totale finale: €${Math.round(savingsInfo.finalTotal)}\n`;
+        summaryText += `✨ RISPARMI TOTALI: €${Math.round(savingsInfo.totalSavings)} 💫\n`;
       } else {
-        summaryText += `💰 Totale: €${savingsInfo.finalTotal}\n`;
+        summaryText += `💰 Totale: €${Math.round(savingsInfo.finalTotal)}\n`;
       }
 
       if (giftItems.length > 0) {
