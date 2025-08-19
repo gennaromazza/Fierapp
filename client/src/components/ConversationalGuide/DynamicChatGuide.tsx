@@ -79,70 +79,145 @@ export function DynamicChatGuide() {
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Utility function to remove undefined values recursively
-  function removeUndefinedDeep(obj: any): any {
-    if (obj === null || obj === undefined) {
-      return null;
+  // Utility function to remove invalid values recursively
+  function removeUndefinedDeep(obj: any, removeNull: boolean = false): any {
+    // Gestione valori primitivi invalidi
+    if (obj === undefined) return null;
+    if (removeNull && obj === null) return null;
+    if (Number.isNaN(obj)) return null;
+    if (obj === Infinity || obj === -Infinity) return null;
+    
+    // Mantieni Date e serverTimestamp intatti
+    if (obj instanceof Date) {
+      return isNaN(obj.getTime()) ? null : obj;
     }
     
+    // Mantieni serverTimestamp di Firebase
+    if (obj && typeof obj === 'object' && obj.constructor?.name === 'ServerTimestampFieldValueImpl') {
+      return obj;
+    }
+    
+    // Array
     if (Array.isArray(obj)) {
       return obj
-        .filter(item => item !== undefined)
-        .map(item => removeUndefinedDeep(item));
+        .map(item => removeUndefinedDeep(item, removeNull))
+        .filter(item => {
+          if (removeNull) return item !== null && item !== undefined;
+          return item !== undefined;
+        });
     }
     
-    if (typeof obj === 'object') {
-      return Object.entries(obj)
-        .filter(([_, value]) => value !== undefined)
-        .reduce((acc, [key, value]) => {
-          acc[key] = removeUndefinedDeep(value);
-          return acc;
-        }, {} as any);
+    // Oggetti
+    if (typeof obj === 'object' && obj !== null) {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        const cleanedValue = removeUndefinedDeep(value, removeNull);
+        if (cleanedValue !== undefined) {
+          if (!removeNull || cleanedValue !== null) {
+            cleaned[key] = cleanedValue;
+          }
+        }
+      }
+      return cleaned;
     }
     
+    // Valori primitivi validi
     return obj;
   }
 
   // Salva dati conversazione su Firebase
   const saveChatHistory = async (eventType: string, data: any = {}) => {
     try {
+      const pricing = cart.getPricingWithRules();
+      
       const rawData = {
-        sessionId: conversationData.sessionId,
-        eventType,
-        data,
+        sessionId: conversationData.sessionId || `session_${Date.now()}`,
+        eventType: eventType || 'unknown',
+        data: data || {},
         conversationData: {
-          ...conversationData,
-          currentPhase,
-          messagesCount: messages.length,
-          cartItemsCount: cart.cart.items.length,
-          totalValue: cart.getPricingWithRules().total,
-          totalSavings: cart.getPricingWithRules().totalSavings
+          userName: conversationData.userName || null,
+          eventDate: conversationData.eventDate || null,
+          selectedServices: conversationData.selectedServices || [],
+          selectedProducts: conversationData.selectedProducts || [],
+          preferences: conversationData.preferences || [],
+          sessionId: conversationData.sessionId || `session_${Date.now()}`,
+          startTime: conversationData.startTime || new Date(),
+          currentPhase: currentPhase || 'unknown',
+          messagesCount: messages?.length || 0,
+          cartItemsCount: cart?.cart?.items?.length || 0,
+          totalValue: pricing?.total || 0,
+          totalSavings: pricing?.totalSavings || 0
         },
         timestamp: serverTimestamp(),
-        createdAt: new Date()
+        createdAt: new Date().toISOString()
       };
 
-      const cleanedData = removeUndefinedDeep(rawData);
+      // Prima pulizia: rimuovi undefined, NaN, Infinity
+      const cleanedData = removeUndefinedDeep(rawData, false);
 
-      // Log dettagliato del JSON che sto per salvare
-      const jsonString = JSON.stringify(cleanedData, null, 2);
-      console.log('📤 JSON completo da salvare su Firebase:', jsonString);
-
-      // Controllo per valori undefined rimasti
-      if (jsonString.includes('undefined')) {
-        console.error('⚠️ ATTENZIONE: Trovati valori "undefined" nel JSON che sto per salvare!');
-        console.error('🔍 Posizioni con undefined:', jsonString.split('\n').map((line, index) => 
-          line.includes('undefined') ? `Riga ${index + 1}: ${line.trim()}` : null
-        ).filter(Boolean));
+      // Log dettagliato PRIMA di salvare
+      console.log('🔍 === FIREBASE SAVE DEBUG ===');
+      console.log('📦 Raw data BEFORE cleaning:', rawData);
+      console.log('🧹 Cleaned data AFTER cleaning:', cleanedData);
+      
+      // Serializza per verificare cosa verrà effettivamente salvato
+      const jsonString = JSON.stringify(cleanedData, (key, value) => {
+        if (value === undefined) return '[UNDEFINED]';
+        if (Number.isNaN(value)) return '[NaN]';
+        if (value === Infinity) return '[Infinity]';
+        if (value === -Infinity) return '[-Infinity]';
+        if (value && typeof value === 'object' && value.constructor?.name === 'ServerTimestampFieldValueImpl') {
+          return '[ServerTimestamp]';
+        }
+        return value;
+      }, 2);
+      
+      console.log('📤 JSON serializzato che verrà salvato:', jsonString);
+      
+      // Controllo finale per valori problematici
+      const problematicValues = ['[UNDEFINED]', '[NaN]', '[Infinity]', '[-Infinity]'];
+      const hasProblems = problematicValues.some(val => jsonString.includes(val));
+      
+      if (hasProblems) {
+        console.error('❌ ERRORE: Trovati valori non validi nel JSON!');
+        problematicValues.forEach(val => {
+          if (jsonString.includes(val)) {
+            const lines = jsonString.split('\n');
+            lines.forEach((line, index) => {
+              if (line.includes(val)) {
+                console.error(`   Riga ${index + 1}: ${line.trim()}`);
+              }
+            });
+          }
+        });
+        
+        // Prova una seconda pulizia più aggressiva
+        console.log('🔄 Tentativo di pulizia aggressiva...');
+        const deepCleanedData = JSON.parse(JSON.stringify(cleanedData, (key, value) => {
+          if (value === undefined || Number.isNaN(value) || value === Infinity || value === -Infinity) {
+            return null;
+          }
+          return value;
+        }));
+        
+        // Ripristina serverTimestamp dopo la serializzazione
+        deepCleanedData.timestamp = serverTimestamp();
+        
+        console.log('✨ Dati dopo pulizia aggressiva:', deepCleanedData);
+        await addDoc(collection(db, 'chat_history'), deepCleanedData);
       } else {
-        console.log('✅ Nessun valore undefined trovato nel JSON');
+        console.log('✅ Nessun valore problematico trovato, procedo con il salvataggio');
+        await addDoc(collection(db, 'chat_history'), cleanedData);
       }
 
-      await addDoc(collection(db, 'chat_history'), cleanedData);
-
-      console.log(`💾 Chat history saved: ${eventType}`, data);
+      console.log(`💾 Chat history saved successfully: ${eventType}`, data);
     } catch (error) {
-      console.error('Error saving chat history:', error);
+      console.error('❌ Error saving chat history:', error);
+      console.error('📊 Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
     }
   };
 
