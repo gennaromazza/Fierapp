@@ -2001,6 +2001,14 @@ export function DynamicChatGuide() {
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
+        leadData={{
+          name: leadData.name || '',
+          surname: leadData.surname || '',
+          email: leadData.email || '',
+          phone: leadData.phone || '',
+          eventDate: leadData.eventDate || '',
+          notes: leadData.notes || ''
+        }}
       />
 
       {/* Toast Notifications */}

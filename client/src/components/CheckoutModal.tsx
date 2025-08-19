@@ -26,6 +26,14 @@ declare global {
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  leadData?: {
+    name?: string;
+    surname?: string;
+    email?: string;
+    phone?: string;
+    eventDate?: string;
+    notes?: string;
+  };
 }
 
 // Utility function to remove undefined values recursively
@@ -52,7 +60,7 @@ function removeUndefinedDeep(obj: any): any {
   return obj;
 }
 
-export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
+export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutModalProps) {
   const cartWithRules = useCartWithRules();
   const { toast } = useToast();
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -71,6 +79,8 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   useEffect(() => {
     async function loadSettings() {
       try {
+        console.log('🔄 CheckoutModal - Received leadData:', leadData);
+        
         const settingsDoc = await getDoc(doc(db, "settings", "app"));
         if (settingsDoc.exists()) {
           const settingsData = settingsDoc.data() as Settings;
@@ -100,11 +110,28 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             
             if (field.required) {
               fieldSchema = fieldSchema.min(1, `${field.label} richiesto`);
-              defaults[fieldName] = "";
-            } else {
-              defaults[fieldName] = "";
             }
             
+            // Precompile with leadData if available
+            let defaultValue = "";
+            if (leadData) {
+              // Map common field names to leadData properties
+              if (fieldName.includes('nome') || fieldName.includes('name')) {
+                defaultValue = leadData.name || "";
+              } else if (fieldName.includes('cognome') || fieldName.includes('surname')) {
+                defaultValue = leadData.surname || "";
+              } else if (fieldName.includes('email') || fieldName.includes('mail')) {
+                defaultValue = leadData.email || "";
+              } else if (fieldName.includes('telefono') || fieldName.includes('phone')) {
+                defaultValue = leadData.phone || "";
+              } else if (fieldName.includes('data') || fieldName.includes('date')) {
+                defaultValue = leadData.eventDate || "";
+              } else if (fieldName.includes('note')) {
+                defaultValue = leadData.notes || "";
+              }
+            }
+            
+            defaults[fieldName] = defaultValue;
             schemaFields[fieldName] = fieldSchema;
           });
           
