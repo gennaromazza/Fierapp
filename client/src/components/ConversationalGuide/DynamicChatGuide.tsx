@@ -79,34 +79,50 @@ export function DynamicChatGuide() {
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Utility function to remove undefined values
-  function removeUndefined(obj: any): any {
-    return Object.entries(obj)
-      .filter(([_, value]) => value !== undefined)
-      .reduce((acc, [key, value]) => {
-        acc[key] = value;
-        return acc;
-      }, {} as any);
+  // Utility function to remove undefined values recursively
+  function removeUndefinedDeep(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return null;
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj
+        .filter(item => item !== undefined)
+        .map(item => removeUndefinedDeep(item));
+    }
+    
+    if (typeof obj === 'object') {
+      return Object.entries(obj)
+        .filter(([_, value]) => value !== undefined)
+        .reduce((acc, [key, value]) => {
+          acc[key] = removeUndefinedDeep(value);
+          return acc;
+        }, {} as any);
+    }
+    
+    return obj;
   }
 
   // Salva dati conversazione su Firebase
   const saveChatHistory = async (eventType: string, data: any = {}) => {
     try {
-      const cleanedData = removeUndefined({
+      const rawData = {
         sessionId: conversationData.sessionId,
         eventType,
         data,
-        conversationData: removeUndefined({
+        conversationData: {
           ...conversationData,
           currentPhase,
           messagesCount: messages.length,
           cartItemsCount: cart.cart.items.length,
           totalValue: cart.getPricingWithRules().total,
           totalSavings: cart.getPricingWithRules().totalSavings
-        }),
+        },
         timestamp: serverTimestamp(),
         createdAt: new Date()
-      });
+      };
+
+      const cleanedData = removeUndefinedDeep(rawData);
 
       console.log('📤 Saving chat history:', cleanedData);
       await addDoc(collection(db, 'chat_history'), cleanedData);
