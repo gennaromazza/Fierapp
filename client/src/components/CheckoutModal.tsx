@@ -5,7 +5,11 @@ import { db, analytics } from "../firebase";
 import { logEvent } from "firebase/analytics";
 import { Settings } from "@shared/schema";
 import { saveLead } from "../lib/leadSaver";
-import { labelToFieldName, mapLeadDataToFormField, formatFieldForDisplay } from "../lib/fieldMappingHelper";
+import {
+  labelToFieldName,
+  mapLeadDataToFormField,
+  formatFieldForDisplay,
+} from "../lib/fieldMappingHelper";
 import { useCartWithRules } from "../hooks/useCartWithRules";
 import { generateWhatsAppLink } from "../lib/whatsapp";
 import { generateClientQuotePDF } from "../lib/pdf";
@@ -14,7 +18,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 // Add global type for reCAPTCHA
@@ -39,24 +49,27 @@ interface CheckoutModalProps {
   };
 }
 
-// Utility function moved to centralized leadSaver.ts
+// ===== Helpers di formattazione sicura =====
+const toNum = (n: unknown) => {
+  const v = typeof n === "string" ? Number(n) : (n as number);
+  return Number.isFinite(v) ? (v as number) : 0;
+};
+const formatEUR = (n: unknown) =>
+  toNum(n).toLocaleString("it-IT", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
-const formatEUR = (n?: number) =>
-  (Number.isFinite(n as number) ? (n as number) : 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutModalProps) {
+export default function CheckoutModal({
+  isOpen,
+  onClose,
+  leadData,
+}: CheckoutModalProps) {
   const cartWithRules = useCartWithRules();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [allowEmptyCart, setAllowEmptyCart] = useState(false);
-
-  const pricing = cartWithRules.getPricingWithRules?.() ?? {
-    originalSubtotal: 0,
-    discount: 0,
-    giftSavings: 0,
-    total: 0,
-  };
 
   // Reset allowEmptyCart when modal opens with items
   useEffect(() => {
@@ -66,19 +79,23 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
   }, [isOpen, cartWithRules.cart.itemCount]);
 
   // Use React Query for cached settings loading
-  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
-    queryKey: ['settings', 'app'],
+  const {
+    data: settings,
+    isLoading: settingsLoading,
+    error: settingsError,
+  } = useQuery({
+    queryKey: ["settings", "app"],
     queryFn: async () => {
-      console.log('🔄 CheckoutModal - Fetching settings from Firebase...');
-      const settingsDoc = await getDoc(doc(db, 'settings', 'app'));
+      console.log("🔄 CheckoutModal - Fetching settings from Firebase...");
+      const settingsDoc = await getDoc(doc(db, "settings", "app"));
 
       if (!settingsDoc.exists()) {
-        console.warn('⚠️ Settings document does not exist');
+        console.warn("⚠️ Settings document does not exist");
         return null;
       }
 
       const data = settingsDoc.data();
-      console.log('✅ CheckoutModal - Settings loaded successfully');
+      console.log("✅ CheckoutModal - Settings loaded successfully");
       return data as Settings;
     },
     staleTime: 30000, // Cache for 30 seconds
@@ -98,13 +115,13 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
   useEffect(() => {
     if (!isOpen || !settings) return;
 
-    console.log('🔄 CheckoutModal - Creating form schema from cached settings');
+    console.log("🔄 CheckoutModal - Creating form schema from cached settings");
 
     // Create dynamic form schema and defaults
     const schemaFields: Record<string, any> = {};
     const defaults: Record<string, any> = {};
 
-    settings.formFields.forEach(field => {
+    (settings.formFields ?? []).forEach((field) => {
       const fieldName = labelToFieldName(field.label);
       let fieldSchema: any;
 
@@ -127,15 +144,17 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       }
 
       // Use centralized mapping for leadData precompilation
-      const defaultValue = leadData ? mapLeadDataToFormField(leadData, fieldName) : "";
+      const defaultValue = leadData
+        ? mapLeadDataToFormField(leadData, fieldName)
+        : "";
 
       defaults[fieldName] = defaultValue;
       schemaFields[fieldName] = fieldSchema;
     });
 
     // Add GDPR consent
-    schemaFields.gdpr_consent = z.boolean().refine(val => val === true, {
-      message: "Devi accettare il trattamento dei dati personali"
+    schemaFields.gdpr_consent = z.boolean().refine((val) => val === true, {
+      message: "Devi accettare il trattamento dei dati personali",
     });
     defaults.gdpr_consent = false;
 
@@ -147,8 +166,6 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
     form.reset(defaults);
   }, [isOpen, settings, leadData, form]);
 
-
-
   const onSubmit = async (data: any) => {
     if (!settings) return;
 
@@ -159,7 +176,10 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       let recaptchaToken = null;
       if (settings.reCAPTCHASiteKey && window.grecaptcha) {
         try {
-          recaptchaToken = await window.grecaptcha.execute(settings.reCAPTCHASiteKey, { action: 'submit' });
+          recaptchaToken = await window.grecaptcha.execute(
+            settings.reCAPTCHASiteKey,
+            { action: "submit" },
+          );
         } catch (error) {
           console.error("reCAPTCHA error:", error);
         }
@@ -168,85 +188,101 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       // Use centralized save function
       const leadId = await saveLead({
         customer: data,
-        selectedItems: cartWithRules.cart.items.map(item => ({
+        selectedItems: cartWithRules.cart.items.map((item) => ({
           id: item.id,
           title: item.title,
-          price: item.price,
-          originalPrice: item.originalPrice
+          price: toNum(item.price),
+          originalPrice: toNum(item.originalPrice),
         })),
-        pricing: pricing,
+        pricing: cartWithRules.getPricingWithRules(),
         gdprConsent: {
           accepted: data.gdpr_consent || false,
           text: settings.gdprText,
-          timestamp: new Date()
+          timestamp: new Date(),
         },
         reCAPTCHAToken: recaptchaToken || undefined,
-        status: "new"
+        status: "new",
       });
 
-      // Use unified pricing for analytics
-      // Analytics
+      // Pricing unificato per analytics e messaggi
+      const p = cartWithRules.getPricingWithRules();
+
+      // Analytics - submit
       if (analytics) {
-        logEvent(analytics, 'form_submit', {
-          form_id: 'checkout_form',
+        logEvent(analytics, "form_submit", {
+          form_id: "checkout_form",
           lead_id: leadId,
-          total_value: pricing.total
+          total_value: toNum(p.total),
         });
       }
 
-      // Create detailed WhatsApp message with form data
+      // WhatsApp message
       if (settings.whatsappNumber) {
-        const items = cartWithRules.getItemsWithRuleInfo ? cartWithRules.getItemsWithRuleInfo() : cartWithRules.cart.items ?? [];
-        const itemsList = items.map(it => {
-          const priceNum = (it as any).finalPrice ?? (it as any).price ?? 0;
-          const priceText = (it as any).isGift ? 'GRATIS' : `€${formatEUR(priceNum)}`;
-          const title = (it as any).title ?? 'Voce';
-          return `• ${title} - ${priceText}`;
-        }).join('\n');
+        const items = cartWithRules.getItemsWithRuleInfo();
+        const itemsList = items
+          .map((it) => {
+            const title = it.title ?? "Voce";
+            const priceNum = toNum((it as any).price);
+            const originalNum = toNum((it as any).originalPrice);
+            const priceText = it.isGift ? "GRATIS" : `€${formatEUR(priceNum)}`;
+            // Se scontato e non omaggio, mostra barrato
+            if (!it.isGift && originalNum > priceNum) {
+              return `• ${title} - ~€${formatEUR(originalNum)}~  €${formatEUR(priceNum)}`;
+            }
+            // Se omaggio e ho un originale, mostra barrato + GRATIS
+            if (it.isGift && originalNum > 0) {
+              return `• ${title} - ~€${formatEUR(originalNum)}~  GRATIS`;
+            }
+            return `• ${title} - ${priceText}`;
+          })
+          .join("\n");
 
         // Format form data for WhatsApp using centralized helper
         const formDataText = Object.entries(data)
-          .filter(([key, value]) => key !== 'gdpr_consent' && value)
+          .filter(([key, value]) => key !== "gdpr_consent" && value)
           .map(([key, value]) => {
-            const field = settings.formFields.find(field => 
-              labelToFieldName(field.label) === key
+            const field = (settings.formFields ?? []).find(
+              (f) => labelToFieldName(f.label) === key,
             );
             return formatFieldForDisplay(key, value, field?.label);
           })
           .filter(Boolean)
-          .join('\n');
+          .join("\n");
 
-        // Riepilogo per WhatsApp
-        const lines: string[] = [
-          `Subtotale: €${formatEUR(pricing.originalSubtotal)}`
+        const lines = [
+          `Subtotale: €${formatEUR(p.originalSubtotal)}`,
+          ...(toNum(p.discount) > 0
+            ? [`Sconti: -€${formatEUR(p.discount)}`]
+            : []),
+          ...(toNum(p.giftSavings) > 0
+            ? [`Servizi gratuiti: -€${formatEUR(p.giftSavings)}`]
+            : []),
+          `Totale: €${formatEUR(p.total)}`,
         ];
-        if (pricing.discount > 0) {
-          lines.push(`Sconti: -€${formatEUR(pricing.discount)}`);
-        }
-        if (pricing.giftSavings > 0) {
-          lines.push(`Servizi gratuiti: -€${formatEUR(pricing.giftSavings)}`);
-        }
-        lines.push(`Totale: €${formatEUR(pricing.total)}`);
-        const totalText = lines.join('\n');
+        const totalText = lines.join("\n");
 
-        const message = `🎬 PREVENTIVO MATRIMONIO\n\n📋 SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Grazie per averci scelto!`;
+        const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${leadId}`;
 
-        const whatsappUrl = generateWhatsAppLink(settings.whatsappNumber, message);
-        window.open(whatsappUrl, '_blank');
+        const whatsappUrl = generateWhatsAppLink(
+          settings.whatsappNumber,
+          message,
+        );
+        window.open(whatsappUrl, "_blank");
 
-        // Analytics for WhatsApp  
+        // Analytics for WhatsApp
         if (analytics) {
-          logEvent(analytics, 'whatsapp_contact', {
+          logEvent(analytics, "whatsapp_contact", {
             items: cartWithRules.cart.items.length,
-            total_value: pricing.total,
-            lead_id: leadId
+            total_value: toNum(p.total),
+            lead_id: leadId,
           });
         }
       }
 
       toast({
         title: "Richiesta inviata con successo!",
-        description: "I tuoi dati sono stati salvati e si è aperta la conversazione WhatsApp. Ti contatteremo al più presto!",
+        description:
+          "I tuoi dati sono stati salvati e si è aperta la conversazione WhatsApp. Ti contatteremo al più presto!",
       });
 
       // Allow modal to stay open with empty cart momentarily for confirmation
@@ -262,7 +298,8 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       console.error("Error submitting form:", error);
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante l'invio. Riprova più tardi.",
+        description:
+          "Si è verificato un errore durante l'invio. Riprova più tardi.",
         variant: "destructive",
       });
     } finally {
@@ -277,7 +314,8 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
     if (cartWithRules.cart.itemCount === 0) {
       toast({
         title: "Carrello vuoto",
-        description: "Aggiungi almeno un servizio per generare il preventivo PDF",
+        description:
+          "Aggiungi almeno un servizio per generare il preventivo PDF",
         variant: "destructive",
       });
       return;
@@ -290,16 +328,20 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       // Prepare data structure similar to lead data
       const pdfData = {
         customer: formData,
-        selectedItems: cartWithRules.cart.items.map(item => ({
+        selectedItems: cartWithRules.cart.items.map((item) => ({
           id: item.id,
           title: item.title,
-          price: item.price,
-          originalPrice: item.originalPrice
+          price: toNum(item.price),
+          originalPrice: toNum(item.originalPrice),
         })),
-        pricing: pricing
+        pricing: cartWithRules.getPricingWithRules(),
       };
 
-      const customerName = formData.nome || formData.Nome || 'cliente';
+      const customerName = (
+        formData.nome ||
+        formData.Nome ||
+        "cliente"
+      ).toString();
       const filename = `preventivo-${customerName}-${new Date().toISOString().slice(0, 10)}.pdf`;
 
       await generateClientQuotePDF(pdfData, filename);
@@ -325,14 +367,17 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary" 
+      <DialogContent
+        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary"
         aria-describedby="checkout-description"
       >
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-brand-accent">RICHIEDI INFORMAZIONI</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-brand-accent">
+            RICHIEDI INFORMAZIONI
+          </DialogTitle>
           <DialogDescription id="checkout-description">
-            Compila il form per ricevere un preventivo personalizzato per i servizi selezionati.
+            Compila il form per ricevere un preventivo personalizzato per i
+            servizi selezionati.
           </DialogDescription>
         </DialogHeader>
 
@@ -348,13 +393,17 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
         {settingsError && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <p className="text-red-600">Errore nel caricamento delle impostazioni. Riprova più tardi.</p>
+            <p className="text-red-600">
+              Errore nel caricamento delle impostazioni. Riprova più tardi.
+            </p>
           </div>
         )}
 
         {!settingsLoading && !settingsError && !settings && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-            <p className="text-yellow-600">Configurazione non trovata. Contatta l'amministratore.</p>
+            <p className="text-yellow-600">
+              Configurazione non trovata. Contatta l'amministratore.
+            </p>
           </div>
         )}
 
@@ -363,193 +412,223 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           <>
             {/* Selected Items Summary */}
             <div className="bg-brand-primary rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-brand-accent mb-3">RIEPILOGO SELEZIONE</h4>
+              <h4 className="font-semibold text-brand-accent mb-3">
+                RIEPILOGO SELEZIONE
+              </h4>
               <div className="space-y-2 text-sm">
-            {(() => {
-              const items = cartWithRules.getItemsWithRuleInfo ? cartWithRules.getItemsWithRuleInfo() : cartWithRules.cart.items ?? [];
-              return items.map((item, index) => {
-                const priceNum = (item as any).finalPrice ?? (item as any).price ?? 0;
-                return (
-                  <div key={index} className="flex justify-between">
-                    <span>
-                      {item.title}
-                      {(item as any).isGift && (
-                        <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
+                {(() => {
+                  const p = cartWithRules.getPricingWithRules();
+                  // preferisci le righe "vere" dell'engine; fallback agli item con rule info includendo nascosti
+                  const lineItems = p?.detailed?.items 
+                    ?? cartWithRules.getItemsWithRuleInfo?.({ includeHidden: true }) 
+                    ?? cartWithRules.cart.items;
+
+                  const toNum = (n: unknown) => {
+                    const v = typeof n === "string" ? Number(n) : (n as number);
+                    return Number.isFinite(v) ? (v as number) : 0;
+                  };
+                  const formatEUR = (n: unknown) => toNum(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                  return (
+                    <>
+                      {/* Lista righe coerente con il totale */}
+                      {lineItems.map((it: any, idx: number) => {
+                        const title = it.title ?? "Voce";
+                        const orig = toNum(it.originalPrice ?? it.original ?? it.basePrice);
+                        const final = toNum(it.price ?? it.finalPrice);
+                        const isGift = !!(it.isGift ?? it.gift);
+
+                        return (
+                          <div key={idx} className="flex justify-between text-sm">
+                            <span>
+                              {title}
+                              {isGift && <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>}
+                            </span>
+                            <span>
+                              {isGift ? (
+                                <>
+                                  {orig > 0 && <span className="line-through text-gray-400 mr-2">€{formatEUR(orig)}</span>}
+                                  <span className="text-green-600 font-bold">GRATIS</span>
+                                </>
+                              ) : orig > final ? (
+                                <>
+                                  <span className="line-through text-gray-400 mr-2">€{formatEUR(orig)}</span>
+                                  <span className="text-green-600 font-semibold">€{formatEUR(final)}</span>
+                                </>
+                              ) : (
+                                <>€{formatEUR(final)}</>
+                              )}
+                            </span>
+                          </div>
+                        );
+                      })}
+
+                      <hr className="border-brand-secondary" />
+
+                      {/* Totali presi dallo stesso oggetto dell'engine */}
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Subtotale servizi/prodotti:</span>
+                        <span>€{formatEUR(p.originalSubtotal)}</span>
+                      </div>
+
+                      {toNum(p.discount) > 0 && (
+                        <div className="flex justify-between text-orange-600 font-semibold">
+                          <span>Sconto applicato:</span>
+                          <span>-€{formatEUR(p.discount)}</span>
+                        </div>
                       )}
-                    </span>
-                    <span>
-                      {(item as any).isGift ? (
-                        <>
-                          <span className="line-through text-gray-400 mr-2">€{formatEUR((item as any).originalPrice)}</span>
-                          <span className="text-green-600 font-bold">GRATIS</span>
-                        </>
-                      ) : (item as any).originalPrice !== priceNum ? (
-                        <>
-                          <span className="line-through text-gray-400 mr-2">€{formatEUR((item as any).originalPrice)}</span>
-                          <span className="text-green-600 font-semibold">€{formatEUR(priceNum)}</span>
-                        </>
-                      ) : (
-                        `€${formatEUR(priceNum)}`
+
+                      {toNum(p.giftSavings) > 0 && (
+                        <div className="flex justify-between text-green-600 font-semibold">
+                          <span>Servizi in omaggio:</span>
+                          <span>-€{formatEUR(p.giftSavings)}</span>
+                        </div>
                       )}
-                    </span>
-                  </div>
-                );
-              });
-            })()}
 
-            {(() => {
-              return (
-                <>
-                  <hr className="border-brand-secondary" />
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Subtotale servizi/prodotti:</span>
-                    <span>€{formatEUR(pricing.originalSubtotal)}</span>
-                  </div>
-
-                  {pricing.discount > 0 && (
-                    <div className="flex justify-between text-sm text-red-600">
-                      <span>Sconto applicato:</span>
-                      <span>-€{formatEUR(pricing.discount)}</span>
-                    </div>
-                  )}
-
-                  {pricing.giftSavings > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>Servizi gratuiti:</span>
-                      <span>-€{formatEUR(pricing.giftSavings)}</span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between font-bold text-lg text-brand-accent">
-                    <span>TOTALE</span>
-                    <span>€{formatEUR(pricing.total)}</span>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        </div>
-
-        {/* Dynamic Form */}
-        {settings && (
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {settings.formFields.map((field, index) => {
-                const fieldName = field.label.toLowerCase().replace(/\s+/g, '_');
-
-                return (
-                  <div key={index} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {field.label} {field.required && '*'}
-                    </label>
-                    {field.type === 'textarea' ? (
-                      <textarea
-                        {...form.register(fieldName)}
-                        rows={3}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent resize-none"
-                      />
-                    ) : field.type === 'select' && field.options ? (
-                      <select
-                        {...form.register(fieldName)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent"
-                      >
-                        <option value="">Seleziona...</option>
-                        {field.options.map((option, optIndex) => (
-                          <option key={optIndex} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type={field.type}
-                        {...form.register(fieldName)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent"
-                      />
-                    )}
-                    {form.formState.errors[fieldName] && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {form.formState.errors[fieldName]?.message as string}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* GDPR Consent */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <label className="flex items-start space-x-3">
-                <input
-                  type="checkbox"
-                  {...form.register('gdpr_consent')}
-                  className="mt-1 w-5 h-5 text-brand-accent border-gray-300 rounded focus:ring-brand-accent"
-                />
-                <span className="text-sm text-gray-700">
-                  {settings.gdprText} *
-                </span>
-              </label>
-              {form.formState.errors.gdpr_consent && (
-                <p className="mt-1 text-sm text-red-600">
-                  {form.formState.errors.gdpr_consent?.message as string}
-                </p>
-              )}
-            </div>
-
-            {/* reCAPTCHA Notice */}
-            {settings.reCAPTCHASiteKey && (
-              <div className="text-xs text-gray-500 text-center">
-                Questo sito è protetto da reCAPTCHA e si applicano la Privacy Policy e i Termini di Servizio di Google.
+                      <div className="flex justify-between font-bold text-lg text-brand-accent">
+                        <span>TOTALE</span>
+                        <span>€{formatEUR(p.total)}</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="pt-4 space-y-3">
-              {/* Download PDF Button */}
-              <Button
-                type="button"
-                onClick={handleDownloadPDF}
-                disabled={isGeneratingPDF || !form.watch('gdpr_consent')}
-                className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isGeneratingPDF ? (
-                  <>
-                    <span>Generando PDF...</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-5 h-5" />
-                    <span>SCARICA PREVENTIVO PDF</span>
-                  </>
-                )}
-              </Button>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={isSubmitting || !form.watch('gdpr_consent')}
-                className="w-full flex items-center justify-center space-x-2 bg-brand-accent text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span>Invio in corso...</span>
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle className="w-5 h-5" />
-                    <span>INVIA RICHIESTA</span>
-                  </>
-                )}
-              </Button>
-              {settings?.whatsappNumber && (
-                <p className="text-xs text-gray-500 text-center mt-2">
-                  La richiesta verrà salvata e si aprirà automaticamente WhatsApp
-                </p>
-              )}
             </div>
-          </form>
-        )}
-        </>
-      )}
 
+            {/* Dynamic Form */}
+            {settings && (
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(settings.formFields ?? []).map((field, index) => {
+                    const fieldName = labelToFieldName(field.label);
+
+                    return (
+                      <div
+                        key={index}
+                        className={
+                          field.type === "textarea" ? "md:col-span-2" : ""
+                        }
+                      >
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {field.label} {field.required && "*"}
+                        </label>
+                        {field.type === "textarea" ? (
+                          <textarea
+                            {...form.register(fieldName)}
+                            rows={3}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent resize-none"
+                          />
+                        ) : field.type === "select" && field.options ? (
+                          <select
+                            {...form.register(fieldName)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent"
+                          >
+                            <option value="">Seleziona...</option>
+                            {field.options.map((option, optIndex) => (
+                              <option key={optIndex} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={field.type}
+                            {...form.register(fieldName)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent"
+                          />
+                        )}
+                        {form.formState.errors[fieldName] && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {
+                              form.formState.errors[fieldName]
+                                ?.message as string
+                            }
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* GDPR Consent */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <label className="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      {...form.register("gdpr_consent")}
+                      className="mt-1 w-5 h-5 text-brand-accent border-gray-300 rounded focus:ring-brand-accent"
+                    />
+                    <span className="text-sm text-gray-700">
+                      {settings.gdprText} *
+                    </span>
+                  </label>
+                  {form.formState.errors.gdpr_consent && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {form.formState.errors.gdpr_consent?.message as string}
+                    </p>
+                  )}
+                </div>
+
+                {/* reCAPTCHA Notice */}
+                {settings.reCAPTCHASiteKey && (
+                  <div className="text-xs text-gray-500 text-center">
+                    Questo sito è protetto da reCAPTCHA e si applicano la
+                    Privacy Policy e i Termini di Servizio di Google.
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="pt-4 space-y-3">
+                  {/* Download PDF Button */}
+                  <Button
+                    type="button"
+                    onClick={handleDownloadPDF}
+                    disabled={isGeneratingPDF || !form.watch("gdpr_consent")}
+                    className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isGeneratingPDF ? (
+                      <>
+                        <span>Generando PDF...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-5 h-5" />
+                        <span>SCARICA PREVENTIVO PDF</span>
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Submit Button */}
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || !form.watch("gdpr_consent")}
+                    className="w-full flex items-center justify-center space-x-2 bg-brand-accent text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span>Invio in corso...</span>
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="w-5 h-5" />
+                        <span>INVIA RICHIESTA</span>
+                      </>
+                    )}
+                  </Button>
+                  {settings?.whatsappNumber && (
+                    <p className="text-xs text-gray-500 text-center mt-2">
+                      La richiesta verrà salvata e si aprirà automaticamente
+                      WhatsApp
+                    </p>
+                  )}
+                </div>
+              </form>
+            )}
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

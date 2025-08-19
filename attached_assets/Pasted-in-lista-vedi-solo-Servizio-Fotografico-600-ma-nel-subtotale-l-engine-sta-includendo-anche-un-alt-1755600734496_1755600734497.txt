@@ -1,0 +1,90 @@
+in lista vedi solo “Servizio Fotografico 600”, ma nel subtotale l’engine sta includendo anche un’altra voce (es. item auto-aggiunto o nascosto) ⇒ 700 – 10% = 630. In DynamicChat il prezzo (540) è coerente con la preview perché usa la stessa vista/engine in modo allineato.
+
+Fix preciso (minimale, risolve 630 → 540)
+
+Nel CheckoutModal.tsx non costruire più la lista dalla cart API “comoda”. Usa sempre le linee dell’engine (quelle che il totale somma). Sostituisci i due blocchi “RIEPILOGO SELEZIONE” con questo:
+
+{(() => {
+  const p = cartWithRules.getPricingWithRules();
+  // preferisci le righe "vere" dell'engine; fallback agli item con rule info includendo nascosti
+  const lineItems = p?.detailed?.items 
+    ?? cartWithRules.getItemsWithRuleInfo?.({ includeHidden: true }) 
+    ?? cartWithRules.cart.items;
+
+  const toNum = (n: unknown) => {
+    const v = typeof n === "string" ? Number(n) : (n as number);
+    return Number.isFinite(v) ? (v as number) : 0;
+  };
+  const formatEUR = (n: unknown) => toNum(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  return (
+    <>
+      {/* Lista righe coerente con il totale */}
+      {lineItems.map((it: any, idx: number) => {
+        const title = it.title ?? "Voce";
+        const orig = toNum(it.originalPrice ?? it.original ?? it.basePrice);
+        const final = toNum(it.price ?? it.finalPrice);
+        const isGift = !!(it.isGift ?? it.gift);
+
+        return (
+          <div key={idx} className="flex justify-between text-sm">
+            <span>
+              {title}
+              {isGift && <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>}
+            </span>
+            <span>
+              {isGift ? (
+                <>
+                  {orig > 0 && <span className="line-through text-gray-400 mr-2">€{formatEUR(orig)}</span>}
+                  <span className="text-green-600 font-bold">GRATIS</span>
+                </>
+              ) : orig > final ? (
+                <>
+                  <span className="line-through text-gray-400 mr-2">€{formatEUR(orig)}</span>
+                  <span className="text-green-600 font-semibold">€{formatEUR(final)}</span>
+                </>
+              ) : (
+                <>€{formatEUR(final)}</>
+              )}
+            </span>
+          </div>
+        );
+      })}
+
+      <hr className="border-brand-secondary" />
+
+      {/* Totali presi dallo stesso oggetto dell’engine */}
+      <div className="flex justify-between text-sm text-gray-600">
+        <span>Subtotale servizi/prodotti:</span>
+        <span>€{formatEUR(p.originalSubtotal)}</span>
+      </div>
+
+      {toNum(p.discount) > 0 && (
+        <div className="flex justify-between text-orange-600 font-semibold">
+          <span>Sconto applicato:</span>
+          <span>-€{formatEUR(p.discount)}</span>
+        </div>
+      )}
+
+      {toNum(p.giftSavings) > 0 && (
+        <div className="flex justify-between text-green-600 font-semibold">
+          <span>Servizi in omaggio:</span>
+          <span>-€{formatEUR(p.giftSavings)}</span>
+        </div>
+      )}
+
+      <div className="flex justify-between font-bold text-lg text-brand-accent">
+        <span>TOTALE</span>
+        <span>€{formatEUR(p.total)}</span>
+      </div>
+    </>
+  );
+})()}
+
+Perché funziona
+
+Lista e totali vengono dalla stessa fonte (engine) ⇒ niente più “item nascosti” esclusi in lista ma inclusi nel conteggio.
+
+Se l’engine calcola 540, vedrai 540 anche in modale.
+
+Se vuoi nascondere alcune voci dalla UI, non usarle nella lista ma allora devi anche escluderle dal pricing (non consigliato) o quantomeno mostrarle con etichetta “(applicato automaticamente)” così l’utente capisce da dove viene la differenza.
