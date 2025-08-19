@@ -436,15 +436,17 @@ export function DynamicChatGuide() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Auto-open checkout modal when lead phase is active and data is complete
+  // Auto-open checkout modal when entering lead phase for the first time
+  const [hasAutoOpenedCheckout, setHasAutoOpenedCheckout] = useState(false);
   useEffect(() => {
-    if (currentPhase === 'lead') {
+    if (currentPhase === 'lead' && !hasAutoOpenedCheckout) {
       const isLeadDataComplete = leadData.name && leadData.surname && leadData.email && leadData.phone && leadData.eventDate;
       if (isLeadDataComplete) {
         setIsCheckoutOpen(true);
+        setHasAutoOpenedCheckout(true);
       }
     }
-  }, [currentPhase, leadData]);
+  }, [currentPhase, leadData, hasAutoOpenedCheckout]);
 
   // Show services when items become ready (if we're in services phase and showed loading)
   useEffect(() => {
@@ -1676,6 +1678,14 @@ export function DynamicChatGuide() {
                 Fantastico! Il tuo pacchetto è pronto. 
                 Inserisci i tuoi dati per ricevere il preventivo dettagliato! 📋
               </p>
+              
+              {/* Button to reopen checkout modal */}
+              <button
+                onClick={() => setIsCheckoutOpen(true)}
+                className="mt-3 w-full bg-brand-accent text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors"
+              >
+                Inserisci i tuoi dati
+              </button>
             </div>
           </div>
 

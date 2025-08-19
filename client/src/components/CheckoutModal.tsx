@@ -419,8 +419,8 @@ export default function CheckoutModal({
                 {(() => {
                   const p = cartWithRules.getPricingWithRules();
                   // preferisci le righe "vere" dell'engine; fallback agli item con rule info includendo nascosti
-                  const lineItems = p?.detailed?.items 
-                    ?? cartWithRules.getItemsWithRuleInfo?.({ includeHidden: true }) 
+                  const lineItems = (p?.detailed as any)?.items 
+                    ?? cartWithRules.getItemsWithRuleInfo() 
                     ?? cartWithRules.cart.items;
 
                   const toNum = (n: unknown) => {
