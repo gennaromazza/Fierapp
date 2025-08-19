@@ -223,11 +223,20 @@ export default function CheckoutModal({
         });
       }
 
-      // Prepare lead data for confirm modal
+      // Prepare complete lead data for confirm modal with proper pricing structure
+      const pricingData = cartWithRules.getPricingWithRules();
       const leadDataForConfirm = {
         customer: data,
         selectedItems: selectedItems,
-        pricing: cartWithRules.getPricingWithRules(),
+        pricing: {
+          ...pricingData,
+          // Ensure compatibility with ConfirmQuoteModal expectations
+          detailed: pricingData.detailed || {
+            individualDiscountSavings: 0,
+            globalDiscountSavings: pricingData.totalSavings - (pricingData.giftSavings || 0)
+          }
+        },
+        settings: settings, // Pass settings to avoid reload
       };
 
       // Store lead data and show confirmation modal

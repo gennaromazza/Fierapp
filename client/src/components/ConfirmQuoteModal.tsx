@@ -26,6 +26,7 @@ interface ConfirmQuoteModalProps {
     customer: any;
     selectedItems: any[];
     pricing: any;
+    settings?: any; // Optional settings from parent
   };
 }
 
@@ -51,14 +52,17 @@ export default function ConfirmQuoteModal({
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
 
-  // Fetch settings from Firebase
-  const { data: settings } = useQuery({
+  // Use settings from parent or fetch from Firebase as fallback
+  const { data: fetchedSettings } = useQuery({
     queryKey: ["/api/settings"],
     queryFn: async () => {
-      const settingsDoc = await getDoc(doc(db, "settings", "main"));
+      const settingsDoc = await getDoc(doc(db, "settings", "app")); // Fixed: use "app" not "main"
       return settingsDoc.exists() ? (settingsDoc.data() as Settings) : null;
     },
+    enabled: !leadData.settings, // Only fetch if not provided by parent
   });
+
+  const settings = leadData.settings || fetchedSettings;
 
   const handleWhatsAppShare = async () => {
     if (!settings?.whatsappNumber) {
@@ -107,21 +111,26 @@ export default function ConfirmQuoteModal({
         .filter(Boolean)
         .join("\n");
 
-      // Generate pricing breakdown
+      // Generate pricing breakdown with safe fallbacks
+      const individualSavings = toNum(pricing.detailed?.individualDiscountSavings || 0);
+      const globalSavings = toNum(pricing.detailed?.globalDiscountSavings || 0);
+      const giftSavings = toNum(pricing.giftSavings || 0);
+      const totalSavings = toNum(pricing.totalSavings || 0);
+      
       const lines = [
         `Subtotale servizi/prodotti: €${formatEUR(pricing.subtotal)}`,
-        ...(toNum(pricing.detailed?.individualDiscountSavings) > 0
-          ? [`Sconti per prodotto/servizio: -€${formatEUR(pricing.detailed.individualDiscountSavings)}`]
+        ...(individualSavings > 0
+          ? [`Sconti per prodotto/servizio: -€${formatEUR(individualSavings)}`]
           : []),
-        ...(toNum(pricing.detailed?.globalDiscountSavings) > 0
-          ? [`Sconto globale (-10%): -€${formatEUR(pricing.detailed.globalDiscountSavings)}`]
+        ...(globalSavings > 0
+          ? [`Sconto globale (-10%): -€${formatEUR(globalSavings)}`]
           : []),
-        ...(toNum(pricing.giftSavings) > 0
-          ? [`Servizi in omaggio: -€${formatEUR(pricing.giftSavings)}`]
+        ...(giftSavings > 0
+          ? [`Servizi in omaggio: -€${formatEUR(giftSavings)}`]
           : []),
         `TOTALE: €${formatEUR(pricing.total)}`,
-        ...(toNum(pricing.totalSavings) > 0
-          ? [`💰 Totale risparmiato: €${formatEUR(pricing.totalSavings)}!`]
+        ...(totalSavings > 0
+          ? [`💰 Totale risparmiato: €${formatEUR(totalSavings)}!`]
           : []),
       ];
       const totalText = lines.join("\n");
@@ -165,15 +174,18 @@ export default function ConfirmQuoteModal({
     try {
       const { customer, selectedItems, pricing } = leadData;
 
-      // Generate PDF with lead data
+      // Generate PDF with proper data structure
+      const individualSavings = toNum(pricing.detailed?.individualDiscountSavings || 0);
+      const globalSavings = toNum(pricing.detailed?.globalDiscountSavings || 0);
+      
       const pdfData = {
         customer,
         selectedItems,
         pricing: {
           ...pricing,
           // Ensure compatibility with PDF generation
-          discount: pricing.detailed?.individualDiscountSavings + pricing.detailed?.globalDiscountSavings || 0,
-          originalSubtotal: pricing.subtotal + (pricing.detailed?.individualDiscountSavings || 0)
+          discount: individualSavings + globalSavings,
+          originalSubtotal: toNum(pricing.subtotal) + individualSavings
         }
       };
 
