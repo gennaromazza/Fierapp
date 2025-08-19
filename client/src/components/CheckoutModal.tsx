@@ -187,9 +187,13 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
       // Create detailed WhatsApp message with form data
       if (settings.whatsappNumber) {
-        const cartSummary = cartWithRules.cart.items.map(item => 
-          `• ${item.title} - €${item.price.toLocaleString('it-IT')}`
-        ).join('\n');
+        const items = cartWithRules.getItemsWithRuleInfo();
+        const itemsList = items.map(it => {
+          const priceText = it.isGift
+            ? 'GRATIS'
+            : `€${it.price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          return `• ${it.title} - ${priceText}`;
+        }).join('\n');
 
         // Format form data for WhatsApp using centralized helper
         const formDataText = Object.entries(data)
@@ -203,12 +207,20 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           .filter(Boolean)
           .join('\n');
 
-        const pricing = cartWithRules.getPricingWithRules();
-        const totalText = pricing.discount > 0 
-          ? `Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.discount.toLocaleString('it-IT')}\nTotale: €${pricing.total.toLocaleString('it-IT')}`
-          : `Totale: €${pricing.total.toLocaleString('it-IT')}`;
+        const p = cartWithRules.getPricingWithRules();
+        const lines = [
+          `Subtotale: €${p.originalSubtotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        ];
+        if (p.discount > 0) {
+          lines.push(`Sconti: -€${p.discount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        }
+        if (p.giftSavings > 0) {
+          lines.push(`Servizi gratuiti: -€${p.giftSavings.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        }
+        lines.push(`Totale: €${p.total.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        const totalText = lines.join('\n');
 
-        const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${cartSummary}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${leadId}`;
+        const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${leadId}`;
 
         const whatsappUrl = generateWhatsAppLink(settings.whatsappNumber, message);
         window.open(whatsappUrl, '_blank');
@@ -345,35 +357,29 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
               <h4 className="font-semibold text-brand-accent mb-3">RIEPILOGO SELEZIONE</h4>
               <div className="space-y-2 text-sm">
             {(() => {
-              const unifiedPricing = cartWithRules.getPricingWithRules();
-              return cartWithRules.cart.items.map((item, index) => {
-                const isGift = cartWithRules.isItemGift && cartWithRules.isItemGift(item.id);
-                const itemDetail = unifiedPricing.detailed?.itemDetails?.find(detail => detail.id === item.id);
-                const originalPrice = itemDetail?.originalPrice || item.price;
-                const finalPrice = itemDetail?.finalPrice || item.price;
-                const hasDiscount = originalPrice !== finalPrice && !isGift;
-                
+              const items = cartWithRules.getItemsWithRuleInfo();
+              return items.map((item, index) => {
                 return (
                   <div key={index} className="flex justify-between">
                     <span>
                       {item.title}
-                      {isGift && (
+                      {item.isGift && (
                         <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
                       )}
                     </span>
                     <span>
-                      {isGift ? (
+                      {item.isGift ? (
                         <>
-                          <span className="line-through text-gray-400 mr-2">€{originalPrice.toLocaleString('it-IT')}</span>
+                          <span className="line-through text-gray-400 mr-2">€{item.originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span className="text-green-600 font-bold">GRATIS</span>
                         </>
-                      ) : hasDiscount ? (
+                      ) : item.originalPrice !== item.price ? (
                         <>
-                          <span className="line-through text-gray-400 mr-2">€{originalPrice.toLocaleString('it-IT')}</span>
-                          <span className="text-green-600 font-semibold">€{finalPrice.toLocaleString('it-IT')}</span>
+                          <span className="line-through text-gray-400 mr-2">€{item.originalPrice.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span className="text-green-600 font-semibold">€{item.price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </>
                       ) : (
-                        `€${finalPrice.toLocaleString('it-IT')}`
+                        `€${item.price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                       )}
                     </span>
                   </div>
@@ -389,26 +395,26 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
                   <hr className="border-brand-secondary" />
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotale servizi/prodotti:</span>
-                    <span>€{Math.round(unifiedPricing.originalSubtotal).toLocaleString('it-IT')}</span>
+                    <span>€{unifiedPricing.originalSubtotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
 
                   {unifiedPricing.discount > 0 && (
                     <div className="flex justify-between text-orange-600 font-semibold">
                       <span>Sconto applicato:</span>
-                      <span>-€{Math.round(unifiedPricing.discount).toLocaleString('it-IT')}</span>
+                      <span>-€{unifiedPricing.discount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   )}
 
                   {unifiedPricing.giftSavings > 0 && (
                     <div className="flex justify-between text-green-600 font-semibold">
                       <span>Servizi in omaggio:</span>
-                      <span>-€{Math.round(unifiedPricing.giftSavings).toLocaleString('it-IT')}</span>
+                      <span>-€{unifiedPricing.giftSavings.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   )}
 
                   <div className="flex justify-between font-bold text-lg text-brand-accent">
                     <span>TOTALE</span>
-                    <span>€{Math.round(unifiedPricing.total).toLocaleString('it-IT')}</span>
+                    <span>€{unifiedPricing.total.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </>
               );
