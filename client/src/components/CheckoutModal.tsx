@@ -28,6 +28,30 @@ interface CheckoutModalProps {
   onClose: () => void;
 }
 
+// Utility function to remove undefined values recursively
+function removeUndefinedDeep(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj
+      .filter(item => item !== undefined)
+      .map(item => removeUndefinedDeep(item));
+  }
+  
+  if (typeof obj === 'object') {
+    return Object.entries(obj)
+      .filter(([_, value]) => value !== undefined)
+      .reduce((acc, [key, value]) => {
+        acc[key] = removeUndefinedDeep(value);
+        return acc;
+      }, {} as any);
+  }
+  
+  return obj;
+}
+
 export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const cartWithRules = useCartWithRules();
   const { toast } = useToast();
@@ -126,7 +150,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       }
 
       // Prepare lead data with correct schema structure
-      const leadData: InsertLead = {
+      const rawLeadData: InsertLead = {
         customer: data,
         selectedItems: cartWithRules.cart.items.map(item => ({
           id: item.id,
@@ -145,11 +169,24 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
       // Only add reCAPTCHA token if it exists
       if (recaptchaToken) {
-        leadData.reCAPTCHAToken = recaptchaToken;
+        rawLeadData.reCAPTCHAToken = recaptchaToken;
+      }
+
+      // Clean data to remove undefined values
+      const cleanedLeadData = removeUndefinedDeep(rawLeadData);
+      
+      // Log cleaned data for debugging
+      const jsonString = JSON.stringify(cleanedLeadData, null, 2);
+      console.log('📤 JSON lead data da salvare:', jsonString);
+      
+      if (jsonString.includes('undefined')) {
+        console.error('⚠️ ATTENZIONE: Trovati valori "undefined" nel lead data!');
+      } else {
+        console.log('✅ Nessun valore undefined nel lead data');
       }
 
       // Save to Firestore
-      const docRef = await addDoc(collection(db, "leads"), leadData);
+      const docRef = await addDoc(collection(db, "leads"), cleanedLeadData);
       console.log("Lead saved successfully with ID:", docRef.id);
       
       // Analytics
