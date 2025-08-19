@@ -1,0 +1,43 @@
+Sto lavorando su un componente React molto complesso chiamato `DynamicChatGuide` nel file:
+
+`client/src/components/ConversationalGuide/DynamicChatGuide.tsx`
+
+Questo componente:
+
+- gestisce l'intera conversazione guidata con l'utente (chat dinamica)
+- raccoglie dati per creare un lead (nome, email, telefono, ecc.)
+- gestisce la logica del carrello e delle offerte
+- salva i dati su Firebase (Firestore)
+- mostra la schermata finale con il form per l'invio del lead
+
+### Cosa voglio fare:
+
+Rifattorizzare `DynamicChatGuide` in modo **modulare, leggibile e manutenibile**, con i seguenti obiettivi:
+
+#### ✅ 1. Separare il componente in moduli logici
+- `ChatInterface` → per rendering messaggi e input utente
+- `ChatLogicManager` → per gestire la logica delle fasi e i messaggi dinamici
+- `LeadForm` → già presente, ma assicurarsi sia ben integrato
+- `CartSummary` → se esiste, separare gestione carrello
+- `ChatContext` o altro stato centralizzato per condividere dati
+
+#### ✅ 2. Stato centralizzato
+- Tutti i dati raccolti (nome, email, ecc.) devono essere salvati in un **oggetto coerente e centralizzato**, es: `conversationData.leadData`
+- I dati devono avere la **stessa struttura** usata poi per salvare su Firebase
+
+#### ✅ 3. Organizzazione coerente con Firebase
+- I dati da salvare nel documento Firestore devono essere preparati in modo coerente con la struttura attesa dal database
+- Evitare valori `undefined`, `NaN`, ecc. (già risolto con `removeUndefinedDeep()`)
+
+#### ✅ 4. Pulizia del codice
+- Spostare utility come `removeUndefinedDeep` in un file separato (`utils/firebaseSanitizer.ts`)
+- Rimuovere logica inline non necessaria e dividerla in custom hook o moduli
+
+#### 📁 Output atteso
+Voglio:
+- Una nuova struttura file/folder consigliata (`components/ConversationalGuide/`)
+- I file nuovi creati (con nome e responsabilità)
+- Codice aggiornato e rifattorizzato dei componenti principali
+- Eventuali miglioramenti alla gestione dello stato, se serve
+
+Mostrami direttamente la nuova struttura e i file con il codice aggiornato. Evita spiegazioni verbali.
