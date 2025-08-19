@@ -217,13 +217,13 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       console.log("Lead saved successfully with ID:", docRef.id);
 
       // Use unified pricing for analytics
-      const unifiedPricing = cartWithRules.getUnifiedPricing();
+      const unifiedPricing = cartWithRules.getPricingWithRules();
       // Analytics
       if (analytics) {
         logEvent(analytics, 'form_submit', {
           form_id: 'checkout_form',
           lead_id: docRef.id,
-          total_value: unifiedPricing.finalTotal
+          total_value: unifiedPricing.total
         });
       }
 
@@ -244,10 +244,10 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           })
           .join('\n');
 
-        const pricing = cartWithRules.getUnifiedPricing();
+        const pricing = cartWithRules.getPricingWithRules();
         const totalText = pricing.discount > 0 
-          ? `Subtotale: €${pricing.subtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.discount.toLocaleString('it-IT')}\nTotale: €${pricing.finalTotal.toLocaleString('it-IT')}`
-          : `Totale: €${pricing.finalTotal.toLocaleString('it-IT')}`;
+          ? `Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.discount.toLocaleString('it-IT')}\nTotale: €${pricing.total.toLocaleString('it-IT')}`
+          : `Totale: €${pricing.total.toLocaleString('it-IT')}`;
 
         const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${cartSummary}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${docRef.id}`;
 
@@ -258,7 +258,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
         if (analytics) {
           logEvent(analytics, 'whatsapp_contact', {
             items: cartWithRules.cart.items.length,
-            total_value: pricing.finalTotal,
+            total_value: pricing.total,
             lead_id: docRef.id
           });
         }
@@ -300,7 +300,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           price: item.price,
           originalPrice: item.originalPrice
         })),
-        pricing: cartWithRules.getUnifiedPricing()
+        pricing: cartWithRules.getPricingWithRules()
       };
 
       const customerName = formData.nome || formData.Nome || 'cliente';
@@ -365,14 +365,14 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
             ))}
 
             {(() => {
-              const unifiedPricing = cartWithRules.getUnifiedPricing();
+              const unifiedPricing = cartWithRules.getPricingWithRules();
 
               return (
                 <>
                   <hr className="border-brand-secondary" />
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotale servizi/prodotti:</span>
-                    <span>€{unifiedPricing.subtotal.toLocaleString('it-IT')}</span>
+                    <span>€{unifiedPricing.originalSubtotal.toLocaleString('it-IT')}</span>
                   </div>
 
                   {unifiedPricing.discount > 0 && (
@@ -391,7 +391,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
                   <div className="flex justify-between font-bold text-lg text-brand-accent">
                     <span>TOTALE</span>
-                    <span>€{Math.round(unifiedPricing.finalTotal).toLocaleString('it-IT')}</span>
+                    <span>€{Math.round(unifiedPricing.total).toLocaleString('it-IT')}</span>
                   </div>
                 </>
               );
