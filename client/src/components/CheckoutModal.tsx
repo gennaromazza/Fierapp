@@ -263,6 +263,7 @@ export default function CheckoutModal({
   if (cartWithRules.cart.itemCount === 0 && !allowEmptyCart) return null;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary"
@@ -547,14 +548,15 @@ export default function CheckoutModal({
           </>
         )}
       </DialogContent>
-      
-      {/* Confirm Quote Modal */}
-      <ConfirmQuoteModal
-        isOpen={confirmModalOpen}
-        onClose={handleCloseConfirmModal}
-        leadId={savedLeadId}
-        leadData={savedLeadData || { customer: {}, selectedItems: [], pricing: {} }}
-      />
     </Dialog>
+    
+    {/* Confirm Quote Modal - Separate Dialog */}
+    <ConfirmQuoteModal
+      isOpen={confirmModalOpen}
+      onClose={handleCloseConfirmModal}
+      leadId={savedLeadId}
+      leadData={savedLeadData || { customer: {}, selectedItems: [], pricing: {} }}
+    />
+    </>
   );
 }
