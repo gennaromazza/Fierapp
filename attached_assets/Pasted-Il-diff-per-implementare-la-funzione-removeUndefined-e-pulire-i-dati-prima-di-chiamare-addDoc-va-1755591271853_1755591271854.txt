@@ -1,0 +1,72 @@
+Il diff per implementare la funzione removeUndefined() e pulire i dati prima di chiamare addDoc() va inserito nel primo file, quello che contiene la definizione di DynamicChatGuide, perché è lì che risiede la funzione saveChatHistory() con la relativa chiamata a Firebase.
+
+Quale file modificare?
+
+Primo file: DynamicChatGuide.tsx (o .tsx/.ts) — dove si trovano saveChatHistory() e l'intera logica di chat.
+
+Secondo file: ConversationalGuide.tsx — semplicemente importa e esporta DynamicChatGuide, NON contiene la logica Firebase.
+
+Riepilogo del contesto
+
+Il problema dell’errore:
+
+FirebaseError: Function addDoc() called with invalid data. Unsupported field value: undefined (found in document…)
+
+
+è causato dal fatto che Firebase non accetta valori undefined nei documenti 
+stackoverflow.com
++1
+.
+
+La soluzione più efficace e sicura è rimuovere i campi undefined prima del salvataggio, implementando la funzione removeUndefined() direttamente accanto a saveChatHistory() nel file principale.
+
+Per chiarezza: dove mettere il codice
+
+File da modificare: quello dove è definito tutto il flusso di DynamicChatGuide, incluso saveChatHistory().
+
+Ecco il diff completo da applicare in quel file:
+
+// Subito sopra saveChatHistory():
++ function removeUndefined(obj: any): any {
++   return Object.entries(obj)
++     .filter(([_, v]) => v !== undefined)
++     .reduce((acc, [k, v]) => {
++       acc[k] = v;
++       return acc;
++     }, {} as any);
++ }
+
+// All'interno di saveChatHistory, sostituisci la chiamata a addDoc:
+- await addDoc(collection(db, 'chat_history'), {
+-   sessionId: conversationData.sessionId,
+-   eventType,
+-   data,
+-   conversationData: {
+-     ...conversationData,
+-     currentPhase,
+-     messagesCount: messages.length,
+-     cartItemsCount: cart.cart.items.length,
+-     totalValue: cart.getPricingWithRules().total,
+-     totalSavings: cart.getPricingWithRules().totalSavings
+-   },
+-   timestamp: serverTimestamp(),
+-   createdAt: new Date()
+- });
+
++ const cleanedData = removeUndefined({
++   sessionId: conversationData.sessionId,
++   eventType,
++   data,
++   conversationData: removeUndefined({
++     ...conversationData,
++     currentPhase,
++     messagesCount: messages.length,
++     cartItemsCount: cart.cart.items.length,
++     totalValue: cart.getPricingWithRules().total,
++     totalSavings: cart.getPricingWithRules().totalSavings
++   }),
++   timestamp: serverTimestamp(),
++   createdAt: new Date()
++ });
++ console.log('📤 Saving chat history:', cleanedData);
++ await addDoc(collection(db, 'chat_history'), cleanedData);
