@@ -1475,7 +1475,15 @@ export function DynamicChatGuide() {
                       <div className="flex justify-between font-bold">
                         <span>Totale:</span>
                         <span className="text-green-600">
-                          €{Math.round(cartSavingsInfo.total)}
+                          €{cart.cart.items.reduce((sum, item) => {
+                            const isGift = cart.isItemGift(item.id);
+                            const originalPrice = item.originalPrice || item.price;
+                            const discountInfo = discounts ? 
+                              getItemDiscountInfo(originalPrice, item.id, discounts) : 
+                              { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
+                            const finalPrice = isGift ? 0 : discountInfo.finalPrice;
+                            return sum + finalPrice;
+                          }, 0)}
                         </span>
                       </div>
                     </div>
@@ -1828,6 +1836,17 @@ export function DynamicChatGuide() {
       const studioText = settings?.studioName ? ` da ${settings.studioName}` : '';
       let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
 
+      // Calcola il totale corretto usando il pricing unificato
+      const actualTotal = cart.cart.items.reduce((sum, item) => {
+        const isGift = cart.isItemGift(item.id);
+        const originalPrice = item.originalPrice || item.price;
+        const discountInfo = discounts ? 
+          getItemDiscountInfo(originalPrice, item.id, discounts) : 
+          { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
+        const finalPrice = isGift ? 0 : discountInfo.finalPrice;
+        return sum + finalPrice;
+      }, 0);
+
       if (savingsInfo.discount > 0 || savingsInfo.giftSavings > 0) {
         summaryText += `💰 Prezzo originale: €${Math.round(savingsInfo.originalSubtotal)}\n`;
 
@@ -1839,10 +1858,10 @@ export function DynamicChatGuide() {
           summaryText += `🎁 Risparmi con regali: €${Math.round(savingsInfo.giftSavings)}\n`;
         }
 
-        summaryText += `💰 Totale finale: €${Math.round(savingsInfo.total)}\n`;
-        summaryText += `✨ RISPARMI TOTALI: €${Math.round(savingsInfo.totalSavings)} 💫\n`;
+        summaryText += `💰 Totale finale: €${Math.round(actualTotal)}\n`;
+        summaryText += `✨ RISPARMI TOTALI: €${Math.round(savingsInfo.originalSubtotal - actualTotal)} 💫\n`;
       } else {
-        summaryText += `💰 Totale: €${Math.round(savingsInfo.total)}\n`;
+        summaryText += `💰 Totale: €${Math.round(actualTotal)}\n`;
       }
 
       if (giftItems.length > 0) {

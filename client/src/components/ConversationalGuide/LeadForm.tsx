@@ -487,7 +487,7 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
           )}
           <div className="flex justify-between font-bold border-t pt-1">
             <span>TOTALE:</span>
-            <span>€{formattedPrices.total}</span>
+            <span>€{Math.max(0, pricing.originalSubtotal - pricing.discount - pricing.giftSavings).toLocaleString('it-IT')}</span>
           </div>
           {pricing.totalSavings > 0 && (
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 mt-3">
