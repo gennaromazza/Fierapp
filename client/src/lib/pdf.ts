@@ -105,11 +105,11 @@ async function getBrand(): Promise<PdfBrand> {
 /** Genera e incrementa numero preventivo progressivo */
 async function getNextQuoteNumber(): Promise<number> {
   return await runTransaction(db, async (transaction) => {
-    const counterRef = doc(db, "counters", "preventivi");
+    const counterRef = fireDoc(db, "counters", "preventivi");
     const counterSnap = await transaction.get(counterRef);
     let newNumber = 1;
     if (counterSnap.exists()) {
-      newNumber = (counterSnap.data().lastNumber || 0) + 1;
+      newNumber = ((counterSnap.data() as any)?.lastNumber || 0) + 1;
     }
     transaction.set(counterRef, { lastNumber: newNumber }, { merge: true });
     return newNumber;
@@ -278,17 +278,40 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
     doc.setFont("helvetica", "normal");
     doc.text(`${index + 1}. ${item.title}`, tableX + 2, y + 7);
     
-    doc.setFont("helvetica", "bold");
-    doc.text(`€${item.price.toLocaleString('it-IT')}`, tableX + colTitleW + 2, y + 7);
-    
-    // Original price if different
-    if (item.originalPrice && item.originalPrice !== item.price) {
+    // Gestione display prezzo
+    if (item.isGift) {
+      // Item regalo: prezzo originale barrato + "GRATIS"
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
+      doc.setFontSize(9);
       doc.setTextColor(120, 120, 120);
-      doc.text(`(Orig: €${item.originalPrice.toLocaleString('it-IT')})`, tableX + colTitleW + 2, y + 10);
-      doc.setTextColor(33, 33, 33);
+      doc.text(`€${item.originalPrice.toLocaleString('it-IT')}`, tableX + colTitleW + 2, y + 6);
+      
+      // Barrato sul prezzo originale
+      const priceText = `€${item.originalPrice.toLocaleString('it-IT')}`;
+      const priceWidth = doc.getTextWidth(priceText);
+      doc.setDrawColor(120, 120, 120);
+      doc.line(tableX + colTitleW + 2, y + 6 - 1, tableX + colTitleW + 2 + priceWidth, y + 6 - 1);
+      
+      // "GRATIS" in verde
+      doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
+      doc.setTextColor(34, 197, 94);
+      doc.text("GRATIS", tableX + colTitleW + 2, y + 9);
+      doc.setTextColor(33, 33, 33);
+    } else {
+      // Item normale
+      doc.setFont("helvetica", "bold");
+      doc.text(`€${item.price.toLocaleString('it-IT')}`, tableX + colTitleW + 2, y + 7);
+      
+      // Prezzo originale se diverso (sconto individuale)
+      if (item.originalPrice && item.originalPrice !== item.price) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`(Era €${item.originalPrice.toLocaleString('it-IT')})`, tableX + colTitleW + 2, y + 10);
+        doc.setTextColor(33, 33, 33);
+        doc.setFontSize(10);
+      }
     }
     
     // Bottom border
@@ -299,21 +322,21 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
     y = ensureNextLine(doc, y);
   });
 
-  // Sezione Totali - Layout migliorato con sistema unificato
+  // Sezione Totali - Usa dati già calcolati dal CheckoutModal
   y += 15;
   
-  // Usa il sistema unificato per calcoli accurati
-  const giftItems = leadData.selectedItems?.filter((item: any) => item.price === 0) || [];
-  const giftItemIds = giftItems.map((item: any) => item.id);
-  // 🔧 FETCH DISCOUNTS: Usa i veri sconti invece di null per consistenza con tutto il sistema
-  const discountsSnapshot = await getDoc(fireDoc(db, "settings", "discounts"));
-  const discounts = discountsSnapshot.exists() ? discountsSnapshot.data() : null;
-  
-  const unifiedPricing = calculateUnifiedPricing(leadData.selectedItems || [], discounts, giftItemIds);
+  // Usa i dati di pricing già calcolati (allineati con CheckoutModal)
+  const pricing = leadData.pricing || {};
+  const subtotal = pricing.subtotal || 0;
+  const individualDiscountSavings = pricing.individualDiscountSavings || 0;
+  const globalDiscountSavings = pricing.globalDiscountSavings || 0;
+  const giftSavings = pricing.giftSavings || 0;
+  const totalSavings = pricing.totalSavings || 0;
+  const total = pricing.total || 0;
   
   const totalBoxY = y;
-  const hasDiscounts = unifiedPricing.totalSavings > 0;
-  const totalBoxH = hasDiscounts ? (unifiedPricing.giftSavings > 0 ? 55 : 40) : 25;
+  const hasDiscounts = totalSavings > 0;
+  const totalBoxH = hasDiscounts ? (giftSavings > 0 ? 55 : 40) : 25;
   
   // Box per i totali con sfondo più scuro
   doc.setFillColor(240, 242, 247);
@@ -326,24 +349,33 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
     // Subtotale
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
-    doc.text("Subtotale:", tableX + 8, y);
-    doc.text(`€${unifiedPricing.originalSubtotal.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
+    doc.text("Subtotale servizi/prodotti:", tableX + 8, y);
+    doc.text(`€${subtotal.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
     y += 8;
     
-    // Sconti
-    if (unifiedPricing.totalDiscountSavings > 0) {
-      doc.setTextColor(220, 53, 69);
-      doc.text("Sconti:", tableX + 8, y);
-      doc.text(`-€${unifiedPricing.totalDiscountSavings.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
+    // Sconti individuali per prodotto/servizio
+    if (individualDiscountSavings > 0) {
+      doc.setTextColor(59, 130, 246);
+      doc.text("Sconti per prodotto/servizio:", tableX + 8, y);
+      doc.text(`-€${individualDiscountSavings.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
       doc.setTextColor(33, 33, 33);
       y += 8;
     }
     
-    // Servizi gratuiti
-    if (unifiedPricing.giftSavings > 0) {
+    // Sconto globale
+    if (globalDiscountSavings > 0) {
+      doc.setTextColor(255, 159, 67);
+      doc.text("Sconto globale (-10%):", tableX + 8, y);
+      doc.text(`-€${globalDiscountSavings.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
+      doc.setTextColor(33, 33, 33);
+      y += 8;
+    }
+    
+    // Servizi in omaggio
+    if (giftSavings > 0) {
       doc.setTextColor(34, 197, 94);
-      doc.text("Servizi gratuiti:", tableX + 8, y);
-      doc.text(`-€${unifiedPricing.giftSavings.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
+      doc.text("Servizi in omaggio:", tableX + 8, y);
+      doc.text(`-€${giftSavings.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
       doc.setTextColor(33, 33, 33);
       y += 8;
     }
@@ -363,15 +395,15 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text("TOTALE:", tableX + 8, y);
-  doc.text(`€${unifiedPricing.finalTotal.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
+  doc.text(`€${total.toLocaleString('it-IT')}`, tableX + tableW - 8, y, { align: "right" });
   
   // Messaggio di risparmio se presente
-  if (unifiedPricing.totalSavings > 0) {
+  if (totalSavings > 0) {
     y += 10;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(34, 197, 94);
-    const savingsText = `Totale risparmiato: €${unifiedPricing.totalSavings.toLocaleString('it-IT')}!`;
+    const savingsText = `Totale risparmiato: €${totalSavings.toLocaleString('it-IT')}!`;
     doc.text(savingsText, tableX + tableW / 2, y, { align: "center" });
     doc.setTextColor(33, 33, 33);
   }
@@ -494,10 +526,10 @@ export async function generateQuotePDF(lead: Lead): Promise<void> {
   y = totalBoxY + totalBoxH + 10;
 
   // Note
-  if (lead.customer?.note_aggiuntive) {
+  if (lead.customer?.note) {
     y = ensureNextLine(doc, y);
     y = sectionTitle(doc, "Note", y, brand.accent);
-    const note = doc.splitTextToSize(String(lead.customer.note_aggiuntive), tableW);
+    const note = doc.splitTextToSize(String(lead.customer.note), tableW);
     note.forEach((line: string) => { doc.text(line, mm.left, y); y += 6; });
   }
 

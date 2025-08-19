@@ -324,17 +324,63 @@ export default function CheckoutModal({
     setIsGeneratingPDF(true);
     try {
       const formData = form.getValues();
+      
+      // Usa la stessa logica del display CheckoutModal per il PDF
+      const itemsWithRules = cartWithRules.getItemsWithRuleInfo();
+      const allItemsWithAvailability = cartWithRules.getAllItemsWithAvailability();
+      
+      // Calcola i totali usando i dati reali dal database (come nel CheckoutModal)
+      let subtotalFromDB = 0;
+      let totalIndividualDiscounts = 0;
+      let giftSavingsFromDB = 0;
+      
+      const selectedItems = itemsWithRules.map(cartItem => {
+        // Trova i dati completi dal database
+        const fullItem = allItemsWithAvailability.find(dbItem => dbItem.id === cartItem.id);
+        
+        const title = fullItem?.title || cartItem.title || "Voce";
+        const originalPrice = toNum(fullItem?.originalPrice || fullItem?.price || cartItem.price);
+        const currentPrice = toNum(fullItem?.price || cartItem.price);
+        const isGift = cartItem.isGift;
+        
+        if (isGift) {
+          giftSavingsFromDB += originalPrice;
+        } else {
+          subtotalFromDB += currentPrice;
+          if (originalPrice > currentPrice) {
+            totalIndividualDiscounts += (originalPrice - currentPrice);
+          }
+        }
+        
+        return {
+          id: cartItem.id,
+          title: title,
+          price: isGift ? 0 : currentPrice,
+          originalPrice: originalPrice,
+          isGift: isGift
+        };
+      });
+      
+      // Sconto globale sui prezzi già scontati dal database
+      const globalDiscountRate = 0.1; // 10%
+      const globalDiscountAmount = subtotalFromDB * globalDiscountRate;
+      const finalTotal = subtotalFromDB - globalDiscountAmount;
 
-      // Prepare data structure similar to lead data
+      // Struttura dati per PDF allineata con il CheckoutModal
       const pdfData = {
         customer: formData,
-        selectedItems: cartWithRules.cart.items.map((item) => ({
-          id: item.id,
-          title: item.title,
-          price: toNum(item.price),
-          originalPrice: toNum(item.originalPrice),
-        })),
-        pricing: cartWithRules.getPricingWithRules(),
+        selectedItems: selectedItems,
+        pricing: {
+          subtotal: subtotalFromDB,
+          individualDiscountSavings: totalIndividualDiscounts,
+          globalDiscountSavings: globalDiscountAmount,
+          giftSavings: giftSavingsFromDB,
+          totalSavings: totalIndividualDiscounts + globalDiscountAmount + giftSavingsFromDB,
+          total: finalTotal,
+          // Mantieni compatibilità con vecchio sistema
+          discount: totalIndividualDiscounts + globalDiscountAmount,
+          originalSubtotal: subtotalFromDB + totalIndividualDiscounts
+        }
       };
 
       const customerName = (
