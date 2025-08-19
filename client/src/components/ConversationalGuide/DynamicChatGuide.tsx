@@ -79,24 +79,37 @@ export function DynamicChatGuide() {
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Utility function to remove undefined values
+  function removeUndefined(obj: any): any {
+    return Object.entries(obj)
+      .filter(([_, value]) => value !== undefined)
+      .reduce((acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      }, {} as any);
+  }
+
   // Salva dati conversazione su Firebase
   const saveChatHistory = async (eventType: string, data: any = {}) => {
     try {
-      await addDoc(collection(db, 'chat_history'), {
+      const cleanedData = removeUndefined({
         sessionId: conversationData.sessionId,
         eventType,
         data,
-        conversationData: {
+        conversationData: removeUndefined({
           ...conversationData,
           currentPhase,
           messagesCount: messages.length,
           cartItemsCount: cart.cart.items.length,
           totalValue: cart.getPricingWithRules().total,
           totalSavings: cart.getPricingWithRules().totalSavings
-        },
+        }),
         timestamp: serverTimestamp(),
         createdAt: new Date()
       });
+
+      console.log('📤 Saving chat history:', cleanedData);
+      await addDoc(collection(db, 'chat_history'), cleanedData);
 
       console.log(`💾 Chat history saved: ${eventType}`, data);
     } catch (error) {
