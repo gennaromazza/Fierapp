@@ -463,10 +463,24 @@ export default function CheckoutModal({
                         <span>€{formatEUR(p.subtotal)}</span>
                       </div>
 
-                      {toNum(p.discount) > 0 && (
+                      {toNum(p.detailed.globalDiscountSavings) > 0 && (
                         <div className="flex justify-between text-orange-600 font-semibold">
-                          <span>Sconto applicato:</span>
-                          <span>-€{formatEUR(p.discount)}</span>
+                          <span>Sconto globale (-10%):</span>
+                          <span>-€{formatEUR(p.detailed.globalDiscountSavings)}</span>
+                        </div>
+                      )}
+
+                      {toNum(p.detailed.individualDiscountSavings) > 0 && (
+                        <div className="flex justify-between text-blue-600 font-semibold">
+                          <span>Sconti per prodotto/servizio:</span>
+                          <span>-€{formatEUR(p.detailed.individualDiscountSavings)}</span>
+                        </div>
+                      )}
+
+                      {toNum(p.discount) > 0 && (
+                        <div className="flex justify-between text-gray-600 text-sm border-t border-gray-200 pt-2 mt-2">
+                          <span>Totale sconti applicati:</span>
+                          <span className="font-semibold">-€{formatEUR(p.discount)}</span>
                         </div>
                       )}
 
