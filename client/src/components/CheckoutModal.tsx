@@ -251,11 +251,11 @@ export default function CheckoutModal({
 
         const lines = [
           `Subtotale servizi/prodotti: €${formatEUR(p.subtotal)}`,
-          ...(toNum(p.individualDiscountSavings) > 0
-            ? [`Sconti per prodotto/servizio: -€${formatEUR(p.individualDiscountSavings)}`]
+          ...(toNum(p.detailed?.individualDiscountSavings) > 0
+            ? [`Sconti per prodotto/servizio: -€${formatEUR(p.detailed.individualDiscountSavings)}`]
             : []),
-          ...(toNum(p.globalDiscountSavings) > 0
-            ? [`Sconto globale (-10%): -€${formatEUR(p.globalDiscountSavings)}`]
+          ...(toNum(p.detailed?.globalDiscountSavings) > 0
+            ? [`Sconto globale (-10%): -€${formatEUR(p.detailed.globalDiscountSavings)}`]
             : []),
           ...(toNum(p.giftSavings) > 0
             ? [`Servizi in omaggio: -€${formatEUR(p.giftSavings)}`]
