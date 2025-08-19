@@ -11,9 +11,6 @@ import {
   formatFieldForDisplay,
 } from "../lib/fieldMappingHelper";
 import { useCartWithRules } from "../hooks/useCartWithRules";
-import { generateWhatsAppLink } from "../lib/whatsapp";
-import { generateClientQuotePDF } from "../lib/pdf";
-import { MessageCircle, Download } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import ConfirmQuoteModal from "./ConfirmQuoteModal";
 
 // Add global type for reCAPTCHA
 declare global {
@@ -68,8 +66,10 @@ export default function CheckoutModal({
   const cartWithRules = useCartWithRules();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [allowEmptyCart, setAllowEmptyCart] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [savedLeadId, setSavedLeadId] = useState("");
+  const [savedLeadData, setSavedLeadData] = useState<any>(null);
 
   // Reset allowEmptyCart when modal opens with items
   useEffect(() => {
@@ -200,7 +200,7 @@ export default function CheckoutModal({
         };
       });
       
-      // Use centralized save function
+      // Save lead to Firestore
       const leadId = await saveLead({
         customer: data,
         selectedItems: selectedItems,
@@ -214,102 +214,31 @@ export default function CheckoutModal({
         status: "new",
       });
 
-      // Pricing unificato per analytics e messaggi
-      const p = cartWithRules.getPricingWithRules();
-
       // Analytics - submit
       if (analytics) {
         logEvent(analytics, "form_submit", {
           form_id: "checkout_form",
           lead_id: leadId,
-          total_value: toNum(p.total),
+          total_value: toNum(cartWithRules.getPricingWithRules().total),
         });
       }
 
-      // WhatsApp message
-      if (settings.whatsappNumber) {
-        const items = cartWithRules.getItemsWithRuleInfo();
-        const itemsList = items
-          .map((it) => {
-            const title = it.title ?? "Voce";
-            const priceNum = toNum((it as any).price);
-            const originalNum = toNum((it as any).originalPrice);
-            const priceText = it.isGift ? "GRATIS" : `€${formatEUR(priceNum)}`;
-            // Se scontato e non omaggio, mostra barrato
-            if (!it.isGift && originalNum > priceNum) {
-              return `• ${title} - ~€${formatEUR(originalNum)}~  €${formatEUR(priceNum)}`;
-            }
-            // Se omaggio e ho un originale, mostra barrato + GRATIS
-            if (it.isGift && originalNum > 0) {
-              return `• ${title} - ~€${formatEUR(originalNum)}~  GRATIS`;
-            }
-            return `• ${title} - ${priceText}`;
-          })
-          .join("\n");
+      // Prepare lead data for confirm modal
+      const leadDataForConfirm = {
+        customer: data,
+        selectedItems: selectedItems,
+        pricing: cartWithRules.getPricingWithRules(),
+      };
 
-        // Format form data for WhatsApp using centralized helper
-        const formDataText = Object.entries(data)
-          .filter(([key, value]) => key !== "gdpr_consent" && value)
-          .map(([key, value]) => {
-            const field = (settings.formFields ?? []).find(
-              (f) => labelToFieldName(f.label) === key,
-            );
-            return formatFieldForDisplay(key, value, field?.label);
-          })
-          .filter(Boolean)
-          .join("\n");
+      // Store lead data and show confirmation modal
+      setSavedLeadId(leadId);
+      setSavedLeadData(leadDataForConfirm);
+      setConfirmModalOpen(true);
 
-        const lines = [
-          `Subtotale servizi/prodotti: €${formatEUR(p.subtotal)}`,
-          ...(toNum(p.detailed?.individualDiscountSavings) > 0
-            ? [`Sconti per prodotto/servizio: -€${formatEUR(p.detailed.individualDiscountSavings)}`]
-            : []),
-          ...(toNum(p.detailed?.globalDiscountSavings) > 0
-            ? [`Sconto globale (-10%): -€${formatEUR(p.detailed.globalDiscountSavings)}`]
-            : []),
-          ...(toNum(p.giftSavings) > 0
-            ? [`Servizi in omaggio: -€${formatEUR(p.giftSavings)}`]
-            : []),
-          `TOTALE: €${formatEUR(p.total)}`,
-          ...(toNum(p.totalSavings) > 0
-            ? [`💰 Totale risparmiato: €${formatEUR(p.totalSavings)}!`]
-            : []),
-        ];
-        const totalText = lines.join("\n");
-
-        const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${itemsList}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${leadId}`;
-
-        const whatsappUrl = generateWhatsAppLink(
-          settings.whatsappNumber,
-          message,
-        );
-        window.open(whatsappUrl, "_blank");
-
-        // Analytics for WhatsApp
-        if (analytics) {
-          logEvent(analytics, "whatsapp_contact", {
-            items: cartWithRules.cart.items.length,
-            total_value: toNum(p.total),
-            lead_id: leadId,
-          });
-        }
-      }
-
-      toast({
-        title: "Richiesta inviata con successo!",
-        description:
-          "I tuoi dati sono stati salvati e si è aperta la conversazione WhatsApp. Ti contatteremo al più presto!",
-      });
-
-      // Allow modal to stay open with empty cart momentarily for confirmation
+      // Clear cart and close this modal
       setAllowEmptyCart(true);
       cartWithRules.clearCart();
-
-      // Close modal after a brief delay to show the success message
-      setTimeout(() => {
-        setAllowEmptyCart(false);
-        onClose();
-      }, 2000);
+      onClose();
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({
@@ -323,105 +252,11 @@ export default function CheckoutModal({
     }
   };
 
-  const handleDownloadPDF = async () => {
-    if (!settings) return;
-
-    // Prevent PDF generation if cart is empty
-    if (cartWithRules.cart.itemCount === 0) {
-      toast({
-        title: "Carrello vuoto",
-        description:
-          "Aggiungi almeno un servizio per generare il preventivo PDF",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGeneratingPDF(true);
-    try {
-      const formData = form.getValues();
-      
-      // Usa la stessa logica del display CheckoutModal per il PDF
-      const itemsWithRules = cartWithRules.getItemsWithRuleInfo();
-      const allItemsWithAvailability = cartWithRules.getAllItemsWithAvailability();
-      
-      // Calcola i totali usando i dati reali dal database (come nel CheckoutModal)
-      let subtotalFromDB = 0;
-      let totalIndividualDiscounts = 0;
-      let giftSavingsFromDB = 0;
-      
-      const selectedItems = itemsWithRules.map(cartItem => {
-        // Trova i dati completi dal database
-        const fullItem = allItemsWithAvailability.find(dbItem => dbItem.id === cartItem.id);
-        
-        const title = fullItem?.title || cartItem.title || "Voce";
-        const originalPrice = toNum(fullItem?.originalPrice || fullItem?.price || cartItem.price);
-        const currentPrice = toNum(fullItem?.price || cartItem.price);
-        const isGift = cartItem.isGift;
-        
-        if (isGift) {
-          giftSavingsFromDB += originalPrice;
-        } else {
-          subtotalFromDB += currentPrice;
-          if (originalPrice > currentPrice) {
-            totalIndividualDiscounts += (originalPrice - currentPrice);
-          }
-        }
-        
-        return {
-          id: cartItem.id,
-          title: title,
-          price: isGift ? 0 : currentPrice,
-          originalPrice: originalPrice,
-          isGift: isGift
-        };
-      });
-      
-      // Sconto globale sui prezzi già scontati dal database
-      const globalDiscountRate = 0.1; // 10%
-      const globalDiscountAmount = subtotalFromDB * globalDiscountRate;
-      const finalTotal = subtotalFromDB - globalDiscountAmount;
-
-      // Struttura dati per PDF allineata con il CheckoutModal
-      const pdfData = {
-        customer: formData,
-        selectedItems: selectedItems,
-        pricing: {
-          subtotal: subtotalFromDB,
-          individualDiscountSavings: totalIndividualDiscounts,
-          globalDiscountSavings: globalDiscountAmount,
-          giftSavings: giftSavingsFromDB,
-          totalSavings: totalIndividualDiscounts + globalDiscountAmount + giftSavingsFromDB,
-          total: finalTotal,
-          // Mantieni compatibilità con vecchio sistema
-          discount: totalIndividualDiscounts + globalDiscountAmount,
-          originalSubtotal: subtotalFromDB + totalIndividualDiscounts
-        }
-      };
-
-      const customerName = (
-        formData.nome ||
-        formData.Nome ||
-        "cliente"
-      ).toString();
-      const filename = `preventivo-${customerName}-${new Date().toISOString().slice(0, 10)}.pdf`;
-
-      await generateClientQuotePDF(pdfData, filename);
-
-      toast({
-        title: "PDF generato",
-        description: "Il preventivo è stato scaricato con successo",
-      });
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "Errore",
-        description: "Errore durante la generazione del PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingPDF(false);
-    }
+  const handleCloseConfirmModal = () => {
+    setConfirmModalOpen(false);
+    setSavedLeadId("");
+    setSavedLeadData(null);
+    setAllowEmptyCart(false);
   };
 
   // Only hide modal if cart is empty AND we don't allow empty cart state
@@ -687,25 +522,6 @@ export default function CheckoutModal({
 
                 {/* Action Buttons */}
                 <div className="pt-4 space-y-3">
-                  {/* Download PDF Button */}
-                  <Button
-                    type="button"
-                    onClick={handleDownloadPDF}
-                    disabled={isGeneratingPDF || !form.watch("gdpr_consent")}
-                    className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isGeneratingPDF ? (
-                      <>
-                        <span>Generando PDF...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-5 h-5" />
-                        <span>SCARICA PREVENTIVO PDF</span>
-                      </>
-                    )}
-                  </Button>
-
                   {/* Submit Button */}
                   <Button
                     type="submit"
@@ -714,27 +530,31 @@ export default function CheckoutModal({
                   >
                     {isSubmitting ? (
                       <>
-                        <span>Invio in corso...</span>
+                        <span>Salvataggio in corso...</span>
                       </>
                     ) : (
                       <>
-                        <MessageCircle className="w-5 h-5" />
-                        <span>INVIA RICHIESTA</span>
+                        <span>RICHIEDI PREVENTIVO</span>
                       </>
                     )}
                   </Button>
-                  {settings?.whatsappNumber && (
-                    <p className="text-xs text-gray-500 text-center mt-2">
-                      La richiesta verrà salvata e si aprirà automaticamente
-                      WhatsApp
-                    </p>
-                  )}
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    Il preventivo verrà salvato e potrai scegliere come procedere
+                  </p>
                 </div>
               </form>
             )}
           </>
         )}
       </DialogContent>
+      
+      {/* Confirm Quote Modal */}
+      <ConfirmQuoteModal
+        isOpen={confirmModalOpen}
+        onClose={handleCloseConfirmModal}
+        leadId={savedLeadId}
+        leadData={savedLeadData || { customer: {}, selectedItems: [], pricing: {} }}
+      />
     </Dialog>
   );
 }
