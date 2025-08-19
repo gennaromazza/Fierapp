@@ -43,6 +43,10 @@ export default function LeadsManagement() {
   const { data: allLeads, loading } = useCollection<Lead>("leads");
   const { toast } = useToast();
 
+  // Ricerca lead specifico
+  const targetLeadId = 'b0ii10OxMFuW9KhEqEoh';
+  const targetLead = allLeads?.find(lead => lead.id === targetLeadId);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<Date | undefined>();
@@ -454,6 +458,47 @@ export default function LeadsManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Debug sezione per lead specifico */}
+      {targetLead && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="text-blue-800">🔍 LEAD SPECIFICO TROVATO: {targetLeadId}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-semibold text-blue-700">👤 DATI CLIENTE:</h4>
+                <p>Nome: {targetLead.customer?.nome || 'N/A'}</p>
+                <p>Cognome: {targetLead.customer?.cognome || 'N/A'}</p>
+                <p>Email: {targetLead.customer?.email || 'N/A'}</p>
+                <p>Telefono: {targetLead.customer?.telefono || 'N/A'}</p>
+                <p>Data Evento: {targetLead.customer?.data_evento || 'N/A'}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-blue-700">💰 PRICING:</h4>
+                <p>Subtotale: €{(targetLead.pricing?.subtotal || 0).toLocaleString('it-IT')}</p>
+                <p>Totale: €{(targetLead.pricing?.total || 0).toLocaleString('it-IT')}</p>
+                <p>Total Savings: €{(targetLead.pricing?.totalSavings || 0).toLocaleString('it-IT')}</p>
+                <p>Gift Savings: €{(targetLead.pricing?.giftSavings || 0).toLocaleString('it-IT')}</p>
+                <p>Status: {targetLead.status || 'N/A'}</p>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-blue-700">🛍️ SERVIZI ({targetLead.selectedItems?.length || 0}):</h4>
+              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                {targetLead.selectedItems?.map((item, index) => (
+                  <div key={item.id} className="text-sm border-l-2 border-blue-300 pl-2">
+                    <span className="font-medium">{item.title}</span>
+                    <br />
+                    <span>Orig: €{item.originalPrice || 0} → Final: €{item.price || 0}</span>
+                    {item.price === 0 && <span className="text-green-600 font-bold"> 🎁 GRATIS</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <div className="relative overflow-hidden rounded-2xl p-8 shadow-2xl border border-white/20 backdrop-blur-lg" 
            style={{
              background: `linear-gradient(135deg, 
