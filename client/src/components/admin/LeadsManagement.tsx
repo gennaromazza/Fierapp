@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { collection, query, orderBy, updateDoc, doc, deleteDoc, where, Timestamp, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { Lead, Customer, Settings } from "@shared/schema";
@@ -43,7 +43,6 @@ export default function LeadsManagement() {
   const { data: allLeads, loading } = useCollection<Lead>("leads");
   const { toast } = useToast();
 
-  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<Date | undefined>();
@@ -53,12 +52,10 @@ export default function LeadsManagement() {
 
   // Stato per editing lead
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingLead, setEditingLead] = useState<Lead | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Customer>>({});
-  const ITEMS_PER_PAGE = 20;
 
-  useEffect(() => {
-    if (!allLeads) return;
+  // Memoized filtered leads - expensive filtering operations
+  const filteredLeads = useMemo(() => {
+    if (!allLeads) return [];
 
     let filtered = allLeads;
 
@@ -101,9 +98,16 @@ export default function LeadsManagement() {
       });
     }
 
-    setFilteredLeads(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
+    return filtered;
   }, [allLeads, searchTerm, statusFilter, dateFilter]);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Customer>>({});
+  const ITEMS_PER_PAGE = 20;
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, dateFilter]);
 
   const updateLeadStatus = async (leadId: string, newStatus: Lead["status"]) => {
     try {
@@ -994,8 +998,8 @@ export default function LeadsManagement() {
                       </Label>
                       <Input
                         id={`edit-${key}`}
-                        value={editForm[key] || ''}
-                        onChange={(e) => handleEditFormChange(key, e.target.value)}
+                        value={(editForm as any)[key] || ''}
+                        onChange={(e) => handleEditFormChange(key as keyof Customer, e.target.value)}
                         className="mt-1"
                         placeholder={`Inserisci ${key.replace(/_/g, ' ')}`}
                       />

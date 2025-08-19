@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, ShoppingCart, Gift, Tag, Check, X, Sparkles, MessageCircle, ArrowLeft, SkipForward, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { db } from '../../firebase';
 import type { Item, Discounts, Settings } from '../../../../shared/schema';
 import CheckoutModal from '@/components/CheckoutModal';
 import { LeadForm } from './LeadForm';
+import type { LeadData } from './types';
 import { SpectacularAvatar } from './SpectacularAvatar';
 import { CalendarIcon } from 'lucide-react';
 import { getItemDiscountInfo } from '../../lib/discounts';
@@ -86,50 +87,93 @@ export function DynamicChatGuide() {
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Utility function to remove invalid values recursively
+  // Utility function to remove invalid values recursively with robust error handling
   function removeUndefinedDeep(obj: any, removeNull: boolean = false): any {
-    // Gestione valori primitivi invalidi
-    if (obj === undefined) return null;
-    if (removeNull && obj === null) return null;
-    if (Number.isNaN(obj)) return null;
-    if (obj === Infinity || obj === -Infinity) return null;
-    
-    // Mantieni Date e serverTimestamp intatti
-    if (obj instanceof Date) {
-      return isNaN(obj.getTime()) ? null : obj;
-    }
-    
-    // Mantieni serverTimestamp di Firebase
-    if (obj && typeof obj === 'object' && obj.constructor?.name === 'ServerTimestampFieldValueImpl') {
-      return obj;
-    }
-    
-    // Array
-    if (Array.isArray(obj)) {
-      return obj
-        .map(item => removeUndefinedDeep(item, removeNull))
-        .filter(item => {
-          if (removeNull) return item !== null && item !== undefined;
-          return item !== undefined;
-        });
-    }
-    
-    // Oggetti
-    if (typeof obj === 'object' && obj !== null) {
-      const cleaned: any = {};
-      for (const [key, value] of Object.entries(obj)) {
-        const cleanedValue = removeUndefinedDeep(value, removeNull);
-        if (cleanedValue !== undefined) {
-          if (!removeNull || cleanedValue !== null) {
-            cleaned[key] = cleanedValue;
-          }
+    try {
+      // Handle null and undefined early
+      if (obj === null) return removeNull ? undefined : null;
+      if (obj === undefined) return null;
+      
+      // Handle primitive invalid values
+      if (Number.isNaN(obj)) return null;
+      if (obj === Infinity || obj === -Infinity) return null;
+      
+      // Handle Date objects with validation
+      if (obj instanceof Date) {
+        try {
+          return isNaN(obj.getTime()) ? null : obj;
+        } catch (error) {
+          console.warn('⚠️ Invalid Date object encountered:', obj, error);
+          return null;
         }
       }
-      return cleaned;
+      
+      // Handle Firebase serverTimestamp safely
+      if (obj && typeof obj === 'object') {
+        try {
+          if (obj.constructor?.name === 'ServerTimestampFieldValueImpl' || obj._methodName === 'serverTimestamp') {
+            return obj;
+          }
+        } catch (error) {
+          console.warn('⚠️ Error checking Firebase timestamp:', error);
+          // Continue processing as regular object
+        }
+      }
+      
+      // Handle Arrays with error recovery
+      if (Array.isArray(obj)) {
+        try {
+          const cleanedArray = [];
+          for (let i = 0; i < obj.length; i++) {
+            try {
+              const cleanedItem = removeUndefinedDeep(obj[i], removeNull);
+              if (cleanedItem !== undefined && (!removeNull || cleanedItem !== null)) {
+                cleanedArray.push(cleanedItem);
+              }
+            } catch (error) {
+              console.warn(`⚠️ Error cleaning array item at index ${i}:`, error, obj[i]);
+              // Skip problematic item and continue
+            }
+          }
+          return cleanedArray;
+        } catch (error) {
+          console.error('❌ Critical error processing array:', error, obj);
+          return []; // Return empty array as fallback
+        }
+      }
+      
+      // Handle Objects with error recovery
+      if (typeof obj === 'object' && obj !== null) {
+        try {
+          const cleaned: any = {};
+          const entries = Object.entries(obj);
+          
+          for (const [key, value] of entries) {
+            try {
+              const cleanedValue = removeUndefinedDeep(value, removeNull);
+              if (cleanedValue !== undefined && (!removeNull || cleanedValue !== null)) {
+                cleaned[key] = cleanedValue;
+              }
+            } catch (error) {
+              console.warn(`⚠️ Error cleaning object property '${key}':`, error, value);
+              // Skip problematic property and continue
+            }
+          }
+          return cleaned;
+        } catch (error) {
+          console.error('❌ Critical error processing object:', error, obj);
+          return {}; // Return empty object as fallback
+        }
+      }
+      
+      // Return valid primitives as-is
+      return obj;
+      
+    } catch (error) {
+      console.error('❌ Critical error in removeUndefinedDeep:', error, obj);
+      // Final fallback - return null for any unrecoverable error
+      return null;
     }
-    
-    // Valori primitivi validi
-    return obj;
   }
 
   // Salva dati conversazione su Firebase
@@ -159,8 +203,30 @@ export function DynamicChatGuide() {
         createdAt: new Date().toISOString()
       };
 
-      // Prima pulizia: rimuovi undefined, NaN, Infinity
-      const cleanedData = removeUndefinedDeep(rawData, false);
+      // Prima pulizia: rimuovi undefined, NaN, Infinity con gestione errori robusta
+      let cleanedData;
+      try {
+        cleanedData = removeUndefinedDeep(rawData, false);
+        console.log('✅ Data cleaning completed successfully');
+      } catch (error) {
+        console.error('❌ Critical error during data cleaning:', error);
+        // Fallback: create minimal safe data structure
+        cleanedData = {
+          sessionId: conversationData.sessionId || `session_${Date.now()}`,
+          eventType: eventType || 'unknown',
+          data: { error: 'Data cleaning failed', originalError: (error as Error)?.message || 'Unknown error' },
+          conversationData: {
+            sessionId: conversationData.sessionId || `session_${Date.now()}`,
+            currentPhase: currentPhase || 'unknown',
+            messagesCount: messages?.length || 0,
+            startTime: new Date()
+          },
+          timestamp: serverTimestamp(),
+          createdAt: new Date().toISOString(),
+          cleaningError: true
+        };
+        console.log('🚨 Using fallback data structure due to cleaning error');
+      }
 
       // Log dettagliato PRIMA di salvare
       console.log('🔍 === FIREBASE SAVE DEBUG ===');
@@ -547,22 +613,84 @@ export function DynamicChatGuide() {
   };
 
   const handleEmailInput = (email: string) => {
-    if (!email.includes('@')) {
+    // Comprehensive email validation with detailed error messages
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const trimmedEmail = email.trim();
+    
+    // Check for empty email
+    if (!trimmedEmail) {
       addMessage({
         type: 'assistant',
         avatar: 'thoughtful',
-        text: 'Mi serve un indirizzo email valido per inviarti il preventivo. Riprova! 😊'
+        text: 'Non hai inserito nessuna email. Inserisci il tuo indirizzo email per ricevere il preventivo! 📧'
       });
+      return;
+    }
+    
+    // Check basic format requirements
+    if (!trimmedEmail.includes('@')) {
+      addMessage({
+        type: 'assistant',
+        avatar: 'thoughtful',
+        text: 'L\'email deve contenere il simbolo @. Esempio: nome@dominio.com 😊'
+      });
+      return;
+    }
+    
+    // Check for domain part
+    if (!trimmedEmail.includes('.') || trimmedEmail.endsWith('.')) {
+      addMessage({
+        type: 'assistant',
+        avatar: 'thoughtful',
+        text: 'L\'email deve avere un dominio valido. Esempio: mario@gmail.com 📧'
+      });
+      return;
+    }
+    
+    // Comprehensive regex validation
+    if (!emailRegex.test(trimmedEmail)) {
+      // Specific error messages for common issues
+      if (trimmedEmail.startsWith('@') || trimmedEmail.startsWith('.')) {
+        addMessage({
+          type: 'assistant',
+          avatar: 'thoughtful',
+          text: 'L\'email non può iniziare con @ o punto. Prova con: nome@dominio.com 😊'
+        });
+      } else if (trimmedEmail.endsWith('@')) {
+        addMessage({
+          type: 'assistant',
+          avatar: 'thoughtful',
+          text: 'L\'email è incompleta. Manca il dominio dopo @. Esempio: mario@gmail.com 📧'
+        });
+      } else if (trimmedEmail.includes('..')) {
+        addMessage({
+          type: 'assistant',
+          avatar: 'thoughtful',
+          text: 'L\'email non può contenere punti consecutivi. Controlla e riprova! 😊'
+        });
+      } else if (trimmedEmail.includes(' ')) {
+        addMessage({
+          type: 'assistant',
+          avatar: 'thoughtful',
+          text: 'L\'email non può contenere spazi. Rimuovi gli spazi e riprova! 📧'
+        });
+      } else {
+        addMessage({
+          type: 'assistant',
+          avatar: 'thoughtful',
+          text: 'Il formato email non è valido. Usa il formato: nome@dominio.com 😊'
+        });
+      }
       return;
     }
 
     addMessage({
       type: 'user',
-      text: email
+      text: trimmedEmail
     });
 
     setLeadData((prev) => {
-      const newData = { ...prev, email };
+      const newData = { ...prev, email: trimmedEmail };
       console.log('📝 DynamicChatGuide - Email aggiornata:', newData);
       return newData;
     });
@@ -1058,14 +1186,14 @@ export function DynamicChatGuide() {
     return cart.getUnavailableReason(item.id) || 'Elemento non disponibile';
   };
 
-  const toggleDescription = (itemId: string) => {
+  const toggleDescription = useCallback((itemId: string) => {
     setExpandedDescriptions(prev => ({
       ...prev,
       [itemId]: !prev[itemId]
     }));
-  };
+  }, []);
 
-  const renderItemCard = (item: Item) => {
+  const renderItemCard = useCallback((item: Item) => {
     const cartItem = cart.cart.items.find(ci => ci.id === item.id);
     const isSelected = !!cartItem;
     const isAvailable = cart.isItemAvailable(item.id);
@@ -1228,7 +1356,7 @@ export function DynamicChatGuide() {
         </div>
       </div>
     );
-  };
+  }, [cart, discounts, expandedDescriptions, getDetailedUnavailableReason, handleItemToggle, toggleDescription]);
 
   const renderMessage = (message: ChatMessage) => {
     if (message.type === 'assistant') {

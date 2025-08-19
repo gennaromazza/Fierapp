@@ -46,6 +46,14 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [allowEmptyCart, setAllowEmptyCart] = useState(false);
+  
+  // Reset allowEmptyCart when modal opens with items
+  useEffect(() => {
+    if (isOpen && cartWithRules.cart.itemCount > 0) {
+      setAllowEmptyCart(false);
+    }
+  }, [isOpen, cartWithRules.cart.itemCount]);
 
   // Use React Query for cached settings loading
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
@@ -162,7 +170,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           text: settings.gdprText,
           timestamp: new Date()
         },
-        reCAPTCHAToken: recaptchaToken,
+        reCAPTCHAToken: recaptchaToken || undefined,
         status: "new"
       });
 
@@ -220,9 +228,15 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
         description: "I tuoi dati sono stati salvati e si è aperta la conversazione WhatsApp. Ti contatteremo al più presto!",
       });
 
-      // Clear cart and close modal
+      // Allow modal to stay open with empty cart momentarily for confirmation
+      setAllowEmptyCart(true);
       cartWithRules.clearCart();
-      onClose();
+      
+      // Close modal after a brief delay to show the success message
+      setTimeout(() => {
+        setAllowEmptyCart(false);
+        onClose();
+      }, 2000);
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({
@@ -237,6 +251,16 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
   const handleDownloadPDF = async () => {
     if (!settings) return;
+    
+    // Prevent PDF generation if cart is empty
+    if (cartWithRules.cart.itemCount === 0) {
+      toast({
+        title: "Carrello vuoto",
+        description: "Aggiungi almeno un servizio per generare il preventivo PDF",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsGeneratingPDF(true);
     try {
@@ -275,7 +299,8 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
     }
   };
 
-  if (cartWithRules.cart.itemCount === 0) return null;
+  // Only hide modal if cart is empty AND we don't allow empty cart state
+  if (cartWithRules.cart.itemCount === 0 && !allowEmptyCart) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

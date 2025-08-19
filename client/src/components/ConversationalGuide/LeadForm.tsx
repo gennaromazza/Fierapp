@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -78,8 +78,8 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     syncWithInitialData();
   }, [syncWithInitialData]);
 
-  // Reconstruct formData object for backward compatibility
-  const formData: LeadData = {
+  // Reconstruct formData object for backward compatibility - memoized for performance
+  const formData: LeadData = useMemo(() => ({
     name,
     surname,
     email,
@@ -87,13 +87,13 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     notes,
     gdprAccepted,
     eventDate: eventDate ? eventDate.toISOString() : ''
-  };
+  }), [name, surname, email, phone, notes, gdprAccepted, eventDate]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch settings for WhatsApp number using the same pattern as Header.tsx
-  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
+  const { data: settings, isLoading: settingsLoading, error: settingsError, refetch: refetchSettings } = useQuery({
     queryKey: ['settings', 'app'],
     queryFn: async () => {
       try {
@@ -122,7 +122,24 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       }
     },
     staleTime: 30000, // Cache for 30 seconds
-    retry: 3, // Retry failed requests
+    retry: (failureCount, error) => {
+      // Don't retry on authentication or permission errors
+      if (error?.message?.includes('permission-denied') || 
+          error?.message?.includes('unauthenticated')) {
+        console.warn('🚫 Auth error - not retrying:', error.message);
+        return false;
+      }
+      
+      // Retry up to 3 times for network/temporary errors
+      if (failureCount < 3) {
+        console.log(`🔄 Retry attempt ${failureCount + 1}/3 for settings query`);
+        return true;
+      }
+      
+      console.error('❌ Max retries exceeded for settings query');
+      return false;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff (1s, 2s, 4s, max 10s)
   });
 
   // Debug settings loading with enhanced information
@@ -192,7 +209,8 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
     }
   };
 
-  const validateForm = (): boolean => {
+  // Memoized validation errors - recalculates only when formData changes
+  const validationErrors = useMemo(() => {
     const newErrors: Record<string, string> = {};
 
     Object.keys(formData).forEach(field => {
@@ -202,13 +220,18 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       }
     });
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
+  }, [formData]);
+
+  const validateForm = (): boolean => {
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
   };
 
-  const isFormValid = () => {
+  // Memoized form validity check - recalculates only when individual fields change
+  const isFormValid = useMemo(() => {
     return name && surname && email && phone && eventDate && gdprAccepted;
-  };
+  }, [name, surname, email, phone, eventDate, gdprAccepted]);
 
   const handleDownloadPDF = async () => {
     if (!validateForm() || isSubmitting) return;
@@ -316,16 +339,10 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
       console.log('📞 Settings loading:', settingsLoading);
       console.log('❌ Settings error:', settingsError);
       
-      // Check if settings are still loading
-      if (settingsLoading) {
-        alert('Caricamento impostazioni in corso. Riprova tra un momento.');
-        return;
-      }
-
-      // Check for errors in settings loading
-      if (settingsError) {
-        console.error('❌ Error loading settings:', settingsError);
-        alert('Errore nel caricamento delle impostazioni. Verifica i permessi Firebase e riprova.');
+      // Check if settings are still loading or have errors
+      if (settingsLoading || settingsError) {
+        console.warn('⚠️ Cannot send WhatsApp: settings not ready', { settingsLoading, settingsError });
+        // Don't proceed - the UI banners will show the appropriate state
         return;
       }
       
@@ -417,8 +434,22 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
   // Add test button in development mode
   const isDevelopment = import.meta.env.DEV;
 
-  // Usa il sistema di pricing unificato
-  const pricing = cart.getPricingWithRules();
+  // Usa il sistema di pricing unificato - memoized per performance
+  const pricing = useMemo(() => cart.getPricingWithRules(), [cart]);
+  
+  // Memoized marketing messages - expensive calculation
+  const marketingMessages = useMemo(() => {
+    return generateMarketingMessages(pricing.detailed);
+  }, [pricing.detailed]);
+  
+  // Memoized formatted price strings to avoid recalculating on every render
+  const formattedPrices = useMemo(() => ({
+    subtotal: pricing.originalSubtotal.toLocaleString('it-IT'),
+    discount: pricing.discount.toLocaleString('it-IT'),
+    giftSavings: pricing.giftSavings.toLocaleString('it-IT'),
+    total: pricing.total.toLocaleString('it-IT'),
+    totalSavings: pricing.totalSavings.toLocaleString('it-IT')
+  }), [pricing.originalSubtotal, pricing.discount, pricing.giftSavings, pricing.total, pricing.totalSavings]);
 
   return (
     <div className={cn("bg-white rounded-lg p-6 shadow-lg max-w-md mx-auto", className)}>
@@ -440,55 +471,86 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
         <div className="border-t pt-2 mt-2 space-y-1">
           <div className="flex justify-between text-sm">
             <span>Subtotale:</span>
-            <span>€{pricing.originalSubtotal.toLocaleString('it-IT')}</span>
+            <span>€{formattedPrices.subtotal}</span>
           </div>
           {pricing.discount > 0 && (
             <div className="flex justify-between text-sm text-red-600">
               <span>Sconti:</span>
-              <span>-€{pricing.discount.toLocaleString('it-IT')}</span>
+              <span>-€{formattedPrices.discount}</span>
             </div>
           )}
           {pricing.giftSavings > 0 && (
             <div className="flex justify-between text-sm text-green-600">
               <span>Servizi gratuiti:</span>
-              <span>-€{pricing.giftSavings.toLocaleString('it-IT')}</span>
+              <span>-€{formattedPrices.giftSavings}</span>
             </div>
           )}
           <div className="flex justify-between font-bold border-t pt-1">
             <span>TOTALE:</span>
-            <span>€{pricing.total.toLocaleString('it-IT')}</span>
+            <span>€{formattedPrices.total}</span>
           </div>
           {pricing.totalSavings > 0 && (
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 mt-3">
               <div className="text-center text-green-800 font-bold text-lg mb-2">
-                🎉 RISPARMIO TOTALE: €{pricing.totalSavings.toLocaleString('it-IT')}!
+                🎉 RISPARMIO TOTALE: €{formattedPrices.totalSavings}!
               </div>
-              {(() => {
-                const marketingMessages = generateMarketingMessages(pricing.detailed);
-                return (
-                  <div className="space-y-1 text-center">
-                    {marketingMessages.mainSavings && (
-                      <div className="text-sm text-green-700 font-medium">
-                        {marketingMessages.mainSavings.replace(/🔥|💰|✨|💡/, '')}
-                      </div>
-                    )}
-                    {marketingMessages.giftMessage && (
-                      <div className="text-sm text-green-600">
-                        {marketingMessages.giftMessage}
-                      </div>
-                    )}
-                    {marketingMessages.urgencyText && (
-                      <div className="text-sm text-orange-600 font-medium mt-2">
-                        {marketingMessages.urgencyText}
-                      </div>
-                    )}
+              <div className="space-y-1 text-center">
+                {marketingMessages.mainSavings && (
+                  <div className="text-sm text-green-700 font-medium">
+                    {marketingMessages.mainSavings.replace(/🔥|💰|✨|💡/, '')}
                   </div>
-                );
-              })()}
+                )}
+                {marketingMessages.giftMessage && (
+                  <div className="text-sm text-green-600">
+                    {marketingMessages.giftMessage}
+                  </div>
+                )}
+                {marketingMessages.urgencyText && (
+                  <div className="text-sm text-orange-600 font-medium mt-2">
+                    {marketingMessages.urgencyText}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Settings Error Banner */}
+      {settingsError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <div className="text-red-500 text-xl">⚠️</div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-red-800 mb-2">Errore di connessione</h4>
+              <p className="text-red-700 text-sm mb-3">
+                Impossibile caricare le impostazioni. Verifica la connessione e riprova.
+              </p>
+              <Button 
+                onClick={() => refetchSettings()} 
+                size="sm"
+                variant="outline"
+                className="border-red-300 text-red-700 hover:bg-red-100"
+                disabled={settingsLoading}
+              >
+                {settingsLoading ? '⏳ Caricamento...' : '🔄 Riprova'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Loading Banner */}
+      {settingsLoading && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            <p className="text-blue-700 text-sm">
+              Caricamento configurazione in corso...
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Lead Form */}
       <div className="space-y-4">
