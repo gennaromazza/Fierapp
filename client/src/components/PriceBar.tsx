@@ -21,7 +21,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
         const discountsData = discountsDoc.data() as Discounts;
 
         setDiscounts(discountsData);
-        
+
         // Salva nel localStorage per sync con useCartWithRules
         localStorage.setItem('cachedDiscounts', JSON.stringify(discountsData));
       } else {
@@ -43,7 +43,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
 
     // Controlla se c'è uno sconto globale attivo
     const hasGlobalDiscount = discounts?.global?.isActive;
-    
+
 
 
     // Calcola lo sconto globale se attivo
@@ -67,12 +67,12 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
       if (item.price === 0) return;
 
       const originalPrice = item.originalPrice || item.price;
-      
+
       // Se l'item ha già uno sconto applicato (originalPrice > price), aggiungilo al totale sconti
       if (item.originalPrice && item.originalPrice > item.price) {
         itemSpecificDiscount += (item.originalPrice - item.price);
       }
-      
+
       // Controlla anche se ci sono sconti configurati in discounts.perItemOverrides
       const hasItemDiscount = discounts?.perItemOverrides?.[item.id];
       if (hasItemDiscount && hasItemDiscount.isActive) {
@@ -93,15 +93,15 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
 
   // Get pricing with rules applied
   const basePricing = cart.getPricingWithRules();
-  
+
   // Calcola il subtotale originale (senza sconti globali)
   const originalSubtotal = cart.cart.items.reduce((sum, item) => {
     if (item.price === 0) return sum; // Salta gli omaggi
     return sum + (item.originalPrice || item.price);
   }, 0);
-  
+
   const pricing = {
-    subtotal: originalSubtotal,
+    originalSubtotal: originalSubtotal,
     totalDiscountValue: globalDiscount + itemSpecificDiscount,
     total: Math.max(0, originalSubtotal - globalDiscount - itemSpecificDiscount)
   };
@@ -142,11 +142,11 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Totale servizi/prodotti senza sconti */}
                 <div className="flex items-center text-sm text-gray-700">
                   <span>Totale servizi/prodotti: </span>
-                  <span className="font-semibold ml-1">€{pricing.subtotal.toLocaleString('it-IT')}</span>
+                  <span className="font-semibold ml-1">€{pricing.originalSubtotal.toLocaleString('it-IT')}</span>
                 </div>
 
                 {/* Sconti breakdown */}
@@ -207,7 +207,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
                   </span>
                 </div>
                 <div className="text-sm text-gray-700">
-                  Totale: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
+                  Totale: <span className="font-semibold">€{pricing.originalSubtotal.toLocaleString('it-IT')}</span>
                 </div>
                 {pricing.totalDiscountValue > 0 && (
                   <div className="flex items-center gap-1 flex-wrap">
@@ -251,7 +251,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
                   </div>
                 </div>
                 <div className="text-sm text-gray-700">
-                  Totale: <span className="font-semibold">€{pricing.subtotal.toLocaleString('it-IT')}</span>
+                  Totale: <span className="font-semibold">€{pricing.originalSubtotal.toLocaleString('it-IT')}</span>
                 </div>
                 {pricing.totalDiscountValue > 0 && (
                   <div className="bg-green-100 text-green-800 rounded px-2 py-1 text-xs text-center font-bold">
@@ -267,7 +267,7 @@ export default function PriceBar({ onOpenCheckout }: PriceBarProps) {
                 {/* Lista prodotti mobile compatta */}
                 <div className="mb-1">
                   <div className="text-xs text-gray-700 font-medium">
-                    {cart.cart.itemCount} prodotti • Totale: €{pricing.subtotal.toLocaleString('it-IT')}
+                    {cart.cart.itemCount} prodotti • Totale: €{pricing.originalSubtotal.toLocaleString('it-IT')}
                   </div>
                   {/* Mostra solo i primi 2 prodotti + contatore */}
                   <div className="text-xs text-gray-600 mt-0.5 flex items-center gap-1 flex-wrap">
