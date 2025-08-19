@@ -466,13 +466,18 @@ export default function CheckoutModal({
                         // Calcola manualmente i totali basati sui prezzi dal database
                         let subtotalFromDB = 0;
                         let totalIndividualDiscounts = 0;
+                        let giftSavingsFromDB = 0;
                         
                         itemsWithRules.forEach(cartItem => {
                           const fullItem = allItemsWithAvailability.find(dbItem => dbItem.id === cartItem.id);
                           const originalPrice = toNum(fullItem?.originalPrice || fullItem?.price || cartItem.price);
                           const currentPrice = toNum(fullItem?.price || cartItem.price);
                           
-                          if (!cartItem.isGift) {
+                          if (cartItem.isGift) {
+                            // Gli item regalo contribuiscono ai savings ma non al subtotale
+                            giftSavingsFromDB += originalPrice;
+                          } else {
+                            // Item normali: usano il prezzo dal database
                             subtotalFromDB += currentPrice;
                             if (originalPrice > currentPrice) {
                               totalIndividualDiscounts += (originalPrice - currentPrice);
@@ -480,7 +485,7 @@ export default function CheckoutModal({
                           }
                         });
                         
-                        // Sconto globale solo sui prezzi già scontati dal database
+                        // Sconto globale solo sui prezzi già scontati dal database (non sui regali)
                         const globalDiscountRate = 0.1; // 10%
                         const globalDiscountAmount = subtotalFromDB * globalDiscountRate;
                         const finalTotal = subtotalFromDB - globalDiscountAmount;
@@ -506,17 +511,17 @@ export default function CheckoutModal({
                               </div>
                             )}
 
-                            {(totalIndividualDiscounts + globalDiscountAmount) > 0 && (
-                              <div className="flex justify-between text-gray-600 text-sm border-t border-gray-200 pt-2 mt-2">
-                                <span>Totale sconti applicati:</span>
-                                <span className="font-semibold">-€{formatEUR(totalIndividualDiscounts + globalDiscountAmount)}</span>
+                            {giftSavingsFromDB > 0 && (
+                              <div className="flex justify-between text-green-600 font-semibold">
+                                <span>Servizi in omaggio:</span>
+                                <span>-€{formatEUR(giftSavingsFromDB)}</span>
                               </div>
                             )}
 
-                            {toNum(p.giftSavings) > 0 && (
-                              <div className="flex justify-between text-green-600 font-semibold">
-                                <span>Servizi in omaggio:</span>
-                                <span>-€{formatEUR(p.giftSavings)}</span>
+                            {(totalIndividualDiscounts + globalDiscountAmount + giftSavingsFromDB) > 0 && (
+                              <div className="flex justify-between text-gray-600 text-sm border-t border-gray-200 pt-2 mt-2">
+                                <span>Totale risparmi:</span>
+                                <span className="font-semibold">-€{formatEUR(totalIndividualDiscounts + globalDiscountAmount + giftSavingsFromDB)}</span>
                               </div>
                             )}
 

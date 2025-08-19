@@ -17,6 +17,15 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **Firebase Error Resolution**: Fixed timestamp handling and data structure issues in lead form submission
 - **Admin Panel Enhancement**: Added "Clear All Leads" functionality with double confirmation for data cleanup
 
+### CheckoutModal Database Integration & Gift Logic (August 19, 2025 - 1:04 PM) - COMPLETED
+- **Database-Driven Pricing**: CheckoutModal now uses real originalPrice and price fields from database instead of calculated values
+- **Individual Discount Display**: Shows proper price transitions (€350 → €300) for items with database-level discounts
+- **Gift Item Integration**: Complete gift logic with price struck-through and "GRATIS" display for gift items
+- **Correct Subtotal Calculation**: Based on actual database prices, excluding gift items from payment calculations
+- **Global Discount Logic**: Applied only to paid items (10% on subtotal), not on gift items
+- **Complete Savings Breakdown**: Shows individual discounts, global discounts, and gift values separately
+- **User Requirement Met**: CheckoutModal perfectly aligned with database schema and gift rules system
+
 ### Sequential Discount Logic Implementation (August 19, 2025 - 11:22 AM) - COMPLETED
 - **CRITICAL FIX**: Implemented sequential discount application - individual discounts now applied before global discounts
 - **Pricing Logic Correction**: Fixed CheckoutModal pricing to show €540 instead of €630 by applying discounts sequentially (700€ → 600€ → 540€)
