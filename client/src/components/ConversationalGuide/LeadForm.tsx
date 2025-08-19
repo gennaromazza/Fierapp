@@ -298,11 +298,18 @@ export function LeadForm({ initialData, onComplete, className }: LeadFormProps) 
           originalPrice: Number(item.originalPrice || item.price) || 0
         })),
         pricing: {
-          subtotal: Number(leadPricing.originalSubtotal) || 0,
+          subtotal: Number(leadPricing.subtotal) || 0,  // Subtotal solo servizi a pagamento
           discount: Number(leadPricing.discount) || 0,
           total: Number(leadPricing.total) || 0,
           giftSavings: Number(leadPricing.giftSavings) || 0,
-          totalSavings: Number(leadPricing.totalSavings) || 0
+          totalSavings: Number(leadPricing.totalSavings) || 0,
+          // Includi la struttura detailed per admin e WhatsApp
+          detailed: {
+            individualDiscountSavings: Number(leadPricing.detailed?.individualDiscountSavings) || 0,
+            globalDiscountSavings: Number(leadPricing.detailed?.globalDiscountSavings) || 0,
+            subtotal: Number(leadPricing.detailed?.subtotal) || 0,
+            finalTotal: Number(leadPricing.detailed?.finalTotal) || 0
+          }
         },
         gdprConsent: {
           accepted: !!formData.gdprAccepted,
