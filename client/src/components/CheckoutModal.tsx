@@ -344,26 +344,42 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
             <div className="bg-brand-primary rounded-lg p-4 mb-6">
               <h4 className="font-semibold text-brand-accent mb-3">RIEPILOGO SELEZIONE</h4>
               <div className="space-y-2 text-sm">
-            {cartWithRules.cart.items.map((item, index) => (
-              <div key={index} className="flex justify-between">
-                <span>
-                  {item.title}
-                  {cartWithRules.isItemGift && cartWithRules.isItemGift(item.id) && (
-                    <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
-                  )}
-                </span>
-                <span>
-                  {cartWithRules.isItemGift && cartWithRules.isItemGift(item.id) ? (
-                    <>
-                      <span className="line-through text-gray-400 mr-2">€{item.price.toLocaleString('it-IT')}</span>
-                      <span className="text-green-600 font-bold">GRATIS</span>
-                    </>
-                  ) : (
-                    `€${item.price.toLocaleString('it-IT')}`
-                  )}
-                </span>
-              </div>
-            ))}
+            {(() => {
+              const unifiedPricing = cartWithRules.getPricingWithRules();
+              return cartWithRules.cart.items.map((item, index) => {
+                const isGift = cartWithRules.isItemGift && cartWithRules.isItemGift(item.id);
+                const itemDetail = unifiedPricing.detailed?.itemDetails?.find(detail => detail.id === item.id);
+                const originalPrice = itemDetail?.originalPrice || item.price;
+                const finalPrice = itemDetail?.finalPrice || item.price;
+                const hasDiscount = originalPrice !== finalPrice && !isGift;
+                
+                return (
+                  <div key={index} className="flex justify-between">
+                    <span>
+                      {item.title}
+                      {isGift && (
+                        <span className="ml-1 text-green-600 font-bold">(OMAGGIO)</span>
+                      )}
+                    </span>
+                    <span>
+                      {isGift ? (
+                        <>
+                          <span className="line-through text-gray-400 mr-2">€{originalPrice.toLocaleString('it-IT')}</span>
+                          <span className="text-green-600 font-bold">GRATIS</span>
+                        </>
+                      ) : hasDiscount ? (
+                        <>
+                          <span className="line-through text-gray-400 mr-2">€{originalPrice.toLocaleString('it-IT')}</span>
+                          <span className="text-green-600 font-semibold">€{finalPrice.toLocaleString('it-IT')}</span>
+                        </>
+                      ) : (
+                        `€${finalPrice.toLocaleString('it-IT')}`
+                      )}
+                    </span>
+                  </div>
+                );
+              });
+            })()}
 
             {(() => {
               const unifiedPricing = cartWithRules.getPricingWithRules();
@@ -392,7 +408,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
                   <div className="flex justify-between font-bold text-lg text-brand-accent">
                     <span>TOTALE</span>
-                    <span>€{Math.round(Math.max(0, unifiedPricing.originalSubtotal - unifiedPricing.discount - unifiedPricing.giftSavings)).toLocaleString('it-IT')}</span>
+                    <span>€{Math.round(unifiedPricing.total).toLocaleString('it-IT')}</span>
                   </div>
                 </>
               );
