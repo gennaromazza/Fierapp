@@ -317,7 +317,7 @@ export default function LeadsManagement() {
       
       if (isGift) {
         // Item regalo: mostra prezzo originale e "GRATIS"
-        bodyLines.push(`   Prezzo originale: €${item.originalPrice.toLocaleString('it-IT')}`);
+        bodyLines.push(`   Prezzo originale: €${(item.originalPrice || 0).toLocaleString('it-IT')}`);
         bodyLines.push(`   🎁 GRATIS (Servizio in omaggio)`);
       } else if (item.originalPrice && item.originalPrice !== item.price) {
         // Item scontato: mostra prezzo originale e scontato
@@ -337,19 +337,21 @@ export default function LeadsManagement() {
     bodyLines.push('');
     bodyLines.push(`Subtotale servizi/prodotti: €${(lead.pricing.subtotal || 0).toLocaleString('it-IT')}`);
 
-    // Sconti individuali per prodotto/servizio
-    if ((lead.pricing.individualDiscountSavings || 0) > 0) {
-      bodyLines.push(`Sconti per prodotto/servizio: -€${lead.pricing.individualDiscountSavings.toLocaleString('it-IT')}`);
+    // Sconti individuali per prodotto/servizio - usa detailed se disponibile
+    const individualSavings = (lead.pricing as any).detailed?.individualDiscountSavings || 0;
+    if (individualSavings > 0) {
+      bodyLines.push(`Sconti per prodotto/servizio: -€${individualSavings.toLocaleString('it-IT')}`);
     }
 
-    // Sconto globale
-    if ((lead.pricing.globalDiscountSavings || 0) > 0) {
-      bodyLines.push(`Sconto globale (-10%): -€${lead.pricing.globalDiscountSavings.toLocaleString('it-IT')}`);
+    // Sconto globale - usa detailed se disponibile
+    const globalSavings = (lead.pricing as any).detailed?.globalDiscountSavings || 0;
+    if (globalSavings > 0) {
+      bodyLines.push(`Sconto globale (-10%): -€${globalSavings.toLocaleString('it-IT')}`);
     }
 
     // Servizi in omaggio
     if ((lead.pricing.giftSavings || 0) > 0) {
-      bodyLines.push(`Servizi in omaggio: -€${lead.pricing.giftSavings.toLocaleString('it-IT')}`);
+      bodyLines.push(`Servizi in omaggio: -€${(lead.pricing.giftSavings || 0).toLocaleString('it-IT')}`);
     }
 
     bodyLines.push('');
@@ -357,7 +359,7 @@ export default function LeadsManagement() {
     
     // Totale risparmiato
     if ((lead.pricing.totalSavings || 0) > 0) {
-      bodyLines.push(`💰 Totale risparmiato: €${lead.pricing.totalSavings.toLocaleString('it-IT')}!`);
+      bodyLines.push(`💰 Totale risparmiato: €${(lead.pricing.totalSavings || 0).toLocaleString('it-IT')}!`);
     }
     
     bodyLines.push('═══════════════════════════════════════════════');
@@ -929,44 +931,93 @@ export default function LeadsManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {selectedLead.selectedItems.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <div className="font-medium">{item.title}</div>
-                          {item.originalPrice && item.originalPrice !== item.price && (
-                            <div className="text-sm text-gray-500">
-                              Prezzo originale: €{item.originalPrice.toLocaleString('it-IT')}
+                    {selectedLead.selectedItems.map((item, index) => {
+                      const isGift = item.price === 0;
+                      const originalPrice = item.originalPrice || 0;
+                      const hasDiscount = originalPrice > 0 && originalPrice !== item.price;
+                      
+                      return (
+                        <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <div className="font-medium flex items-center gap-2">
+                              {item.title}
+                              {isGift && <Badge variant="secondary" className="bg-green-100 text-green-800">🎁 GRATIS</Badge>}
                             </div>
-                          )}
+                            {hasDiscount && (
+                              <div className="text-sm text-gray-500">
+                                Prezzo originale: €{originalPrice.toLocaleString('it-IT')}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            {isGift ? (
+                              <div>
+                                <div className="font-bold text-green-600">GRATIS</div>
+                                {originalPrice > 0 && (
+                                  <div className="text-sm line-through text-gray-400">
+                                    €{originalPrice.toLocaleString('it-IT')}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div>
+                                <div className="font-bold">€{item.price.toLocaleString('it-IT')}</div>
+                                {hasDiscount && (
+                                  <div className="text-sm text-green-600">
+                                    Sconto: €{(originalPrice - item.price).toLocaleString('it-IT')}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold">€{item.price.toLocaleString('it-IT')}</div>
-                          {item.originalPrice && item.originalPrice !== item.price && (
-                            <div className="text-sm text-green-600">
-                              Sconto: €{(item.originalPrice - item.price).toLocaleString('it-IT')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="border-t pt-4 mt-4">
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span>Subtotale:</span>
+                        <span>Subtotale servizi/prodotti:</span>
                         <span>€{selectedLead.pricing.subtotal.toLocaleString('it-IT')}</span>
                       </div>
-                      {selectedLead.pricing.discount > 0 && (
-                        <div className="flex justify-between text-green-600">
-                          <span>Sconto totale:</span>
-                          <span>-€{selectedLead.pricing.discount.toLocaleString('it-IT')}</span>
+                      
+                      {/* Sconti individuali */}
+                      {((selectedLead.pricing as any).detailed?.individualDiscountSavings || 0) > 0 && (
+                        <div className="flex justify-between text-orange-600">
+                          <span>Sconti per prodotto/servizio:</span>
+                          <span>-€{((selectedLead.pricing as any).detailed.individualDiscountSavings || 0).toLocaleString('it-IT')}</span>
                         </div>
                       )}
+                      
+                      {/* Sconto globale */}
+                      {((selectedLead.pricing as any).detailed?.globalDiscountSavings || 0) > 0 && (
+                        <div className="flex justify-between text-blue-600">
+                          <span>Sconto globale (-10%):</span>
+                          <span>-€{((selectedLead.pricing as any).detailed.globalDiscountSavings || 0).toLocaleString('it-IT')}</span>
+                        </div>
+                      )}
+                      
+                      {/* Servizi in omaggio */}
+                      {(selectedLead.pricing.giftSavings || 0) > 0 && (
+                        <div className="flex justify-between text-green-600">
+                          <span>Servizi in omaggio:</span>
+                          <span>-€{(selectedLead.pricing.giftSavings || 0).toLocaleString('it-IT')}</span>
+                        </div>
+                      )}
+                      
                       <div className="flex justify-between font-bold text-lg border-t pt-2">
                         <span>TOTALE:</span>
                         <span>€{selectedLead.pricing.total.toLocaleString('it-IT')}</span>
                       </div>
+                      
+                      {/* Totale risparmiato */}
+                      {(selectedLead.pricing.totalSavings || 0) > 0 && (
+                        <div className="flex justify-between text-green-700 font-semibold">
+                          <span>💰 Totale risparmiato:</span>
+                          <span>€{(selectedLead.pricing.totalSavings || 0).toLocaleString('it-IT')}!</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>

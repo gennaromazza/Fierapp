@@ -25,8 +25,8 @@ const fmt = (n: number) => EUR.format(n ?? 0);
 const mm = {
   pageW: 210,
   pageH: 297,
-  left: 20,
-  right: 20,
+  left: 15, // Ridotto per più spazio orizzontale
+  right: 15, // Ridotto per più spazio orizzontale
   headerH: 40, // più spazio per i contatti
   footerH: 12,
 };
@@ -206,12 +206,31 @@ function keyValue(doc: jsPDF, x: number, y: number, label: string, value: string
   return y + 12;
 }
 
-function ensureNextLine(doc: jsPDF, y: number) {
-  if (y > mm.pageH - mm.footerH - 20) {
+function ensureNextLine(doc: jsPDF, y: number, extraSpace = 20) {
+  if (y > mm.pageH - mm.footerH - extraSpace) {
     doc.addPage();
     return contentTop();
   }
   return y;
+}
+
+function wrapText(doc: jsPDF, text: string, x: number, y: number, maxWidth: number, fontSize = 10): number {
+  doc.setFontSize(fontSize);
+  const lines = doc.splitTextToSize(text, maxWidth);
+  let currentY = y;
+  
+  lines.forEach((line: string) => {
+    doc.text(line, x, currentY);
+    currentY += fontSize * 1.2; // Line height
+  });
+  
+  return currentY;
+}
+
+function getTextHeight(doc: jsPDF, text: string, maxWidth: number, fontSize = 10): number {
+  doc.setFontSize(fontSize);
+  const lines = doc.splitTextToSize(text, maxWidth);
+  return lines.length * fontSize * 1.2;
 }
 
 /* ---------- API ---------- */
@@ -267,7 +286,14 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
   doc.setFontSize(10);
 
   leadData.selectedItems?.forEach((item: any, index: number) => {
-    const rowHeight = 12;
+    // Calcola l'altezza necessaria per il titolo con text wrapping
+    const titleText = `${index + 1}. ${item.title}`;
+    const maxTitleWidth = colTitleW - 8; // Margin per il testo
+    const titleHeight = getTextHeight(doc, titleText, maxTitleWidth, 10);
+    const rowHeight = Math.max(titleHeight + 4, 14); // Altezza minima di 14
+    
+    // Controlla se c'è spazio per questa riga
+    y = ensureNextLine(doc, y, rowHeight + 10);
     
     // Alternating row colors
     if (index % 2 === 0) {
@@ -275,42 +301,51 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
       doc.rect(tableX, y, tableW, rowHeight, "F");
     }
     
+    // Testo del titolo con text wrapping
     doc.setFont("helvetica", "normal");
-    doc.text(`${index + 1}. ${item.title}`, tableX + 2, y + 7);
+    doc.setFontSize(10);
+    doc.setTextColor(33, 33, 33);
+    wrapText(doc, titleText, tableX + 4, y + 7, maxTitleWidth, 10);
     
-    // Gestione display prezzo
-    if (item.isGift) {
+    // Gestione display prezzo - allineato al centro verticale della riga
+    const priceY = y + (rowHeight / 2) + 2;
+    
+    // Determina se è un regalo basato sul prezzo e originalPrice
+    const isGift = item.price === 0 && (item.originalPrice || 0) > 0;
+    
+    if (isGift) {
       // Item regalo: prezzo originale barrato + "GRATIS"
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(120, 120, 120);
-      doc.text(`€${item.originalPrice.toLocaleString('it-IT')}`, tableX + colTitleW + 2, y + 6);
+      const originalPriceText = `€${(item.originalPrice || 0).toLocaleString('it-IT')}`;
+      doc.text(originalPriceText, tableX + colTitleW + 4, priceY - 4);
       
       // Barrato sul prezzo originale
-      const priceText = `€${item.originalPrice.toLocaleString('it-IT')}`;
-      const priceWidth = doc.getTextWidth(priceText);
+      const priceWidth = doc.getTextWidth(originalPriceText);
       doc.setDrawColor(120, 120, 120);
-      doc.line(tableX + colTitleW + 2, y + 6 - 1, tableX + colTitleW + 2 + priceWidth, y + 6 - 1);
+      doc.line(tableX + colTitleW + 4, priceY - 4 - 1, tableX + colTitleW + 4 + priceWidth, priceY - 4 - 1);
       
       // "GRATIS" in verde
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
       doc.setTextColor(34, 197, 94);
-      doc.text("GRATIS", tableX + colTitleW + 2, y + 9);
+      doc.text("GRATIS", tableX + colTitleW + 4, priceY + 2);
       doc.setTextColor(33, 33, 33);
     } else {
       // Item normale
       doc.setFont("helvetica", "bold");
-      doc.text(`€${item.price.toLocaleString('it-IT')}`, tableX + colTitleW + 2, y + 7);
+      doc.setFontSize(10);
+      doc.setTextColor(33, 33, 33);
+      doc.text(`€${item.price.toLocaleString('it-IT')}`, tableX + colTitleW + 4, priceY);
       
       // Prezzo originale se diverso (sconto individuale)
       if (item.originalPrice && item.originalPrice !== item.price) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(120, 120, 120);
-        doc.text(`(Era €${item.originalPrice.toLocaleString('it-IT')})`, tableX + colTitleW + 2, y + 10);
+        doc.text(`(Era €${item.originalPrice.toLocaleString('it-IT')})`, tableX + colTitleW + 4, priceY + 5);
         doc.setTextColor(33, 33, 33);
-        doc.setFontSize(10);
       }
     }
     
@@ -319,17 +354,18 @@ export async function generateClientQuotePDF(leadData: any, filename?: string): 
     doc.line(tableX, y + rowHeight, tableX + tableW, y + rowHeight);
     
     y += rowHeight;
-    y = ensureNextLine(doc, y);
   });
 
   // Sezione Totali - Usa dati già calcolati dal CheckoutModal
   y += 15;
+  y = ensureNextLine(doc, y, 80); // Assicura spazio per i totali
   
   // Usa i dati di pricing già calcolati (allineati con CheckoutModal)
   const pricing = leadData.pricing || {};
   const subtotal = pricing.subtotal || 0;
-  const individualDiscountSavings = pricing.individualDiscountSavings || 0;
-  const globalDiscountSavings = pricing.globalDiscountSavings || 0;
+  // Usa la struttura detailed se disponibile, altrimenti fallback ai campi diretti
+  const individualDiscountSavings = pricing.detailed?.individualDiscountSavings || 0;
+  const globalDiscountSavings = pricing.detailed?.globalDiscountSavings || 0;
   const giftSavings = pricing.giftSavings || 0;
   const totalSavings = pricing.totalSavings || 0;
   const total = pricing.total || 0;
