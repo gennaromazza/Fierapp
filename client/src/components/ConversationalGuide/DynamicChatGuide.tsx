@@ -2211,7 +2211,11 @@ export function DynamicChatGuide() {
 
       <CheckoutModal
         isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
+        onClose={() => {
+          setIsCheckoutOpen(false);
+          // Reset auto-open flag so the button can work again
+          setHasAutoOpenedCheckout(false);
+        }}
         leadData={{
           name: leadData.name || '',
           surname: leadData.surname || '',
