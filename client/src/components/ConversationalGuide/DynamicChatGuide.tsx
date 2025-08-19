@@ -1,33 +1,64 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, ShoppingCart, Gift, Tag, Check, X, Sparkles, MessageCircle, ArrowLeft, SkipForward, RotateCcw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
-import { useCartWithRules } from '@/hooks/useCartWithRules';
-import { collection, getDocs, query, where, onSnapshot, getDoc, doc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase';
-import type { Item, Discounts, Settings } from '../../../../shared/schema';
-import CheckoutModal from '@/components/CheckoutModal';
-import { LeadForm } from './LeadForm';
-import type { LeadData } from './types';
-import { SpectacularAvatar } from './SpectacularAvatar';
-import { CalendarIcon } from 'lucide-react';
-import { getItemDiscountInfo } from '../../lib/discounts';
-import { calculateUnifiedPricing } from '../../lib/unifiedPricing';
-import { useToast } from '@/hooks/useToast';
-import { ToastContainer } from '@/components/ui/toast-notification';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Send,
+  ShoppingCart,
+  Gift,
+  Tag,
+  Check,
+  X,
+  Sparkles,
+  MessageCircle,
+  ArrowLeft,
+  SkipForward,
+  RotateCcw,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import { useCartWithRules } from "@/hooks/useCartWithRules";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  onSnapshot,
+  getDoc,
+  doc,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../../firebase";
+import type { Item, Discounts, Settings } from "../../../../shared/schema";
+import CheckoutModal from "@/components/CheckoutModal";
+import { LeadForm } from "./LeadForm";
+import type { LeadData } from "./types";
+import { SpectacularAvatar } from "./SpectacularAvatar";
+import { CalendarIcon } from "lucide-react";
+import { getItemDiscountInfo } from "../../lib/discounts";
+import { calculateUnifiedPricing } from "../../lib/unifiedPricing";
+import { useToast } from "@/hooks/useToast";
+import { ToastContainer } from "@/components/ui/toast-notification";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-
-type PhaseType = 'welcome' | 'collect_name' | 'collect_surname' | 'collect_email' | 'collect_phone' | 'collect_date' | 'services' | 'products' | 'summary' | 'lead';
+type PhaseType =
+  | "welcome"
+  | "collect_name"
+  | "collect_surname"
+  | "collect_email"
+  | "collect_phone"
+  | "collect_date"
+  | "services"
+  | "products"
+  | "summary"
+  | "lead";
 
 interface ChatMessage {
   id: string;
-  type: 'assistant' | 'user' | 'system';
+  type: "assistant" | "user" | "system";
   text?: string;
-  avatar?: 'smiling' | 'explaining' | 'enthusiastic' | 'excited' | 'thoughtful';
+  avatar?: "smiling" | "explaining" | "enthusiastic" | "excited" | "thoughtful";
   options?: Array<{
     id: string;
     label: string;
@@ -37,17 +68,20 @@ interface ChatMessage {
   items?: Item[];
   showCart?: boolean;
   typing?: boolean;
-  component?: 'service-selector' | 'product-selector' | 'date-selector';
+  component?: "service-selector" | "product-selector" | "date-selector";
 }
 
 export function DynamicChatGuide() {
-  console.log('🚀 DynamicChatGuide component loaded');
-  
+  console.log("🚀 DynamicChatGuide component loaded");
+
   // Refs for setTimeout cleanup to prevent memory leaks
   const timeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
-  
+
   // Helper to create managed timeouts that auto-cleanup on unmount
-  const createManagedTimeout = (callback: () => void, delay: number): NodeJS.Timeout => {
+  const createManagedTimeout = (
+    callback: () => void,
+    delay: number,
+  ): NodeJS.Timeout => {
     const timeoutId = setTimeout(() => {
       timeoutsRef.current.delete(timeoutId);
       callback();
@@ -55,13 +89,13 @@ export function DynamicChatGuide() {
     timeoutsRef.current.add(timeoutId);
     return timeoutId;
   };
-  
+
   // Clear all active timeouts
   const clearAllTimeouts = () => {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current.clear();
   };
-  
+
   const cart = useCartWithRules();
   const toast = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -77,14 +111,14 @@ export function DynamicChatGuide() {
   const items = cart.getAllItemsWithAvailability() || [];
   const [itemsReady, setItemsReady] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [userInput, setUserInput] = useState('');
-  const [currentPhase, setCurrentPhase] = useState<PhaseType>('welcome');
+  const [userInput, setUserInput] = useState("");
+  const [currentPhase, setCurrentPhase] = useState<PhaseType>("welcome");
   const [leadData, setLeadData] = useState<LeadData>({
-    name: '',
-    surname: '',
-    email: '',
-    phone: '',
-    eventDate: ''
+    name: "",
+    surname: "",
+    email: "",
+    phone: "",
+    eventDate: "",
   });
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [messageCounter, setMessageCounter] = useState(0);
@@ -102,14 +136,14 @@ export function DynamicChatGuide() {
     selectedProducts: [],
     preferences: [],
     sessionId: `session_${Date.now()}`,
-    startTime: new Date()
+    startTime: new Date(),
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Cleanup timeouts on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
-      console.log('🧹 Cleaning up timeouts on component unmount');
+      console.log("🧹 Cleaning up timeouts on component unmount");
       clearAllTimeouts();
     };
   }, []);
@@ -120,33 +154,36 @@ export function DynamicChatGuide() {
       // Handle null and undefined early
       if (obj === null) return removeNull ? undefined : null;
       if (obj === undefined) return null;
-      
+
       // Handle primitive invalid values
       if (Number.isNaN(obj)) return null;
       if (obj === Infinity || obj === -Infinity) return null;
-      
+
       // Handle Date objects with validation
       if (obj instanceof Date) {
         try {
           return isNaN(obj.getTime()) ? null : obj;
         } catch (error) {
-          console.warn('⚠️ Invalid Date object encountered:', obj, error);
+          console.warn("⚠️ Invalid Date object encountered:", obj, error);
           return null;
         }
       }
-      
+
       // Handle Firebase serverTimestamp safely
-      if (obj && typeof obj === 'object') {
+      if (obj && typeof obj === "object") {
         try {
-          if (obj.constructor?.name === 'ServerTimestampFieldValueImpl' || obj._methodName === 'serverTimestamp') {
+          if (
+            obj.constructor?.name === "ServerTimestampFieldValueImpl" ||
+            obj._methodName === "serverTimestamp"
+          ) {
             return obj;
           }
         } catch (error) {
-          console.warn('⚠️ Error checking Firebase timestamp:', error);
+          console.warn("⚠️ Error checking Firebase timestamp:", error);
           // Continue processing as regular object
         }
       }
-      
+
       // Handle Arrays with error recovery
       if (Array.isArray(obj)) {
         try {
@@ -154,50 +191,63 @@ export function DynamicChatGuide() {
           for (let i = 0; i < obj.length; i++) {
             try {
               const cleanedItem = removeUndefinedDeep(obj[i], removeNull);
-              if (cleanedItem !== undefined && (!removeNull || cleanedItem !== null)) {
+              if (
+                cleanedItem !== undefined &&
+                (!removeNull || cleanedItem !== null)
+              ) {
                 cleanedArray.push(cleanedItem);
               }
             } catch (error) {
-              console.warn(`⚠️ Error cleaning array item at index ${i}:`, error, obj[i]);
+              console.warn(
+                `⚠️ Error cleaning array item at index ${i}:`,
+                error,
+                obj[i],
+              );
               // Skip problematic item and continue
             }
           }
           return cleanedArray;
         } catch (error) {
-          console.error('❌ Critical error processing array:', error, obj);
+          console.error("❌ Critical error processing array:", error, obj);
           return []; // Return empty array as fallback
         }
       }
-      
+
       // Handle Objects with error recovery
-      if (typeof obj === 'object' && obj !== null) {
+      if (typeof obj === "object" && obj !== null) {
         try {
           const cleaned: any = {};
           const entries = Object.entries(obj);
-          
+
           for (const [key, value] of entries) {
             try {
               const cleanedValue = removeUndefinedDeep(value, removeNull);
-              if (cleanedValue !== undefined && (!removeNull || cleanedValue !== null)) {
+              if (
+                cleanedValue !== undefined &&
+                (!removeNull || cleanedValue !== null)
+              ) {
                 cleaned[key] = cleanedValue;
               }
             } catch (error) {
-              console.warn(`⚠️ Error cleaning object property '${key}':`, error, value);
+              console.warn(
+                `⚠️ Error cleaning object property '${key}':`,
+                error,
+                value,
+              );
               // Skip problematic property and continue
             }
           }
           return cleaned;
         } catch (error) {
-          console.error('❌ Critical error processing object:', error, obj);
+          console.error("❌ Critical error processing object:", error, obj);
           return {}; // Return empty object as fallback
         }
       }
-      
+
       // Return valid primitives as-is
       return obj;
-      
     } catch (error) {
-      console.error('❌ Critical error in removeUndefinedDeep:', error, obj);
+      console.error("❌ Critical error in removeUndefinedDeep:", error, obj);
       // Final fallback - return null for any unrecoverable error
       return null;
     }
@@ -207,10 +257,10 @@ export function DynamicChatGuide() {
   const saveChatHistory = async (eventType: string, data: any = {}) => {
     try {
       const pricing = cart.getPricingWithRules();
-      
+
       const rawData = {
         sessionId: conversationData.sessionId || `session_${Date.now()}`,
-        eventType: eventType || 'unknown',
+        eventType: eventType || "unknown",
         data: data || {},
         conversationData: {
           userName: conversationData.userName || null,
@@ -220,69 +270,87 @@ export function DynamicChatGuide() {
           preferences: conversationData.preferences || [],
           sessionId: conversationData.sessionId || `session_${Date.now()}`,
           startTime: conversationData.startTime || new Date(),
-          currentPhase: currentPhase || 'unknown',
+          currentPhase: currentPhase || "unknown",
           messagesCount: messages?.length || 0,
           cartItemsCount: cart?.cart?.items?.length || 0,
           totalValue: pricing?.total || 0,
-          totalSavings: pricing?.totalSavings || 0
+          totalSavings: pricing?.totalSavings || 0,
         },
         timestamp: serverTimestamp(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
 
       // Prima pulizia: rimuovi undefined, NaN, Infinity con gestione errori robusta
       let cleanedData;
       try {
         cleanedData = removeUndefinedDeep(rawData, false);
-        console.log('✅ Data cleaning completed successfully');
+        console.log("✅ Data cleaning completed successfully");
       } catch (error) {
-        console.error('❌ Critical error during data cleaning:', error);
+        console.error("❌ Critical error during data cleaning:", error);
         // Fallback: create minimal safe data structure
         cleanedData = {
           sessionId: conversationData.sessionId || `session_${Date.now()}`,
-          eventType: eventType || 'unknown',
-          data: { error: 'Data cleaning failed', originalError: (error as Error)?.message || 'Unknown error' },
+          eventType: eventType || "unknown",
+          data: {
+            error: "Data cleaning failed",
+            originalError: (error as Error)?.message || "Unknown error",
+          },
           conversationData: {
             sessionId: conversationData.sessionId || `session_${Date.now()}`,
-            currentPhase: currentPhase || 'unknown',
+            currentPhase: currentPhase || "unknown",
             messagesCount: messages?.length || 0,
-            startTime: new Date()
+            startTime: new Date(),
           },
           timestamp: serverTimestamp(),
           createdAt: new Date().toISOString(),
-          cleaningError: true
+          cleaningError: true,
         };
-        console.log('🚨 Using fallback data structure due to cleaning error');
+        console.log("🚨 Using fallback data structure due to cleaning error");
       }
 
       // Log dettagliato PRIMA di salvare
-      console.log('🔍 === FIREBASE SAVE DEBUG ===');
-      console.log('📦 Raw data BEFORE cleaning:', rawData);
-      console.log('🧹 Cleaned data AFTER cleaning:', cleanedData);
-      
+      console.log("🔍 === FIREBASE SAVE DEBUG ===");
+      console.log("📦 Raw data BEFORE cleaning:", rawData);
+      console.log("🧹 Cleaned data AFTER cleaning:", cleanedData);
+
       // Serializza per verificare cosa verrà effettivamente salvato
-      const jsonString = JSON.stringify(cleanedData, (key, value) => {
-        if (value === undefined) return '[UNDEFINED]';
-        if (Number.isNaN(value)) return '[NaN]';
-        if (value === Infinity) return '[Infinity]';
-        if (value === -Infinity) return '[-Infinity]';
-        if (value && typeof value === 'object' && value.constructor?.name === 'ServerTimestampFieldValueImpl') {
-          return '[ServerTimestamp]';
-        }
-        return value;
-      }, 2);
-      
-      console.log('📤 JSON serializzato che verrà salvato:', jsonString);
-      
+      const jsonString = JSON.stringify(
+        cleanedData,
+        (key, value) => {
+          if (value === undefined) return "[UNDEFINED]";
+          if (Number.isNaN(value)) return "[NaN]";
+          if (value === Infinity) return "[Infinity]";
+          if (value === -Infinity) return "[-Infinity]";
+          if (
+            value &&
+            typeof value === "object" &&
+            value.constructor?.name === "ServerTimestampFieldValueImpl"
+          ) {
+            return "[ServerTimestamp]";
+          }
+          return value;
+        },
+        2,
+      );
+
+      console.log("📤 JSON serializzato che verrà salvato:", jsonString);
+
       // Controllo finale per valori problematici
-      const problematicValues = ['[UNDEFINED]', '[NaN]', '[Infinity]', '[-Infinity]'];
-      const hasProblems = problematicValues.some(val => jsonString.includes(val));
-      
+      const problematicValues = [
+        "[UNDEFINED]",
+        "[NaN]",
+        "[Infinity]",
+        "[-Infinity]",
+      ];
+      const hasProblems = problematicValues.some((val) =>
+        jsonString.includes(val),
+      );
+
       if (hasProblems) {
-        console.error('❌ ERRORE: Trovati valori non validi nel JSON!');
-        problematicValues.forEach(val => {
+        console.error("❌ ERRORE: Trovati valori non validi nel JSON!");
+        problematicValues.forEach((val) => {
           if (jsonString.includes(val)) {
-            const lines = jsonString.split('\n');
+            const lines = jsonString.split("\n");
             lines.forEach((line, index) => {
               if (line.includes(val)) {
                 console.error(`   Riga ${index + 1}: ${line.trim()}`);
@@ -290,33 +358,42 @@ export function DynamicChatGuide() {
             });
           }
         });
-        
+
         // Prova una seconda pulizia più aggressiva
-        console.log('🔄 Tentativo di pulizia aggressiva...');
-        const deepCleanedData = JSON.parse(JSON.stringify(cleanedData, (key, value) => {
-          if (value === undefined || Number.isNaN(value) || value === Infinity || value === -Infinity) {
-            return null;
-          }
-          return value;
-        }));
-        
+        console.log("🔄 Tentativo di pulizia aggressiva...");
+        const deepCleanedData = JSON.parse(
+          JSON.stringify(cleanedData, (key, value) => {
+            if (
+              value === undefined ||
+              Number.isNaN(value) ||
+              value === Infinity ||
+              value === -Infinity
+            ) {
+              return null;
+            }
+            return value;
+          }),
+        );
+
         // Ripristina serverTimestamp dopo la serializzazione
         deepCleanedData.timestamp = serverTimestamp();
-        
-        console.log('✨ Dati dopo pulizia aggressiva:', deepCleanedData);
-        await addDoc(collection(db, 'chat_history'), deepCleanedData);
+
+        console.log("✨ Dati dopo pulizia aggressiva:", deepCleanedData);
+        await addDoc(collection(db, "chat_history"), deepCleanedData);
       } else {
-        console.log('✅ Nessun valore problematico trovato, procedo con il salvataggio');
-        await addDoc(collection(db, 'chat_history'), cleanedData);
+        console.log(
+          "✅ Nessun valore problematico trovato, procedo con il salvataggio",
+        );
+        await addDoc(collection(db, "chat_history"), cleanedData);
       }
 
       console.log(`💾 Chat history saved successfully: ${eventType}`, data);
     } catch (error: any) {
-      console.error('❌ Error saving chat history:', error);
-      console.error('📊 Error details:', {
-        message: error?.message || 'Unknown error',
-        code: error?.code || 'N/A',
-        stack: error?.stack || 'No stack trace'
+      console.error("❌ Error saving chat history:", error);
+      console.error("📊 Error details:", {
+        message: error?.message || "Unknown error",
+        code: error?.code || "N/A",
+        stack: error?.stack || "No stack trace",
       });
     }
   };
@@ -326,23 +403,23 @@ export function DynamicChatGuide() {
     if (!sessionStarted) {
       // Garantisce reset completo della chat
       setMessages([]);
-      setCurrentPhase('welcome');
+      setCurrentPhase("welcome");
       setLeadData({});
-      setUserInput('');
+      setUserInput("");
       setMessageCounter(0);
       setSessionStarted(true);
 
       // Reset carrello per nuova sessione
       cart.clearCart();
 
-      console.log('🔄 Chat completamente resettata per nuova sessione');
+      console.log("🔄 Chat completamente resettata per nuova sessione");
     }
   }, [sessionStarted, cart]);
 
   // Track when items are ready
   useEffect(() => {
     if (!cart.rulesLoading && items.length > 0) {
-      console.log('✅ Items are ready:', items.length);
+      console.log("✅ Items are ready:", items.length);
       setItemsReady(true);
     }
   }, [cart.rulesLoading, items.length]);
@@ -351,7 +428,7 @@ export function DynamicChatGuide() {
     // Load global discounts and settings from Firebase
     async function loadData() {
       try {
-        console.log('🔄 DynamicChatGuide - Loading settings and discounts...');
+        console.log("🔄 DynamicChatGuide - Loading settings and discounts...");
         setIsLoadingDiscounts(true);
         setIsLoadingSettings(true);
         setSettingsError(null);
@@ -363,51 +440,77 @@ export function DynamicChatGuide() {
 
           // Process Firebase Timestamps to Date objects
           if (discountsData.global) {
-            if (discountsData.global.startDate && typeof discountsData.global.startDate === 'object') {
+            if (
+              discountsData.global.startDate &&
+              typeof discountsData.global.startDate === "object"
+            ) {
               // Handle both Firebase Timestamp objects and timestamp objects with seconds/nanoseconds
-              if ('toDate' in discountsData.global.startDate) {
-                discountsData.global.startDate = (discountsData.global.startDate as any).toDate();
-              } else if ('seconds' in discountsData.global.startDate) {
+              if ("toDate" in discountsData.global.startDate) {
+                discountsData.global.startDate = (
+                  discountsData.global.startDate as any
+                ).toDate();
+              } else if ("seconds" in discountsData.global.startDate) {
                 const timestamp = discountsData.global.startDate as any;
-                discountsData.global.startDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+                discountsData.global.startDate = new Date(
+                  timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000,
+                );
               }
             }
-            if (discountsData.global.endDate && typeof discountsData.global.endDate === 'object') {
+            if (
+              discountsData.global.endDate &&
+              typeof discountsData.global.endDate === "object"
+            ) {
               // Handle both Firebase Timestamp objects and timestamp objects with seconds/nanoseconds
-              if ('toDate' in discountsData.global.endDate) {
-                discountsData.global.endDate = (discountsData.global.endDate as any).toDate();
-              } else if ('seconds' in discountsData.global.endDate) {
+              if ("toDate" in discountsData.global.endDate) {
+                discountsData.global.endDate = (
+                  discountsData.global.endDate as any
+                ).toDate();
+              } else if ("seconds" in discountsData.global.endDate) {
                 const timestamp = discountsData.global.endDate as any;
-                discountsData.global.endDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+                discountsData.global.endDate = new Date(
+                  timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000,
+                );
               }
             }
           }
 
           // Process per-item overrides timestamps
           if (discountsData.perItemOverrides) {
-            Object.keys(discountsData.perItemOverrides).forEach(key => {
+            Object.keys(discountsData.perItemOverrides).forEach((key) => {
               const itemDiscount = discountsData.perItemOverrides![key];
-              if (itemDiscount.startDate && typeof itemDiscount.startDate === 'object') {
-                if ('toDate' in itemDiscount.startDate) {
-                  itemDiscount.startDate = (itemDiscount.startDate as any).toDate();
-                } else if ('seconds' in itemDiscount.startDate) {
+              if (
+                itemDiscount.startDate &&
+                typeof itemDiscount.startDate === "object"
+              ) {
+                if ("toDate" in itemDiscount.startDate) {
+                  itemDiscount.startDate = (
+                    itemDiscount.startDate as any
+                  ).toDate();
+                } else if ("seconds" in itemDiscount.startDate) {
                   const timestamp = itemDiscount.startDate as any;
-                  itemDiscount.startDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+                  itemDiscount.startDate = new Date(
+                    timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000,
+                  );
                 }
               }
-              if (itemDiscount.endDate && typeof itemDiscount.endDate === 'object') {
-                if ('toDate' in itemDiscount.endDate) {
+              if (
+                itemDiscount.endDate &&
+                typeof itemDiscount.endDate === "object"
+              ) {
+                if ("toDate" in itemDiscount.endDate) {
                   itemDiscount.endDate = (itemDiscount.endDate as any).toDate();
-                } else if ('seconds' in itemDiscount.endDate) {
+                } else if ("seconds" in itemDiscount.endDate) {
                   const timestamp = itemDiscount.endDate as any;
-                  itemDiscount.endDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+                  itemDiscount.endDate = new Date(
+                    timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000,
+                  );
                 }
               }
             });
           }
 
           setDiscounts(discountsData);
-          console.log('✅ DynamicChatGuide - Discounts loaded successfully');
+          console.log("✅ DynamicChatGuide - Discounts loaded successfully");
         }
         setIsLoadingDiscounts(false);
 
@@ -416,13 +519,16 @@ export function DynamicChatGuide() {
         if (settingsDoc.exists()) {
           const settingsData = settingsDoc.data() as Settings;
           setSettings(settingsData);
-          console.log('✅ DynamicChatGuide - Settings loaded successfully');
+          console.log("✅ DynamicChatGuide - Settings loaded successfully");
         }
         setIsLoadingSettings(false);
-
       } catch (error) {
         console.error("❌ DynamicChatGuide - Error loading data:", error);
-        setSettingsError(error instanceof Error ? error.message : 'Errore nel caricamento dei dati');
+        setSettingsError(
+          error instanceof Error
+            ? error.message
+            : "Errore nel caricamento dei dati",
+        );
         setIsLoadingSettings(false);
         setIsLoadingDiscounts(false);
       }
@@ -433,14 +539,19 @@ export function DynamicChatGuide() {
 
   // Auto-scroll to bottom
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Auto-open checkout modal when entering lead phase for the first time
   const [hasAutoOpenedCheckout, setHasAutoOpenedCheckout] = useState(false);
   useEffect(() => {
-    if (currentPhase === 'lead' && !hasAutoOpenedCheckout) {
-      const isLeadDataComplete = leadData.name && leadData.surname && leadData.email && leadData.phone && leadData.eventDate;
+    if (currentPhase === "lead" && !hasAutoOpenedCheckout) {
+      const isLeadDataComplete =
+        leadData.name &&
+        leadData.surname &&
+        leadData.email &&
+        leadData.phone &&
+        leadData.eventDate;
       if (isLeadDataComplete) {
         setIsCheckoutOpen(true);
         setHasAutoOpenedCheckout(true);
@@ -450,23 +561,27 @@ export function DynamicChatGuide() {
 
   // Show services when items become ready (if we're in services phase and showed loading)
   useEffect(() => {
-    if (itemsReady && currentPhase === 'services' && messages.some(m => m.id === 'services-loading')) {
-      console.log('✅ Items ready! Showing services...');
+    if (
+      itemsReady &&
+      currentPhase === "services" &&
+      messages.some((m) => m.id === "services-loading")
+    ) {
+      console.log("✅ Items ready! Showing services...");
 
-      const services = items.filter(item => {
-        const isService = item.category === 'servizio';
+      const services = items.filter((item) => {
+        const isService = item.category === "servizio";
         const isActive = item.active !== false;
         return isService && isActive;
       });
 
       // Remove loading message and add services
-      setMessages(prev => prev.filter(m => m.id !== 'services-loading'));
+      setMessages((prev) => prev.filter((m) => m.id !== "services-loading"));
 
       addMessage({
-        id: 'services-selection',
-        type: 'system',
+        id: "services-selection",
+        type: "system",
         text: "Perfetto! Ecco i servizi disponibili:",
-        items: services
+        items: services,
       });
     }
   }, [itemsReady, currentPhase, messages, items]);
@@ -474,98 +589,108 @@ export function DynamicChatGuide() {
   // Initialize chat
   useEffect(() => {
     if (messages.length === 0) {
-      const welcomeText = settings?.studioName 
+      const welcomeText = settings?.studioName
         ? `Ciao! 👋 Sono l'assistente di ${settings.studioName}! Ti guiderò nella scelta dei servizi e prodotti migliori con offerte esclusive per il tuo matrimonio perfetto.`
         : "Ciao! 👋 Sono il tuo assistente personale per il matrimonio perfetto! Ti guiderò nella scelta dei servizi e prodotti migliori con offerte esclusive.";
 
       addMessage({
-        type: 'assistant',
-        avatar: 'smiling',
+        type: "assistant",
+        avatar: "smiling",
         text: welcomeText,
       });
 
       createManagedTimeout(() => {
         addMessage({
-          type: 'assistant',
-          avatar: 'explaining',
+          type: "assistant",
+          avatar: "explaining",
           text: "Prima di iniziare, quando sarà il grande giorno?",
           options: [
             {
-              id: 'date-2025',
-              label: '📅 Nel 2025',
-              value: '2025',
-              action: () => handleDateSelection('2025')
+              id: "date-2025",
+              label: "📅 Nel 2025",
+              value: "2025",
+              action: () => handleDateSelection("2025"),
             },
             {
-              id: 'date-2026',
-              label: '📅 Nel 2026',
-              value: '2026',
-              action: () => handleDateSelection('2026')
+              id: "date-2026",
+              label: "📅 Nel 2026",
+              value: "2026",
+              action: () => handleDateSelection("2026"),
             },
             {
-              id: 'date-later',
-              label: '📅 Più avanti',
-              value: 'later',
-              action: () => handleDateSelection('later')
-            }
-          ]
+              id: "date-later",
+              label: "📅 Più avanti",
+              value: "later",
+              action: () => handleDateSelection("later"),
+            },
+          ],
         });
       }, 1500);
     }
   }, [messages.length, settings]);
 
-  const addMessage = (message: Omit<ChatMessage, 'id'> & { id?: string }) => {
+  const addMessage = (message: Omit<ChatMessage, "id"> & { id?: string }) => {
     const messageWithId = {
       ...message,
-      id: message.id || `msg-${Date.now()}-${messageCounter}`
+      id: message.id || `msg-${Date.now()}-${messageCounter}`,
     };
-    setMessageCounter(prev => prev + 1);
+    setMessageCounter((prev) => prev + 1);
 
     if (message.typing) {
       setIsTyping(true);
       setTimeout(() => {
         setIsTyping(false);
-        setMessages(prev => [...prev, { ...messageWithId, typing: false }]);
+        setMessages((prev) => [...prev, { ...messageWithId, typing: false }]);
       }, 1000);
     } else {
-      setMessages(prev => [...prev, messageWithId]);
+      setMessages((prev) => [...prev, messageWithId]);
     }
   };
 
   const handleDateSelection = (date: string) => {
-    const dateText = date === '2025' ? 'Nel 2025' : date === '2026' ? 'Nel 2026' : 'Più avanti';
+    const dateText =
+      date === "2025"
+        ? "Nel 2025"
+        : date === "2026"
+          ? "Nel 2026"
+          : "Più avanti";
 
     addMessage({
       id: `user-date-${Date.now()}`,
-      type: 'user',
-      text: dateText
+      type: "user",
+      text: dateText,
     });
 
     // Crea una data valida per Firebase - usa 1 gennaio dell'anno selezionato
-    const validDate = date === '2025' || date === '2026' 
-      ? `${date}-01-01` 
-      : new Date().toISOString().split('T')[0];
+    const validDate =
+      date === "2025" || date === "2026"
+        ? `${date}-01-01`
+        : new Date().toISOString().split("T")[0];
 
     // Aggiorna dati conversazione
-    setConversationData(prev => ({ ...prev, eventDate: validDate }));
-    setLeadData((prev) => ({ 
-      ...prev, 
-      eventDate: validDate // ✅ Usa solo eventDate per coerenza con LeadForm
+    setConversationData((prev) => ({ ...prev, eventDate: validDate }));
+    setLeadData((prev) => ({
+      ...prev,
+      eventDate: validDate, // ✅ Usa solo eventDate per coerenza con LeadForm
     }));
 
-    console.log('📅 Data evento aggiornata:', { date, validDate, dateText });
+    console.log("📅 Data evento aggiornata:", { date, validDate, dateText });
 
     // Salva selezione data
-    saveChatHistory('date_selected', { eventDate: validDate, dateText, originalSelection: date });
+    saveChatHistory("date_selected", {
+      eventDate: validDate,
+      dateText,
+      originalSelection: date,
+    });
 
     // Start data collection phase
     createManagedTimeout(() => {
       addMessage({
-        type: 'assistant',
-        avatar: 'smiling',
-        text: "Perfetto! Ora conosciamoci meglio. Come ti chiami? 😊"
+        type: "assistant",
+        avatar: "smiling",
+        text: "Perfetto! Ora conosciamoci meglio. Come ti chiami? 😊",
       });
-      setCurrentPhase('collect_name');
+      setCurrentPhase("collect_name");
     }, 1000);
   };
 
@@ -575,69 +700,69 @@ export function DynamicChatGuide() {
     if (!trimmedInput) return;
 
     switch (currentPhase) {
-      case 'collect_name':
+      case "collect_name":
         handleNameInput(trimmedInput);
         break;
-      case 'collect_surname':
+      case "collect_surname":
         handleSurnameInput(trimmedInput);
         break;
-      case 'collect_email':
+      case "collect_email":
         handleEmailInput(trimmedInput);
         break;
-      case 'collect_phone':
+      case "collect_phone":
         handlePhoneInput(trimmedInput);
         break;
-      case 'collect_date':
+      case "collect_date":
         // Non gestiamo input testuale per la data, usiamo solo il date picker
         break;
       default:
         // Altri input non gestiti in questa fase
         break;
     }
-    setUserInput('');
+    setUserInput("");
   };
 
   const handleNameInput = (name: string) => {
     addMessage({
-      type: 'user',
-      text: name
+      type: "user",
+      text: name,
     });
 
     setLeadData((prev) => {
       const newData = { ...prev, name };
-      console.log('📝 DynamicChatGuide - Nome aggiornato:', newData);
+      console.log("📝 DynamicChatGuide - Nome aggiornato:", newData);
       return newData;
     });
 
     setTimeout(() => {
       addMessage({
-        type: 'assistant',
-        avatar: 'smiling',
-        text: `Piacere di conoscerti, ${name}! 👋 E il tuo cognome?`
+        type: "assistant",
+        avatar: "smiling",
+        text: `Piacere di conoscerti, ${name}!  ��� E il tuo cognome?`,
       });
-      setCurrentPhase('collect_surname');
+      setCurrentPhase("collect_surname");
     }, 800);
   };
 
   const handleSurnameInput = (surname: string) => {
     addMessage({
-      type: 'user',
-      text: surname
+      type: "user",
+      text: surname,
     });
 
     setLeadData((prev) => {
       const newData = { ...prev, surname };
-      console.log('📝 DynamicChatGuide - Cognome aggiornato:', newData);
+      console.log("📝 DynamicChatGuide - Cognome aggiornato:", newData);
       return newData;
     });
 
     setTimeout(() => {
       addMessage({
-        type: 'assistant',
-        avatar: 'explaining',
-        text: `${leadData.name} ${surname}, per inviarti il preventivo personalizzato in PDF, qual è la tua email? 📧`
+        type: "assistant",
+        avatar: "explaining",
+        text: `${leadData.name} ${surname}, per inviarti il preventivo personalizzato in PDF, qual è la tua email? 📧`,
       });
-      setCurrentPhase('collect_email');
+      setCurrentPhase("collect_email");
     }, 800);
   };
 
@@ -645,158 +770,166 @@ export function DynamicChatGuide() {
     // Comprehensive email validation with detailed error messages
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const trimmedEmail = email.trim();
-    
+
     // Check for empty email
     if (!trimmedEmail) {
       addMessage({
-        type: 'assistant',
-        avatar: 'thoughtful',
-        text: 'Non hai inserito nessuna email. Inserisci il tuo indirizzo email per ricevere il preventivo! 📧'
+        type: "assistant",
+        avatar: "thoughtful",
+        text: "Non hai inserito nessuna email. Inserisci il tuo indirizzo email per ricevere il preventivo! 📧",
       });
       return;
     }
-    
+
     // Check basic format requirements
-    if (!trimmedEmail.includes('@')) {
+    if (!trimmedEmail.includes("@")) {
       addMessage({
-        type: 'assistant',
-        avatar: 'thoughtful',
-        text: 'L\'email deve contenere il simbolo @. Esempio: nome@dominio.com 😊'
+        type: "assistant",
+        avatar: "thoughtful",
+        text: "L'email deve contenere il simbolo @. Esempio: nome@dominio.com 😊",
       });
       return;
     }
-    
+
     // Check for domain part
-    if (!trimmedEmail.includes('.') || trimmedEmail.endsWith('.')) {
+    if (!trimmedEmail.includes(".") || trimmedEmail.endsWith(".")) {
       addMessage({
-        type: 'assistant',
-        avatar: 'thoughtful',
-        text: 'L\'email deve avere un dominio valido. Esempio: mario@gmail.com 📧'
+        type: "assistant",
+        avatar: "thoughtful",
+        text: "L'email deve avere un dominio valido. Esempio: mario@gmail.com 📧",
       });
       return;
     }
-    
+
     // Comprehensive regex validation
     if (!emailRegex.test(trimmedEmail)) {
       // Specific error messages for common issues
-      if (trimmedEmail.startsWith('@') || trimmedEmail.startsWith('.')) {
+      if (trimmedEmail.startsWith("@") || trimmedEmail.startsWith(".")) {
         addMessage({
-          type: 'assistant',
-          avatar: 'thoughtful',
-          text: 'L\'email non può iniziare con @ o punto. Prova con: nome@dominio.com 😊'
+          type: "assistant",
+          avatar: "thoughtful",
+          text: "L'email non può iniziare con @ o punto. Prova con: nome@dominio.com 😊",
         });
-      } else if (trimmedEmail.endsWith('@')) {
+      } else if (trimmedEmail.endsWith("@")) {
         addMessage({
-          type: 'assistant',
-          avatar: 'thoughtful',
-          text: 'L\'email è incompleta. Manca il dominio dopo @. Esempio: mario@gmail.com 📧'
+          type: "assistant",
+          avatar: "thoughtful",
+          text: "L'email è incompleta. Manca il dominio dopo @. Esempio: mario@gmail.com 📧",
         });
-      } else if (trimmedEmail.includes('..')) {
+      } else if (trimmedEmail.includes("..")) {
         addMessage({
-          type: 'assistant',
-          avatar: 'thoughtful',
-          text: 'L\'email non può contenere punti consecutivi. Controlla e riprova! 😊'
+          type: "assistant",
+          avatar: "thoughtful",
+          text: "L'email non può contenere punti consecutivi. Controlla e riprova! 😊",
         });
-      } else if (trimmedEmail.includes(' ')) {
+      } else if (trimmedEmail.includes(" ")) {
         addMessage({
-          type: 'assistant',
-          avatar: 'thoughtful',
-          text: 'L\'email non può contenere spazi. Rimuovi gli spazi e riprova! 📧'
+          type: "assistant",
+          avatar: "thoughtful",
+          text: "L'email non può contenere spazi. Rimuovi gli spazi e riprova! 📧",
         });
       } else {
         addMessage({
-          type: 'assistant',
-          avatar: 'thoughtful',
-          text: 'Il formato email non è valido. Usa il formato: nome@dominio.com 😊'
+          type: "assistant",
+          avatar: "thoughtful",
+          text: "Il formato email non è valido. Usa il formato: nome@dominio.com 😊",
         });
       }
       return;
     }
 
     addMessage({
-      type: 'user',
-      text: trimmedEmail
+      type: "user",
+      text: trimmedEmail,
     });
 
     setLeadData((prev) => {
       const newData = { ...prev, email: trimmedEmail };
-      console.log('📝 DynamicChatGuide - Email aggiornata:', newData);
+      console.log("📝 DynamicChatGuide - Email aggiornata:", newData);
       return newData;
     });
 
     setTimeout(() => {
       addMessage({
-        type: 'assistant',
-        avatar: 'enthusiastic',
-        text: 'Perfetto! E il tuo numero di telefono per WhatsApp? Così potremo coordinarci meglio! 📱'
+        type: "assistant",
+        avatar: "enthusiastic",
+        text: "Perfetto! E il tuo numero di telefono per WhatsApp? Così potremo coordinarci meglio! 📱",
       });
-      setCurrentPhase('collect_phone');
+      setCurrentPhase("collect_phone");
     }, 800);
   };
 
   const handlePhoneInput = (phone: string) => {
     addMessage({
-      type: 'user',
-      text: phone
+      type: "user",
+      text: phone,
     });
 
     setLeadData((prev) => {
       const newData = { ...prev, phone };
-      console.log('📝 DynamicChatGuide - Telefono aggiornato:', newData);
+      console.log("📝 DynamicChatGuide - Telefono aggiornato:", newData);
       return newData;
     });
 
     setTimeout(() => {
       addMessage({
-        type: 'assistant',
-        avatar: 'explaining',
-        text: 'Infine, quando è previsto il tuo matrimonio? 💒',
-        component: 'date-selector'
+        type: "assistant",
+        avatar: "explaining",
+        text: "Infine, quando è previsto il tuo matrimonio? 💒",
+        component: "date-selector",
       });
-      setCurrentPhase('collect_date');
+      setCurrentPhase("collect_date");
     }, 800);
   };
 
   const handleSpecificDateSelection = (selectedDate: Date) => {
-    const dateText = selectedDate.toLocaleDateString('it-IT', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
+    const dateText = selectedDate.toLocaleDateString("it-IT", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
 
     addMessage({
-      type: 'user', 
-      text: dateText
+      type: "user",
+      text: dateText,
     });
 
     setLeadData((prev) => {
-      const newData = { ...prev, eventDate: selectedDate.toISOString().split('T')[0] };
-      console.log('📝 DynamicChatGuide - Data evento aggiornata:', newData);
+      const newData = {
+        ...prev,
+        eventDate: selectedDate.toISOString().split("T")[0],
+      };
+      console.log("📝 DynamicChatGuide - Data evento aggiornata:", newData);
       return newData;
     });
 
     createManagedTimeout(() => {
-      const studioPersonalizedText = settings?.studioName ? 
-        `Fantastico, ${leadData.name}! ${settings.studioName} ha tutto quello che serve per il tuo matrimonio da sogno! 🎉` :
-        `Fantastico, ${leadData.name}! Abbiamo tutto quello che serve per il tuo matrimonio da sogno! 🎉`;
+      const studioPersonalizedText = settings?.studioName
+        ? `Fantastico, ${leadData.name}! ${settings.studioName} ha tutto quello che serve per il tuo matrimonio da sogno! 🎉`
+        : `Fantastico, ${leadData.name}! Abbiamo tutto quello che serve per il tuo matrimonio da sogno! 🎉`;
 
       const contactInfo = [];
       if (settings?.phoneNumber) contactInfo.push(`📞 ${settings.phoneNumber}`);
       if (settings?.email) contactInfo.push(`📧 ${settings.email}`);
-      if (settings?.studioAddress) contactInfo.push(`📍 ${settings.studioAddress}`);
+      if (settings?.studioAddress)
+        contactInfo.push(`📍 ${settings.studioAddress}`);
 
-      const contactText = contactInfo.length > 0 ? 
-        `\n\nPer info dirette:\n${contactInfo.join('\n')}` : '';
+      const contactText =
+        contactInfo.length > 0
+          ? `\n\nPer info dirette:\n${contactInfo.join("\n")}`
+          : "";
 
       const hasGlobalDiscount = discounts?.global?.isActive;
-      const discountText = hasGlobalDiscount && discounts?.global ? 
-        `\n\n🎯 OFFERTA SPECIALE: Sconto ${discounts.global.type === 'percent' ? discounts.global.value + '%' : '€' + discounts.global.value} attivo su tutti i servizi!` : '';
+      const discountText =
+        hasGlobalDiscount && discounts?.global
+          ? `\n\n🎯 OFFERTA SPECIALE: Sconto ${discounts.global.type === "percent" ? discounts.global.value + "%" : "€" + discounts.global.value} attivo su tutti i servizi!`
+          : "";
 
       addMessage({
-        type: 'assistant',
-        avatar: 'excited',
+        type: "assistant",
+        avatar: "excited",
         text: `${studioPersonalizedText}${discountText}${contactText}`,
-        typing: true
+        typing: true,
       });
 
       startServicesPhase();
@@ -804,49 +937,63 @@ export function DynamicChatGuide() {
   };
 
   const startServicesPhase = () => {
-    setCurrentPhase('services');
+    setCurrentPhase("services");
 
     // Salva transizione di fase
-    saveChatHistory('phase_started', { phase: 'services', timestamp: new Date() });
+    saveChatHistory("phase_started", {
+      phase: "services",
+      timestamp: new Date(),
+    });
 
     addMessage({
-      type: 'assistant',
-      avatar: 'enthusiastic',
+      type: "assistant",
+      avatar: "enthusiastic",
       text: "Perfetto! Iniziamo con i SERVIZI FONDAMENTALI 🎬📸\n\n💡 SUGGERIMENTO: Scegliendo entrambi i servizi (Foto + Video) sbloccherai prodotti esclusivi e otterrai il massimo risparmio!",
-      typing: true
+      typing: true,
     });
 
     // Attendi 2 secondi poi controlla se gli items sono pronti
     createManagedTimeout(() => {
       if (!itemsReady) {
-        console.log('⏳ Items not ready yet, showing loading message...');
+        console.log("⏳ Items not ready yet, showing loading message...");
         addMessage({
-          type: 'assistant',
-          avatar: 'thoughtful',
+          type: "assistant",
+          avatar: "thoughtful",
           text: "Sto caricando i servizi disponibili... un momento per favore! ⏳",
         });
         return;
       }
 
-      const services = items.filter(item => {
-        const isService = item.category === 'servizio';
+      const services = items.filter((item) => {
+        const isService = item.category === "servizio";
         const isActive = item.active !== false;
-        console.log('🔍 Service check - Item:', item.title, 'Category:', item.category, 'active:', item.active, 'isService:', isService);
+        console.log(
+          "🔍 Service check - Item:",
+          item.title,
+          "Category:",
+          item.category,
+          "active:",
+          item.active,
+          "isService:",
+          isService,
+        );
         return isService && isActive;
       });
 
-      console.log('🔍 Filtered services:', services);
+      console.log("🔍 Filtered services:", services);
 
       addMessage({
-        type: 'system',
+        type: "system",
         text: "Seleziona i servizi che desideri:",
-        items: services
+        items: services,
       });
     }, 2000);
   };
 
   const handleItemToggle = (item: Item) => {
-    const isSelected = cart.cart.items.some(cartItem => cartItem.id === item.id);
+    const isSelected = cart.cart.items.some(
+      (cartItem) => cartItem.id === item.id,
+    );
 
     if (isSelected) {
       cart.removeItem(item.id);
@@ -858,24 +1005,25 @@ export function DynamicChatGuide() {
       });
 
       // Aggiorna dati conversazione rimuovendo item
-      setConversationData(prev => ({
+      setConversationData((prev) => ({
         ...prev,
-        selectedServices: item.category === 'servizio' 
-          ? prev.selectedServices.filter(id => id !== item.id)
-          : prev.selectedServices,
-        selectedProducts: item.category === 'prodotto'
-          ? prev.selectedProducts.filter(id => id !== item.id)
-          : prev.selectedProducts
+        selectedServices:
+          item.category === "servizio"
+            ? prev.selectedServices.filter((id) => id !== item.id)
+            : prev.selectedServices,
+        selectedProducts:
+          item.category === "prodotto"
+            ? prev.selectedProducts.filter((id) => id !== item.id)
+            : prev.selectedProducts,
       }));
 
       // Salva rimozione item
-      saveChatHistory('item_removed', { 
-        itemId: item.id, 
-        itemTitle: item.title, 
+      saveChatHistory("item_removed", {
+        itemId: item.id,
+        itemTitle: item.title,
         category: item.category,
-        phase: currentPhase 
+        phase: currentPhase,
       });
-
     } else {
       // Controlla se posso aggiungere l'item (regole di disponibilità)
       const isAvailable = cart.isItemAvailable(item.id);
@@ -883,10 +1031,10 @@ export function DynamicChatGuide() {
       if (!isAvailable) {
         const reason = cart.getUnavailableReason(item.id);
         addMessage({
-          type: 'assistant',
-          avatar: 'thoughtful',
+          type: "assistant",
+          avatar: "thoughtful",
           text: `⚠️ ${item.title} non è disponibile: ${reason}`,
-          typing: true
+          typing: true,
         });
         return;
       }
@@ -895,7 +1043,7 @@ export function DynamicChatGuide() {
         id: item.id,
         title: item.title,
         price: item.price,
-        category: item.category
+        category: item.category,
       });
 
       if (success) {
@@ -903,33 +1051,45 @@ export function DynamicChatGuide() {
 
         // Toast normali per prodotti, figo solo per regali
         if (isGift) {
-          toast.gift("🎁 Regalo Sbloccato!", `${item.title} è ora GRATUITO!`, 4000);
+          toast.gift(
+            "🎁 Regalo Sbloccato!",
+            `${item.title} è ora GRATUITO!`,
+            4000,
+          );
         } else {
-          toast.success("✅ Aggiunto", `${item.title} aggiunto al carrello`, 2000);
+          toast.success(
+            "✅ Aggiunto",
+            `${item.title} aggiunto al carrello`,
+            2000,
+          );
         }
 
         // Aggiorna dati conversazione aggiungendo item
-        setConversationData(prev => ({
+        setConversationData((prev) => ({
           ...prev,
-          selectedServices: item.category === 'servizio' && !prev.selectedServices.includes(item.id)
-            ? [...prev.selectedServices, item.id]
-            : prev.selectedServices,
-          selectedProducts: item.category === 'prodotto' && !prev.selectedProducts.includes(item.id)
-            ? [...prev.selectedProducts, item.id]
-            : prev.selectedProducts
+          selectedServices:
+            item.category === "servizio" &&
+            !prev.selectedServices.includes(item.id)
+              ? [...prev.selectedServices, item.id]
+              : prev.selectedServices,
+          selectedProducts:
+            item.category === "prodotto" &&
+            !prev.selectedProducts.includes(item.id)
+              ? [...prev.selectedProducts, item.id]
+              : prev.selectedProducts,
         }));
 
         // Salva aggiunta item con dettagli di pricing
         const pricing = cart.getPricingWithRules();
-        saveChatHistory('item_added', { 
-          itemId: item.id, 
-          itemTitle: item.title, 
+        saveChatHistory("item_added", {
+          itemId: item.id,
+          itemTitle: item.title,
           category: item.category,
           price: item.price,
           isGift,
           phase: currentPhase,
           cartTotal: pricing.total,
-          cartSavings: pricing.totalSavings
+          cartSavings: pricing.totalSavings,
         });
 
         // Controllo per feedback intelligente sui regali sbloccati
@@ -940,22 +1100,24 @@ export function DynamicChatGuide() {
     }
 
     // Check if should move to next phase
-    if (currentPhase === 'services') {
-      const selectedServices = cart.cart.items.filter(i => i.category === 'servizio');
+    if (currentPhase === "services") {
+      const selectedServices = cart.cart.items.filter(
+        (i) => i.category === "servizio",
+      );
       if (selectedServices.length > 0) {
         setTimeout(() => {
           addMessage({
-            type: 'assistant',
-            avatar: 'excited',
+            type: "assistant",
+            avatar: "excited",
             text: "Ottima scelta! Vuoi procedere con i prodotti aggiuntivi?",
             options: [
               {
-                id: 'continue-products',
-                label: '➡️ Continua con i prodotti',
-                value: 'continue',
-                action: () => startProductsPhase()
-              }
-            ]
+                id: "continue-products",
+                label: "➡️ Continua con i prodotti",
+                value: "continue",
+                action: () => startProductsPhase(),
+              },
+            ],
           });
         }, 1000);
       }
@@ -964,42 +1126,54 @@ export function DynamicChatGuide() {
 
   // Controlla se ci sono nuovi regali attivati e mostra feedback
   const checkForNewGifts = () => {
-    const availableGifts = items.filter(item => 
-      cart.isItemGift(item.id) && 
-      !cart.cart.items.find(ci => ci.id === item.id)
+    const availableGifts = items.filter(
+      (item) =>
+        cart.isItemGift(item.id) &&
+        !cart.cart.items.find((ci) => ci.id === item.id),
     );
 
     if (availableGifts.length > 0) {
-      const giftNames = availableGifts.map(item => item.title).join(', ');
+      const giftNames = availableGifts.map((item) => item.title).join(", ");
 
       addMessage({
-        type: 'assistant',
-        avatar: 'enthusiastic',
-        text: `🎉 FANTASTICO! Hai sbloccato dei REGALI!\n\n🎁 Ora ${giftNames} ${availableGifts.length === 1 ? 'è' : 'sono'} GRATUITO!\n\nPuoi aggiungerlo al tuo carrello senza costi aggiuntivi! ✨`,
-        typing: true
+        type: "assistant",
+        avatar: "enthusiastic",
+        text: `🎉 FANTASTICO! Hai sbloccato dei REGALI!\n\n🎁 Ora ${giftNames} ${availableGifts.length === 1 ? "è" : "sono"} GRATUITO!\n\nPuoi aggiungerlo al tuo carrello senza costi aggiuntivi! ✨`,
+        typing: true,
       });
     }
   };
 
   const startProductsPhase = () => {
-    setCurrentPhase('products');
+    setCurrentPhase("products");
 
     // Salva transizione di fase con stato servizi selezionati
-    const selectedServices = cart.cart.items.filter(i => i.category === 'servizio');
-    saveChatHistory('phase_started', { 
-      phase: 'products', 
+    const selectedServices = cart.cart.items.filter(
+      (i) => i.category === "servizio",
+    );
+    saveChatHistory("phase_started", {
+      phase: "products",
       timestamp: new Date(),
       selectedServicesCount: selectedServices.length,
-      selectedServices: selectedServices.map(s => ({ id: s.id, title: s.title }))
+      selectedServices: selectedServices.map((s) => ({
+        id: s.id,
+        title: s.title,
+      })),
     });
 
-    const hasPhotoService = cart.cart.items.some(i => i.id === 'bsCHxhOyCn70gtzBAGQQ');
-    const hasVideoService = cart.cart.items.some(i => i.id === 'wFwLZdWcjo6tdkhasQbs');
+    const hasPhotoService = cart.cart.items.some(
+      (i) => i.id === "bsCHxhOyCn70gtzBAGQQ",
+    );
+    const hasVideoService = cart.cart.items.some(
+      (i) => i.id === "wFwLZdWcjo6tdkhasQbs",
+    );
 
     // Analizza quali prodotti sono disponibili tramite le regole
-    const products = items.filter(item => item.category === 'prodotto');
-    const availableProducts = products.filter(item => cart.isItemAvailable(item.id));
-    const giftProducts = products.filter(item => cart.isItemGift(item.id));
+    const products = items.filter((item) => item.category === "prodotto");
+    const availableProducts = products.filter((item) =>
+      cart.isItemAvailable(item.id),
+    );
+    const giftProducts = products.filter((item) => cart.isItemGift(item.id));
 
     let unlockMessage = "Ora vediamo i PRODOTTI AGGIUNTIVI! 🎁\n\n";
 
@@ -1007,83 +1181,89 @@ export function DynamicChatGuide() {
       unlockMessage += "🎉 FANTASTICO! Hai scelto entrambi i servizi!\n";
       unlockMessage += `✨ Hai sbloccato ${availableProducts.length} prodotti esclusivi\n`;
       if (giftProducts.length > 0) {
-        const giftNames = giftProducts.map(item => item.title).join(', ');
+        const giftNames = giftProducts.map((item) => item.title).join(", ");
         unlockMessage += `🎁 Regalo per te: ${giftNames}!`;
       }
     } else if (hasPhotoService) {
-      unlockMessage += "📸 Con il servizio fotografico hai sbloccato gli album fotografici!";
+      unlockMessage +=
+        "📸 Con il servizio fotografico hai sbloccato gli album fotografici!";
       const unavailableCount = products.length - availableProducts.length;
       if (unavailableCount > 0) {
         unlockMessage += `\n💡 Aggiungi il servizio video per sbloccare altri ${unavailableCount} prodotti!`;
       }
     } else if (hasVideoService) {
-      unlockMessage += "🎬 Con il servizio video hai sbloccato Drone e VideoProiezione!";
+      unlockMessage +=
+        "🎬 Con il servizio video hai sbloccato Drone e VideoProiezione!";
       const unavailableCount = products.length - availableProducts.length;
       if (unavailableCount > 0) {
         unlockMessage += `\n💡 Aggiungi il servizio fotografico per sbloccare altri ${unavailableCount} prodotti!`;
       }
     } else {
-      unlockMessage += "🔒 Scegli almeno un servizio per sbloccare i prodotti esclusivi!";
+      unlockMessage +=
+        "🔒 Scegli almeno un servizio per sbloccare i prodotti esclusivi!";
     }
 
     addMessage({
-      type: 'assistant',
-      avatar: 'enthusiastic',
+      type: "assistant",
+      avatar: "enthusiastic",
       text: unlockMessage,
-      typing: true
+      typing: true,
     });
 
     createManagedTimeout(() => {
       addMessage({
-        type: 'system',
-        text: availableProducts.length > 0 ? "Scegli i prodotti che desideri:" : "Seleziona prima un servizio per vedere i prodotti:",
-        items: products
+        type: "system",
+        text:
+          availableProducts.length > 0
+            ? "Scegli i prodotti che desideri:"
+            : "Seleziona prima un servizio per vedere i prodotti:",
+        items: products,
       });
     }, 2000);
   };
 
   const startSummaryPhase = () => {
-    setCurrentPhase('summary');
+    setCurrentPhase("summary");
 
     const pricing = cart.getPricingWithRules();
-    const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
-    const giftItemIds = giftItems.map(item => item.id);
+    const giftItems = cart.getItemsWithRuleInfo().filter((item) => item.isGift);
+    const giftItemIds = giftItems.map((item) => item.id);
 
     // Salva transizione a summary con dettagli completi carrello
-    const selectedItems = cart.cart.items.map(item => ({
+    const selectedItems = cart.cart.items.map((item) => ({
       id: item.id,
       title: item.title,
       category: item.category,
-      price: item.price
+      price: item.price,
     }));
 
-    saveChatHistory('phase_started', { 
-      phase: 'summary', 
+    saveChatHistory("phase_started", {
+      phase: "summary",
       timestamp: new Date(),
       cartTotal: pricing.total,
       cartSavings: pricing.totalSavings,
       itemsCount: cart.cart.items.length,
       selectedItems,
       giftItemsCount: giftItems.length,
-      giftItems: giftItems.map(item => ({ id: item.id, title: item.title }))
+      giftItems: giftItems.map((item) => ({ id: item.id, title: item.title })),
     });
 
     // Calculate comprehensive savings using unified pricing system
-    const savingsInfo = discounts ? 
-      calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds) :
-      {
-        subtotal: pricing.total,
-        originalSubtotal: pricing.total,
-        globalDiscountSavings: 0,
-        individualDiscountSavings: 0,
-        totalDiscountSavings: 0,
-        giftSavings: pricing.giftSavings,
-        finalTotal: pricing.total,
-        totalSavings: pricing.giftSavings,
-        itemDetails: []
-      };
+    const savingsInfo = discounts
+      ? calculateUnifiedPricing(cart.cart.items, discounts, giftItemIds)
+      : {
+          subtotal: pricing.total,
+          originalSubtotal: pricing.total,
+          globalDiscountSavings: 0,
+          individualDiscountSavings: 0,
+          totalDiscountSavings: 0,
+          giftSavings: pricing.giftSavings,
+          finalTotal: pricing.total,
+          totalSavings: pricing.giftSavings,
+          itemDetails: [],
+        };
 
-    const studioText = settings?.studioName ? ` da ${settings.studioName}` : '';
+    const studioText = settings?.studioName ? ` da ${settings.studioName}` : "";
     let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
 
     if (savingsInfo.totalDiscountSavings > 0 || savingsInfo.giftSavings > 0) {
@@ -1091,8 +1271,10 @@ export function DynamicChatGuide() {
 
       if (savingsInfo.globalDiscountSavings > 0) {
         const globalDiscount = discounts?.global;
-        const discountText = globalDiscount?.type === 'percent' ? 
-          `${globalDiscount.value}%` : `€${globalDiscount?.value}`;
+        const discountText =
+          globalDiscount?.type === "percent"
+            ? `${globalDiscount.value}%`
+            : `€${globalDiscount?.value}`;
         summaryText += `💸 Sconto globale (${discountText}): -€${savingsInfo.globalDiscountSavings}\n`;
       }
 
@@ -1111,71 +1293,82 @@ export function DynamicChatGuide() {
     }
 
     if (giftItems.length > 0) {
-      const giftNames = giftItems.map(item => item.title).join(', ');
+      const giftNames = giftItems.map((item) => item.title).join(", ");
       summaryText += `\n🎁 Prodotti GRATUITI: ${giftNames}`;
     }
 
     summaryText += "\n\nVuoi procedere con la prenotazione?";
 
     addMessage({
-      type: 'assistant',
-      avatar: 'excited',
+      type: "assistant",
+      avatar: "excited",
       text: summaryText,
       showCart: true,
-      typing: true
+      typing: true,
     });
 
     setTimeout(() => {
-      const contactText = settings?.studioName ? 
-        "Compila i tuoi dati per ricevere il preventivo dettagliato di " + settings.studioName + ":" :
-        "Compila i tuoi dati per ricevere il preventivo dettagliato:";
+      const contactText = settings?.studioName
+        ? "Compila i tuoi dati per ricevere il preventivo dettagliato di " +
+          settings.studioName +
+          ":"
+        : "Compila i tuoi dati per ricevere il preventivo dettagliato:";
 
       addMessage({
-        type: 'assistant',
-        avatar: 'smiling',
+        type: "assistant",
+        avatar: "smiling",
         text: contactText,
         options: [
           {
-            id: 'proceed-checkout',
-            label: '📝 Inserisci i tuoi dati',
-            value: 'checkout',
+            id: "proceed-checkout",
+            label: "📝 Inserisci i tuoi dati",
+            value: "checkout",
             action: () => {
-              if (currentPhase !== 'lead') {
-                console.log('🔄 Transitioning to lead phase from summary options');
-                saveChatHistory('phase_started', { 
-                  phase: 'lead', 
+              if (currentPhase !== "lead") {
+                console.log(
+                  "🔄 Transitioning to lead phase from summary options",
+                );
+                saveChatHistory("phase_started", {
+                  phase: "lead",
                   timestamp: new Date(),
                   finalCartTotal: cart.getPricingWithRules().total,
                   finalCartSavings: cart.getPricingWithRules().totalSavings,
-                  readyForCheckout: true
+                  readyForCheckout: true,
                 });
-                setCurrentPhase('lead');
+                setCurrentPhase("lead");
               }
-            }
-          }
-        ]
+            },
+          },
+        ],
       });
     }, 2000);
   };
 
-  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
+  const [expandedDescriptions, setExpandedDescriptions] = useState<
+    Record<string, boolean>
+  >({});
 
   const getDetailedUnavailableReason = (item: Item): string => {
-    if (cart.isItemAvailable(item.id)) return '';
+    if (cart.isItemAvailable(item.id)) return "";
 
     // Check for mutual exclusion rules first
     const selectedItems = cart.cart.items;
     const rules = cart.getApplicableRules();
 
     for (const rule of rules) {
-      if (rule.type === 'availability' && 
-          rule.action === 'disable' && 
-          rule.targetItems.includes(item.id) &&
-          rule.conditions.type === 'mutually_exclusive') {
-
+      if (
+        rule.type === "availability" &&
+        rule.action === "disable" &&
+        rule.targetItems.includes(item.id) &&
+        rule.conditions.type === "mutually_exclusive"
+      ) {
         const conflictingWith = rule.conditions.mutuallyExclusiveWith;
-        const conflictingItemIds = Array.isArray(conflictingWith) ? conflictingWith : [conflictingWith];
-        const conflictingItem = selectedItems.find(si => conflictingItemIds.some(id => id === si.id));
+        const conflictingItemIds = Array.isArray(conflictingWith)
+          ? conflictingWith
+          : [conflictingWith];
+        const conflictingItem = selectedItems.find((si) =>
+          conflictingItemIds.some((id) => id === si.id),
+        );
 
         if (conflictingItem) {
           return `Questo prodotto non è disponibile perché hai già scelto "${conflictingItem.title}". I due prodotti sono alternativi tra loro.`;
@@ -1185,225 +1378,267 @@ export function DynamicChatGuide() {
 
     // Check for required items rules
     for (const rule of rules) {
-      if (rule.type === 'availability' && 
-          rule.action === 'disable' && 
-          rule.targetItems.includes(item.id) &&
-          rule.conditions.type === 'required_items') {
-
+      if (
+        rule.type === "availability" &&
+        rule.action === "disable" &&
+        rule.targetItems.includes(item.id) &&
+        rule.conditions.type === "required_items"
+      ) {
         const requiredItems = rule.conditions.requiredItems || [];
-        const selectedItemIds = selectedItems.map(si => si.id);
-        const missingItems = requiredItems.filter(reqId => !selectedItemIds.includes(reqId));
+        const selectedItemIds = selectedItems.map((si) => si.id);
+        const missingItems = requiredItems.filter(
+          (reqId) => !selectedItemIds.includes(reqId),
+        );
 
         if (missingItems.length > 0) {
           // Get item names for missing items
           const allItems = cart.getAllItemsWithAvailability();
-          const missingItemNames = missingItems.map(id => {
-            const foundItem = allItems.find(i => i.id === id);
-            return foundItem ? foundItem.title : 'Servizio richiesto';
+          const missingItemNames = missingItems.map((id) => {
+            const foundItem = allItems.find((i) => i.id === id);
+            return foundItem ? foundItem.title : "Servizio richiesto";
           });
 
           if (missingItemNames.length === 1) {
             return `Per sbloccare questo prodotto devi prima selezionare: ${missingItemNames[0]}`;
           } else {
-            return `Per sbloccare questo prodotto devi prima selezionare: ${missingItemNames.join(', ')}`;
+            return `Per sbloccare questo prodotto devi prima selezionare: ${missingItemNames.join(", ")}`;
           }
         }
       }
     }
 
     // Fallback to generic reason
-    return cart.getUnavailableReason(item.id) || 'Elemento non disponibile';
+    return cart.getUnavailableReason(item.id) || "Elemento non disponibile";
   };
 
   const toggleDescription = useCallback((itemId: string) => {
-    setExpandedDescriptions(prev => ({
+    setExpandedDescriptions((prev) => ({
       ...prev,
-      [itemId]: !prev[itemId]
+      [itemId]: !prev[itemId],
     }));
   }, []);
 
-  const renderItemCard = useCallback((item: Item) => {
-    const cartItem = cart.cart.items.find(ci => ci.id === item.id);
-    const isSelected = !!cartItem;
-    const isAvailable = cart.isItemAvailable(item.id);
-    const isGift = cart.isItemGift(item.id);
-    const giftSettings = cart.getItemGiftSettings(item.id);
-    const unavailableReason = !isAvailable ? getDetailedUnavailableReason(item) : null;
-    const isUnavailable = !isAvailable;
-    const isDescriptionExpanded = expandedDescriptions[item.id] || false;
+  const renderItemCard = useCallback(
+    (item: Item) => {
+      const cartItem = cart.cart.items.find((ci) => ci.id === item.id);
+      const isSelected = !!cartItem;
+      const isAvailable = cart.isItemAvailable(item.id);
+      const isGift = cart.isItemGift(item.id);
+      const giftSettings = cart.getItemGiftSettings(item.id);
+      const unavailableReason = !isAvailable
+        ? getDetailedUnavailableReason(item)
+        : null;
+      const isUnavailable = !isAvailable;
+      const isDescriptionExpanded = expandedDescriptions[item.id] || false;
 
-    // Calculate discounted price using both global and individual discounts
-    const originalPrice = item.originalPrice || item.price;
+      // Calculate discounted price using both global and individual discounts
+      const originalPrice = item.originalPrice || item.price;
 
-    let discountInfo: {
-      finalPrice: number;
-      savings: number;
-      discountType: 'individual' | 'global' | null;
-      discountValue: number;
-    } = { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
+      let discountInfo: {
+        finalPrice: number;
+        savings: number;
+        discountType: "individual" | "global" | null;
+        discountValue: number;
+      } = {
+        finalPrice: originalPrice,
+        discountType: null,
+        discountValue: 0,
+        savings: 0,
+      };
 
-    if (discounts && !isGift) {
-      discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
-    }
+      if (discounts && !isGift) {
+        discountInfo = getItemDiscountInfo(originalPrice, item.id, discounts);
+      }
 
-    const hasDiscount = discountInfo.discountType !== null;
+      const hasDiscount = discountInfo.discountType !== null;
 
-    const finalPrice = isGift ? 0 : discountInfo.finalPrice;
+      const finalPrice = isGift ? 0 : discountInfo.finalPrice;
 
-    return (
-      <div
-        key={item.id}
-        className={cn(
-          "border rounded-lg p-3 mb-2 transition-all cursor-pointer",
-          isSelected 
-            ? "border-blue-500 bg-blue-50" 
-            : isUnavailable
-              ? "border-gray-200 bg-gray-50 opacity-60"
-              : "border-gray-200 hover:border-gray-300 hover:shadow-md",
-          isUnavailable && "cursor-not-allowed"
-        )}
-        onClick={() => !isUnavailable && handleItemToggle(item)}
-      >
-        <div className="flex items-start gap-3">
-          {/* Product Image */}
-          {item.imageUrl && (
-            <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
-              <img 
-                src={item.imageUrl} 
-                alt={item.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
+      return (
+        <div
+          key={item.id}
+          className={cn(
+            "border rounded-lg p-3 mb-2 transition-all cursor-pointer",
+            isSelected
+              ? "border-blue-500 bg-blue-50"
+              : isUnavailable
+                ? "border-gray-200 bg-gray-50 opacity-60"
+                : "border-gray-200 hover:border-gray-300 hover:shadow-md",
+            isUnavailable && "cursor-not-allowed",
           )}
+          onClick={() => !isUnavailable && handleItemToggle(item)}
+        >
+          <div className="flex items-start gap-3">
+            {/* Product Image */}
+            {item.imageUrl && (
+              <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
+            )}
 
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h4 className={cn(
-                "font-medium text-sm",
-                isUnavailable ? "text-gray-400" : "text-gray-900"
-              )}>
-                {item.title}
-              </h4>
-              {isSelected && <Check className="h-4 w-4 text-blue-600" />}
-              {isGift && (
-                <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                  GRATIS
-                </Badge>
-              )}
-            </div>
-
-            {/* Description with expand/collapse */}
-            {item.description && (
-              <div className="mt-1">
-                <p className={cn(
-                  "text-xs",
-                  isUnavailable ? "text-gray-400" : "text-gray-600"
-                )}>
-                  {isDescriptionExpanded 
-                    ? item.description 
-                    : `${item.description.substring(0, 50)}${item.description.length > 50 ? '...' : ''}`
-                  }
-                </p>
-                {item.description.length > 50 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleDescription(item.id);
-                    }}
-                    className="text-xs text-blue-600 hover:text-blue-800 mt-1 font-medium"
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h4
+                  className={cn(
+                    "font-medium text-sm",
+                    isUnavailable ? "text-gray-400" : "text-gray-900",
+                  )}
+                >
+                  {item.title}
+                </h4>
+                {isSelected && <Check className="h-4 w-4 text-blue-600" />}
+                {isGift && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-800 text-xs"
                   >
-                    {isDescriptionExpanded ? 'Mostra meno' : 'Continua a leggere'}
-                  </button>
+                    GRATIS
+                  </Badge>
                 )}
               </div>
-            )}
 
-            {/* Enhanced unavailable reason */}
-            {unavailableReason && (
-              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
-                <div className="flex items-start gap-1">
-                  <X className="h-3 w-3 text-red-500 mt-0.5 flex-shrink-0" />
-                  <p className="text-red-700 leading-relaxed">
-                    {unavailableReason}
+              {/* Description with expand/collapse */}
+              {item.description && (
+                <div className="mt-1">
+                  <p
+                    className={cn(
+                      "text-xs",
+                      isUnavailable ? "text-gray-400" : "text-gray-600",
+                    )}
+                  >
+                    {isDescriptionExpanded
+                      ? item.description
+                      : `${item.description.substring(0, 50)}${item.description.length > 50 ? "..." : ""}`}
                   </p>
-                </div>
-              </div>
-            )}
-          </div>
-          {/* Enhanced Pricing Display with Visual Feedback */}
-          <div className="text-right ml-2 flex flex-col items-end">
-            {isGift ? (
-              <div className="flex flex-col items-end">
-                <div className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
-                  GRATIS
-                </div>
-                <div className="text-xs text-gray-500 line-through mt-1">€{item.price}</div>
-                {giftSettings?.giftText && (
-                  <div className="text-xs text-green-600 font-medium mt-1">
-                    {giftSettings.giftText}
-                  </div>
-                )}
-              </div>
-            ) : hasDiscount ? (
-              <div className="flex flex-col items-end">
-                <div className="text-xs text-gray-400 line-through">
-                  €{originalPrice}
-                </div>
-                <div className="text-sm font-semibold text-green-600 bg-gradient-to-r from-green-50 to-emerald-50 px-2 py-1 rounded-md border border-green-200">
-                  €{finalPrice}
-                </div>
-                <div className="flex items-center gap-1 mt-1">
-                  <div className="text-xs text-green-600 font-medium">
-                    -{Math.round((discountInfo.savings / originalPrice) * 100)}%
-                  </div>
-                  {discountInfo.discountType === 'individual' ? (
-                    <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
-                      Speciale
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
-                      Globale
-                    </Badge>
+                  {item.description.length > 50 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleDescription(item.id);
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-800 mt-1 font-medium"
+                    >
+                      {isDescriptionExpanded
+                        ? "Mostra meno"
+                        : "Continua a leggere"}
+                    </button>
                   )}
                 </div>
-                <div className="text-xs text-green-600 font-medium">
-                  Risparmi €{discountInfo.savings.toFixed(2)}
+              )}
+
+              {/* Enhanced unavailable reason */}
+              {unavailableReason && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
+                  <div className="flex items-start gap-1">
+                    <X className="h-3 w-3 text-red-500 mt-0.5 flex-shrink-0" />
+                    <p className="text-red-700 leading-relaxed">
+                      {unavailableReason}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className={cn(
-                "text-sm font-medium",
-                isUnavailable ? "text-gray-400" : "text-gray-900"
-              )}>
-                €{originalPrice}
-              </div>
-            )}
+              )}
+            </div>
+            {/* Enhanced Pricing Display with Visual Feedback */}
+            <div className="text-right ml-2 flex flex-col items-end">
+              {isGift ? (
+                <div className="flex flex-col items-end">
+                  <div className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
+                    GRATIS
+                  </div>
+                  <div className="text-xs text-gray-500 line-through mt-1">
+                    €{item.price}
+                  </div>
+                  {giftSettings?.giftText && (
+                    <div className="text-xs text-green-600 font-medium mt-1">
+                      {giftSettings.giftText}
+                    </div>
+                  )}
+                </div>
+              ) : hasDiscount ? (
+                <div className="flex flex-col items-end">
+                  <div className="text-xs text-gray-400 line-through">
+                    €{originalPrice}
+                  </div>
+                  <div className="text-sm font-semibold text-green-600 bg-gradient-to-r from-green-50 to-emerald-50 px-2 py-1 rounded-md border border-green-200">
+                    €{finalPrice}
+                  </div>
+                  <div className="flex items-center gap-1 mt-1">
+                    <div className="text-xs text-green-600 font-medium">
+                      -
+                      {Math.round((discountInfo.savings / originalPrice) * 100)}
+                      %
+                    </div>
+                    {discountInfo.discountType === "individual" ? (
+                      <Badge
+                        variant="secondary"
+                        className="text-xs bg-orange-100 text-orange-700 border-orange-200"
+                      >
+                        Speciale
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="text-xs bg-blue-100 text-blue-700 border-blue-200"
+                      >
+                        Globale
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-xs text-green-600 font-medium">
+                    Risparmi €{discountInfo.savings.toFixed(2)}
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    "text-sm font-medium",
+                    isUnavailable ? "text-gray-400" : "text-gray-900",
+                  )}
+                >
+                  €{originalPrice}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }, [cart, discounts, expandedDescriptions, getDetailedUnavailableReason, handleItemToggle, toggleDescription]);
+      );
+    },
+    [
+      cart,
+      discounts,
+      expandedDescriptions,
+      getDetailedUnavailableReason,
+      handleItemToggle,
+      toggleDescription,
+    ],
+  );
 
   const renderMessage = (message: ChatMessage) => {
-    if (message.type === 'assistant') {
+    if (message.type === "assistant") {
       return (
         <div className="flex gap-3 mb-4">
-          <SpectacularAvatar 
-            type={message.avatar || 'smiling'}
+          <SpectacularAvatar
+            type={message.avatar || "smiling"}
             className="flex-shrink-0 w-10 h-10"
           />
           <div className="flex-1">
             <div className="bg-gray-100 rounded-lg p-4 max-w-lg">
               {message.text && (
-                <p className="text-gray-800 whitespace-pre-line">{message.text}</p>
+                <p className="text-gray-800 whitespace-pre-line">
+                  {message.text}
+                </p>
               )}
 
               {message.options && (
                 <div className="mt-3 space-y-2">
-                  {message.options.map(option => (
+                  {message.options.map((option) => (
                     <Button
                       key={option.id}
                       onClick={option.action}
@@ -1416,21 +1651,29 @@ export function DynamicChatGuide() {
                 </div>
               )}
 
-              {message.component === 'date-selector' && (
+              {message.component === "date-selector" && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
-                  <p className="text-sm font-medium mb-3">Seleziona una data specifica:</p>
+                  <p className="text-sm font-medium mb-3">
+                    Seleziona una data specifica:
+                  </p>
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="h-4 w-4 text-gray-500" />
                     <input
                       type="date"
-                      value={leadData.eventDate ? new Date(leadData.eventDate).toISOString().split('T')[0] : ''}
+                      value={
+                        leadData.eventDate
+                          ? new Date(leadData.eventDate)
+                              .toISOString()
+                              .split("T")[0]
+                          : ""
+                      }
                       onChange={(e) => {
                         if (e.target.value) {
                           const selectedDate = new Date(e.target.value);
                           handleSpecificDateSelection(selectedDate);
                         }
                       }}
-                      min={new Date().toISOString().split('T')[0]}
+                      min={new Date().toISOString().split("T")[0]}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Seleziona data matrimonio"
                     />
@@ -1438,65 +1681,103 @@ export function DynamicChatGuide() {
                 </div>
               )}
 
-              {message.showCart && cart.cart.items.length > 0 && (() => {
-                // Use the same unified pricing as CheckoutModal
-                const cartSavingsInfo = cart.getPricingWithRules();
+              {message.showCart &&
+                cart.cart.items.length > 0 &&
+                (() => {
+                  // Use the same unified pricing as CheckoutModal
+                  const cartSavingsInfo = cart.getPricingWithRules();
 
-                return (
-                  <div className="mt-4 p-3 bg-white rounded-lg border">
-                    <h4 className="font-semibold mb-2 text-sm">Riepilogo Ordine:</h4>
-                    {cart.cart.items.map(item => {
-                      // Calculate discount for this item
-                      const originalPrice = item.originalPrice || item.price;
-                      const discountInfo = discounts ? 
-                        getItemDiscountInfo(originalPrice, item.id, discounts) : 
-                        { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
-                      const isGift = cart.isItemGift(item.id);
-                      const finalPrice = isGift ? 0 : discountInfo.finalPrice;
-                      const hasDiscount = discountInfo.discountType !== null && !isGift;
+                  return (
+                    <div className="mt-4 p-3 bg-white rounded-lg border">
+                      <h4 className="font-semibold mb-2 text-sm">
+                        Riepilogo Ordine:
+                      </h4>
+                      {cart.cart.items.map((item) => {
+                        // Calculate discount for this item
+                        const originalPrice = item.originalPrice || item.price;
+                        const discountInfo = discounts
+                          ? getItemDiscountInfo(
+                              originalPrice,
+                              item.id,
+                              discounts,
+                            )
+                          : {
+                              finalPrice: originalPrice,
+                              discountType: null,
+                              discountValue: 0,
+                              savings: 0,
+                            };
+                        const isGift = cart.isItemGift(item.id);
+                        const finalPrice = isGift ? 0 : discountInfo.finalPrice;
+                        const hasDiscount =
+                          discountInfo.discountType !== null && !isGift;
 
-                      return (
-                        <div key={item.id} className="flex justify-between text-xs mb-1">
-                          <span className={isGift ? "text-green-600" : ""}>
-                            {item.title} {isGift && "(OMAGGIO)"}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            {(hasDiscount || isGift) && (
-                              <span className="line-through text-gray-400 text-xs">
-                                €{originalPrice}
-                              </span>
-                            )}
-                            <span className={finalPrice === 0 ? "text-green-600 font-bold" : (hasDiscount ? "text-green-600 font-semibold" : "")}>
-                              {finalPrice === 0 ? "GRATIS" : `€${finalPrice}`}
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex justify-between text-xs mb-1"
+                          >
+                            <span className={isGift ? "text-green-600" : ""}>
+                              {item.title} {isGift && "(OMAGGIO)"}
                             </span>
+                            <div className="flex items-center gap-2">
+                              {(hasDiscount || isGift) && (
+                                <span className="line-through text-gray-400 text-xs">
+                                  €{originalPrice}
+                                </span>
+                              )}
+                              <span
+                                className={
+                                  finalPrice === 0
+                                    ? "text-green-600 font-bold"
+                                    : hasDiscount
+                                      ? "text-green-600 font-semibold"
+                                      : ""
+                                }
+                              >
+                                {finalPrice === 0 ? "GRATIS" : `€${finalPrice}`}
+                              </span>
+                            </div>
                           </div>
+                        );
+                      })}
+                      <div className="border-t mt-2 pt-2">
+                        <div className="flex justify-between font-bold">
+                          <span>Totale:</span>
+                          <span className="text-green-600">
+                            €
+                            {cart.cart.items.reduce((sum, item) => {
+                              const isGift = cart.isItemGift(item.id);
+                              const originalPrice =
+                                item.originalPrice || item.price;
+                              const discountInfo = discounts
+                                ? getItemDiscountInfo(
+                                    originalPrice,
+                                    item.id,
+                                    discounts,
+                                  )
+                                : {
+                                    finalPrice: originalPrice,
+                                    discountType: null,
+                                    discountValue: 0,
+                                    savings: 0,
+                                  };
+                              const finalPrice = isGift
+                                ? 0
+                                : discountInfo.finalPrice;
+                              return sum + finalPrice;
+                            }, 0)}
+                          </span>
                         </div>
-                      );
-                    })}
-                    <div className="border-t mt-2 pt-2">
-                      <div className="flex justify-between font-bold">
-                        <span>Totale:</span>
-                        <span className="text-green-600">
-                          €{cart.cart.items.reduce((sum, item) => {
-                            const isGift = cart.isItemGift(item.id);
-                            const originalPrice = item.originalPrice || item.price;
-                            const discountInfo = discounts ? 
-                              getItemDiscountInfo(originalPrice, item.id, discounts) : 
-                              { finalPrice: originalPrice, discountType: null, discountValue: 0, savings: 0 };
-                            const finalPrice = isGift ? 0 : discountInfo.finalPrice;
-                            return sum + finalPrice;
-                          }, 0)}
-                        </span>
                       </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
             </div>
           </div>
         </div>
       );
-    } else if (message.type === 'user') {
+    } else if (message.type === "user") {
       return (
         <div className="flex justify-end mb-4">
           <div className="bg-blue-600 text-white rounded-lg p-3 max-w-lg">
@@ -1504,23 +1785,25 @@ export function DynamicChatGuide() {
           </div>
         </div>
       );
-    } else if (message.type === 'system' && message.items) {
+    } else if (message.type === "system" && message.items) {
       return (
         <div className="mb-4">
           <div className="bg-gray-50 rounded-lg p-4 border">
             {message.text && (
-              <h4 className="text-sm font-semibold text-gray-800 mb-3">{message.text}</h4>
+              <h4 className="text-sm font-semibold text-gray-800 mb-3">
+                {message.text}
+              </h4>
             )}
             <div className="space-y-3">
               {message.items.length > 0 ? (
-                message.items.map(item => renderItemCard(item))
+                message.items.map((item) => renderItemCard(item))
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
                   Nessun elemento disponibile
                 </p>
               )}
             </div>
-            {currentPhase === 'products' && (
+            {currentPhase === "products" && (
               <Button
                 onClick={startSummaryPhase}
                 className="w-full mt-4 bg-green-600 hover:bg-green-700"
@@ -1528,14 +1811,15 @@ export function DynamicChatGuide() {
                 ✅ Procedi al Riepilogo
               </Button>
             )}
-            {currentPhase === 'services' && cart.cart.items.some(i => i.category === 'servizio') && (
-              <Button
-                onClick={() => startProductsPhase()}
-                className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
-              >
-                ➡️ Continua con i prodotti
-              </Button>
-            )}
+            {currentPhase === "services" &&
+              cart.cart.items.some((i) => i.category === "servizio") && (
+                <Button
+                  onClick={() => startProductsPhase()}
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                >
+                  ➡️ Continua con i prodotti
+                </Button>
+              )}
           </div>
         </div>
       );
@@ -1547,44 +1831,88 @@ export function DynamicChatGuide() {
   // Dynamically render content based on current phase
   const renderContent = () => {
     // Filter items for main services and categories
-    const allServices = items.filter(item => item.category === 'servizio' && item.active !== false);
-    const mainServices = allServices.filter(item => item.tags?.includes('main'));
+    const allServices = items.filter(
+      (item) => item.category === "servizio" && item.active !== false,
+    );
+    const mainServices = allServices.filter((item) =>
+      item.tags?.includes("main"),
+    );
     const serviceCategories = [
-      { key: 'photo-services', title: 'Servizi Fotografici', icon: '📸', items: allServices.filter(item => item.tags?.includes('photo')) },
-      { key: 'video-services', title: 'Servizi Video', icon: '🎬', items: allServices.filter(item => item.tags?.includes('video')) },
-      { key: 'other-services', title: 'Altri Servizi', icon: '✨', items: allServices.filter(item => !item.tags || (!item.tags.includes('photo') && !item.tags.includes('video') && !item.tags.includes('main'))) }
-    ].filter(cat => cat.items.length > 0);
+      {
+        key: "photo-services",
+        title: "Servizi Fotografici",
+        icon: "📸",
+        items: allServices.filter((item) => item.tags?.includes("photo")),
+      },
+      {
+        key: "video-services",
+        title: "Servizi Video",
+        icon: "🎬",
+        items: allServices.filter((item) => item.tags?.includes("video")),
+      },
+      {
+        key: "other-services",
+        title: "Altri Servizi",
+        icon: "✨",
+        items: allServices.filter(
+          (item) =>
+            !item.tags ||
+            (!item.tags.includes("photo") &&
+              !item.tags.includes("video") &&
+              !item.tags.includes("main")),
+        ),
+      },
+    ].filter((cat) => cat.items.length > 0);
 
-    if (currentPhase === 'welcome') {
+    if (currentPhase === "welcome") {
       return (
         <div key="welcome-step" className="space-y-4 text-center">
-          <SpectacularAvatar type="explaining" className="mx-auto w-24 h-24 mb-4" />
+          <SpectacularAvatar
+            type="explaining"
+            className="mx-auto w-24 h-24 mb-4"
+          />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
             Benvenuto/a!
           </h2>
           <p className="text-lg text-gray-600 mb-6">
-            Sono qui per aiutarti a creare il pacchetto perfetto per il tuo matrimonio.
+            Sono qui per aiutarti a creare il pacchetto perfetto per il tuo
+            matrimonio.
           </p>
           <p className="text-lg text-gray-600 mb-6">
             Per iniziare, quando sarà il grande giorno?
           </p>
           <div className="flex flex-col items-center gap-3">
-            <Button onClick={() => handleDateSelection('2025')} className="w-64 py-3 text-lg">📅 2025</Button>
-            <Button onClick={() => handleDateSelection('2026')} className="w-64 py-3 text-lg">📅 2026</Button>
-            <Button onClick={() => handleDateSelection('later')} className="w-64 py-3 text-lg">📅 Più avanti</Button>
+            <Button
+              onClick={() => handleDateSelection("2025")}
+              className="w-64 py-3 text-lg"
+            >
+              📅 2025
+            </Button>
+            <Button
+              onClick={() => handleDateSelection("2026")}
+              className="w-64 py-3 text-lg"
+            >
+              📅 2026
+            </Button>
+            <Button
+              onClick={() => handleDateSelection("later")}
+              className="w-64 py-3 text-lg"
+            >
+              📅 Più avanti
+            </Button>
           </div>
         </div>
       );
     }
 
-    if (currentPhase === 'collect_name') {
+    if (currentPhase === "collect_name") {
       return (
         <div key="collect-name-step" className="space-y-4">
           <div className="flex items-start gap-3 mb-6">
             <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
               <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
               <AvatarFallback className="bg-brand-accent text-white font-bold">
-                {settings?.studioName?.charAt(0) || 'S'}
+                {settings?.studioName?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
             <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
@@ -1597,52 +1925,54 @@ export function DynamicChatGuide() {
         </div>
       );
     }
-    if (currentPhase === 'collect_surname') {
+    if (currentPhase === "collect_surname") {
       return (
         <div key="collect-surname-step" className="space-y-4">
           <div className="flex items-start gap-3 mb-6">
             <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
               <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
               <AvatarFallback className="bg-brand-accent text-white font-bold">
-                {settings?.studioName?.charAt(0) || 'S'}
+                {settings?.studioName?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
             <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
               <p className="text-gray-800 leading-relaxed">
-                {leadData.name} {leadData.surname}, per inviarti il preventivo personalizzato in PDF, qual è la tua email? 📧
+                {leadData.name} {leadData.surname}, per inviarti il preventivo
+                personalizzato in PDF, qual è la tua email? 📧
               </p>
             </div>
           </div>
         </div>
       );
     }
-    if (currentPhase === 'collect_email') {
+    if (currentPhase === "collect_email") {
       return (
         <div key="collect-email-step" className="space-y-4">
           <div className="flex items-start gap-3 mb-6">
             <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
               <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
               <AvatarFallback className="bg-brand-accent text-white font-bold">
-                {settings?.studioName?.charAt(0) || 'S'}
+                {settings?.studioName?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
             <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
               <p className="text-gray-800 leading-relaxed">
-                Perfetto! E il tuo numero di telefono per WhatsApp? Così potremo coordinarci meglio! 📱
+                Perfetto! E il tuo numero di telefono per WhatsApp? Così potremo
+                coordinarci meglio! 📱
               </p>
             </div>
           </div>
         </div>
       );
     }
-    if (currentPhase === 'collect_phone') {
+    if (currentPhase === "collect_phone") {
       return (
         <div key="collect-phone-step" className="space-y-4">
           <div className="flex items-start gap-3 mb-6">
             <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
               <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
               <AvatarFallback className="bg-brand-accent text-white font-bold">
-                {settings?.studioName?.charAt(0) || 'S'}
+                {settings?.studioName?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
             <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
@@ -1654,31 +1984,31 @@ export function DynamicChatGuide() {
         </div>
       );
     }
-    if (currentPhase === 'lead') {
+    if (currentPhase === "lead") {
       // Log the data being passed to form
-      console.log('🎯 DynamicChatGuide - Entering lead phase with data:', {
+      console.log("🎯 DynamicChatGuide - Entering lead phase with data:", {
         name: leadData.name,
         surname: leadData.surname,
         email: leadData.email,
         phone: leadData.phone,
-        eventDate: leadData.eventDate
+        eventDate: leadData.eventDate,
       });
-      
+
       return (
         <div key="lead-step" className="space-y-4">
           <div className="flex items-start gap-3 mb-6">
             <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
               <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
               <AvatarFallback className="bg-brand-accent text-white font-bold">
-                {settings?.studioName?.charAt(0) || 'S'}
+                {settings?.studioName?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
             <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
               <p className="text-gray-800 leading-relaxed">
-                Fantastico! Il tuo pacchetto è pronto. 
-                Inserisci i tuoi dati per ricevere il preventivo dettagliato! 📋
+                Fantastico! Il tuo pacchetto è pronto. Inserisci i tuoi dati per
+                ricevere il preventivo dettagliato! 📋
               </p>
-              
+
               {/* Button to reopen checkout modal */}
               <button
                 onClick={() => setIsCheckoutOpen(true)}
@@ -1693,27 +2023,27 @@ export function DynamicChatGuide() {
           <LeadForm
             key="stable-lead-form"
             initialData={{
-              name: leadData.name || '',
-              surname: leadData.surname || '',
-              email: leadData.email || '',
-              phone: leadData.phone || '',
-              eventDate: leadData.eventDate || '',
-              notes: leadData.notes || '',
-              gdprAccepted: !!leadData.gdprAccepted
+              name: leadData.name || "",
+              surname: leadData.surname || "",
+              email: leadData.email || "",
+              phone: leadData.phone || "",
+              eventDate: leadData.eventDate || "",
+              notes: leadData.notes || "",
+              gdprAccepted: !!leadData.gdprAccepted,
             }}
             onComplete={(data) => {
-              console.log('🧪 Dati precompilati (leadData):', leadData);
-              console.log('🧪 Dati per initialData:', {
-                name: leadData.name || '',
-                surname: leadData.surname || '',
-                email: leadData.email || '',
-                phone: leadData.phone || '',
-                eventDate: leadData.eventDate || '',
-                notes: leadData.notes || '',
-                gdprAccepted: !!leadData.gdprAccepted
+              console.log("🧪 Dati precompilati (leadData):", leadData);
+              console.log("🧪 Dati per initialData:", {
+                name: leadData.name || "",
+                surname: leadData.surname || "",
+                email: leadData.email || "",
+                phone: leadData.phone || "",
+                eventDate: leadData.eventDate || "",
+                notes: leadData.notes || "",
+                gdprAccepted: !!leadData.gdprAccepted,
               });
-              console.log('✅ Lead form completed with data:', data);
-              console.log('📊 Previous leadData state:', leadData);
+              console.log("✅ Lead form completed with data:", data);
+              console.log("📊 Previous leadData state:", leadData);
               setLeadData(data);
               setIsCheckoutOpen(true); // Open checkout modal on lead completion
             }}
@@ -1722,7 +2052,7 @@ export function DynamicChatGuide() {
       );
     }
 
-    if (currentPhase === 'services') {
+    if (currentPhase === "services") {
       return (
         <div key="services-step" className="space-y-6">
           {/* Assistant Message */}
@@ -1730,14 +2060,18 @@ export function DynamicChatGuide() {
             <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
               <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
               <AvatarFallback className="bg-brand-accent text-white font-bold">
-                {settings?.studioName?.charAt(0) || 'S'}
+                {settings?.studioName?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
             <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
               <p className="text-gray-800 leading-relaxed">
-                Ciao! Sono {settings?.studioName ? `di ${settings.studioName}` : 'il tuo assistente'}! 
-                Ti aiuterò a creare il pacchetto perfetto per il tuo matrimonio da sogno. 
-                Iniziamo con i nostri servizi principali! 📸✨
+                Ciao! Sono{" "}
+                {settings?.studioName
+                  ? `di ${settings.studioName}`
+                  : "il tuo assistente"}
+                ! Ti aiuterò a creare il pacchetto perfetto per il tuo
+                matrimonio da sogno. Iniziamo con i nostri servizi principali!
+                📸✨
               </p>
             </div>
           </div>
@@ -1761,7 +2095,10 @@ export function DynamicChatGuide() {
           {/* Service Categories */}
           <div className="space-y-6">
             {serviceCategories.map((category, categoryIndex) => (
-              <div key={`category-${category.key}-${categoryIndex}`} className="space-y-3">
+              <div
+                key={`category-${category.key}-${categoryIndex}`}
+                className="space-y-3"
+              >
                 <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                   {category.icon} {category.title}
                 </h4>
@@ -1779,10 +2116,16 @@ export function DynamicChatGuide() {
       );
     }
 
-    if (currentPhase === 'products') {
-      const products = items.filter(item => item.category === 'prodotto' && item.active !== false);
-      const availableProducts = products.filter(item => cart.isItemAvailable(item.id));
-      const unavailableProducts = products.filter(item => !cart.isItemAvailable(item.id));
+    if (currentPhase === "products") {
+      const products = items.filter(
+        (item) => item.category === "prodotto" && item.active !== false,
+      );
+      const availableProducts = products.filter((item) =>
+        cart.isItemAvailable(item.id),
+      );
+      const unavailableProducts = products.filter(
+        (item) => !cart.isItemAvailable(item.id),
+      );
 
       return (
         <div key="products-step" className="space-y-6">
@@ -1791,13 +2134,14 @@ export function DynamicChatGuide() {
             <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
               <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
               <AvatarFallback className="bg-brand-accent text-white font-bold">
-                {settings?.studioName?.charAt(0) || 'S'}
+                {settings?.studioName?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
             <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
               <p className="text-gray-800 leading-relaxed">
-                Ottima scelta! Ora puoi completare il tuo pacchetto aggiungendo altri servizi. 
-                Alcuni potrebbero diventare gratuiti se aggiungi tutto! 🎁
+                Ottima scelta! Ora puoi completare il tuo pacchetto aggiungendo
+                altri servizi. Alcuni potrebbero diventare gratuiti se aggiungi
+                tutto! 🎁
               </p>
             </div>
           </div>
@@ -1809,7 +2153,8 @@ export function DynamicChatGuide() {
                 🛍️ Prodotti Esclusivi
               </h3>
               <p className="text-sm text-gray-600">
-                Aggiungi questi articoli speciali per arricchire il tuo pacchetto
+                Aggiungi questi articoli speciali per arricchire il tuo
+                pacchetto
               </p>
             </div>
             <div className="space-y-3">
@@ -1838,36 +2183,45 @@ export function DynamicChatGuide() {
       );
     }
 
-    if (currentPhase === 'summary') {
+    if (currentPhase === "summary") {
       // Use the same unified pricing as CheckoutModal
       const savingsInfo = cart.getPricingWithRules();
-      const giftItems = cart.getItemsWithRuleInfo().filter(item => item.isGift);
+      const giftItems = cart
+        .getItemsWithRuleInfo()
+        .filter((item) => item.isGift);
 
-      const studioText = settings?.studioName ? ` da ${settings.studioName}` : '';
+      const studioText = settings?.studioName
+        ? ` da ${settings.studioName}`
+        : "";
       let summaryText = `🎉 ECCELLENTE! Ecco il tuo preventivo personalizzato${studioText}:\n\n`;
 
       // Usa lo stesso calcolo del totale della chat per coerenza
-      const actualTotal = Math.max(0, savingsInfo.originalSubtotal - savingsInfo.discount - savingsInfo.giftSavings);
+      const actualTotal = Math.max(
+        0,
+        savingsInfo.originalSubtotal -
+          savingsInfo.discount -
+          savingsInfo.giftSavings,
+      );
 
       if (savingsInfo.discount > 0 || savingsInfo.giftSavings > 0) {
-        summaryText += `💰 Prezzo originale: €${savingsInfo.originalSubtotal.toLocaleString('it-IT')}\n`;
+        summaryText += `💰 Prezzo originale: €${savingsInfo.originalSubtotal.toLocaleString("it-IT")}\n`;
 
         if (savingsInfo.discount > 0) {
-          summaryText += `💸 Sconto globale: -€${savingsInfo.discount.toLocaleString('it-IT')}\n`;
+          summaryText += `💸 Sconto globale: -€${savingsInfo.discount.toLocaleString("it-IT")}\n`;
         }
 
         if (savingsInfo.giftSavings > 0) {
-          summaryText += `🎁 Servizi gratuiti: -€${savingsInfo.giftSavings.toLocaleString('it-IT')}\n`;
+          summaryText += `🎁 Servizi gratuiti: -€${savingsInfo.giftSavings.toLocaleString("it-IT")}\n`;
         }
 
-        summaryText += `💰 Totale finale: €${actualTotal.toLocaleString('it-IT')}\n`;
-        summaryText += `✨ RISPARMI TOTALI: €${(savingsInfo.discount + savingsInfo.giftSavings).toLocaleString('it-IT')} 💫\n`;
+        summaryText += `💰 Totale finale: €${actualTotal.toLocaleString("it-IT")}\n`;
+        summaryText += `✨ RISPARMI TOTALI: €${(savingsInfo.discount + savingsInfo.giftSavings).toLocaleString("it-IT")} 💫\n`;
       } else {
-        summaryText += `💰 Totale: €${actualTotal.toLocaleString('it-IT')}\n`;
+        summaryText += `💰 Totale: €${actualTotal.toLocaleString("it-IT")}\n`;
       }
 
       if (giftItems.length > 0) {
-        const giftNames = giftItems.map(item => item.title).join(', ');
+        const giftNames = giftItems.map((item) => item.title).join(", ");
         summaryText += `\n🎁 Prodotti GRATUITI: ${giftNames}`;
       }
 
@@ -1879,29 +2233,32 @@ export function DynamicChatGuide() {
             <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
               <AvatarImage src="/api/placeholder/48/48" alt="Assistant" />
               <AvatarFallback className="bg-brand-accent text-white font-bold">
-                {settings?.studioName?.charAt(0) || 'S'}
+                {settings?.studioName?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
             <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 max-w-md">
-              <p className="text-gray-800 leading-relaxed">
-                {summaryText}
-              </p>
+              <p className="text-gray-800 leading-relaxed">{summaryText}</p>
             </div>
           </div>
           <div className="text-center pt-4">
-            <Button 
+            <Button
               onClick={() => {
-                saveChatHistory('phase_started', { 
-                  phase: 'lead', 
+                saveChatHistory("phase_started", {
+                  phase: "lead",
                   timestamp: new Date(),
                   finalCartTotal: cart.getPricingWithRules().total,
                   finalCartSavings: cart.getPricingWithRules().totalSavings,
-                  readyForCheckout: true
+                  readyForCheckout: true,
                 });
-                setCurrentPhase('lead');
+                setCurrentPhase("lead");
 
                 // Se i dati del lead sono già completi, apri immediatamente la modale checkout
-                const isLeadDataComplete = leadData.name && leadData.surname && leadData.email && leadData.phone && leadData.eventDate;
+                const isLeadDataComplete =
+                  leadData.name &&
+                  leadData.surname &&
+                  leadData.email &&
+                  leadData.phone &&
+                  leadData.eventDate;
                 if (isLeadDataComplete) {
                   setIsCheckoutOpen(true);
                 }
@@ -1918,97 +2275,124 @@ export function DynamicChatGuide() {
     return null; // Should not happen if currentPhase is handled
   };
 
-
   // Progress calculation
   const getProgress = (): number => {
     switch (currentPhase as PhaseType) {
-      case 'welcome': return 10; // Increased starting progress
-      case 'services': return 40;
-      case 'products': return 60;
-      case 'summary': return 80;
-      case 'lead': return 100;
-      case 'collect_name': return 20;
-      case 'collect_surname': return 25;
-      case 'collect_email': return 30;
-      case 'collect_phone': return 35;
-      default: return 0;
+      case "welcome":
+        return 10; // Increased starting progress
+      case "services":
+        return 40;
+      case "products":
+        return 60;
+      case "summary":
+        return 80;
+      case "lead":
+        return 100;
+      case "collect_name":
+        return 20;
+      case "collect_surname":
+        return 25;
+      case "collect_email":
+        return 30;
+      case "collect_phone":
+        return 35;
+      default:
+        return 0;
     }
   };
 
   const getPhaseLabel = (): string => {
     switch (currentPhase as PhaseType) {
-      case 'welcome': return "Benvenuto";
-      case 'collect_name': return "Dati Personali";
-      case 'collect_surname': return "Dati Personali";
-      case 'collect_email': return "Dati Personali";
-      case 'collect_phone': return "Dati Personali";
-      case 'services': return "Servizi";
-      case 'products': return "Prodotti";
-      case 'summary': return "Riepilogo";
-      case 'lead': return "Prenotazione";
-      default: return "";
+      case "welcome":
+        return "Benvenuto";
+      case "collect_name":
+        return "Dati Personali";
+      case "collect_surname":
+        return "Dati Personali";
+      case "collect_email":
+        return "Dati Personali";
+      case "collect_phone":
+        return "Dati Personali";
+      case "services":
+        return "Servizi";
+      case "products":
+        return "Prodotti";
+      case "summary":
+        return "Riepilogo";
+      case "lead":
+        return "Prenotazione";
+      default:
+        return "";
     }
   };
 
   // Determine if navigation buttons should be visible and enabled
-  const canGoBack = (currentPhase as PhaseType) !== 'welcome' && (currentPhase as PhaseType) !== 'lead' && (currentPhase as PhaseType) !== 'collect_name' && (currentPhase as PhaseType) !== 'collect_surname' && (currentPhase as PhaseType) !== 'collect_email' && (currentPhase as PhaseType) !== 'collect_phone';
+  const canGoBack =
+    (currentPhase as PhaseType) !== "welcome" &&
+    (currentPhase as PhaseType) !== "lead" &&
+    (currentPhase as PhaseType) !== "collect_name" &&
+    (currentPhase as PhaseType) !== "collect_surname" &&
+    (currentPhase as PhaseType) !== "collect_email" &&
+    (currentPhase as PhaseType) !== "collect_phone";
 
   const handleGoBack = () => {
-    if (currentPhase === 'services') {
-      setCurrentPhase('welcome');
+    if (currentPhase === "services") {
+      setCurrentPhase("welcome");
       setMessages([]);
       setTimeout(() => startWelcomePhase(), 100);
-    } else if (currentPhase === 'products') {
-      setCurrentPhase('services');
-    } else if (currentPhase === 'summary') {
-      setCurrentPhase('products');
-    } else if (currentPhase === 'lead') {
-      setCurrentPhase('summary');
-    } else if (currentPhase === 'collect_phone') {
-      setCurrentPhase('collect_email');
-    } else if (currentPhase === 'collect_email') {
-      setCurrentPhase('collect_surname');
-    } else if (currentPhase === 'collect_surname') {
-      setCurrentPhase('collect_name');
-    } else if (currentPhase === 'collect_name') {
-      setCurrentPhase('welcome');
+    } else if (currentPhase === "products") {
+      setCurrentPhase("services");
+    } else if (currentPhase === "summary") {
+      setCurrentPhase("products");
+    } else if (currentPhase === "lead") {
+      setCurrentPhase("summary");
+    } else if (currentPhase === "collect_phone") {
+      setCurrentPhase("collect_email");
+    } else if (currentPhase === "collect_email") {
+      setCurrentPhase("collect_surname");
+    } else if (currentPhase === "collect_surname") {
+      setCurrentPhase("collect_name");
+    } else if (currentPhase === "collect_name") {
+      setCurrentPhase("welcome");
       setMessages([]);
       setTimeout(() => startWelcomePhase(), 100);
     }
   };
 
   const startWelcomePhase = () => {
-    setCurrentPhase('welcome');
+    setCurrentPhase("welcome");
     // Re-trigger welcome message
     createManagedTimeout(() => {
-      const studioText = settings?.studioName ? ` di ${settings.studioName}` : '';
+      const studioText = settings?.studioName
+        ? ` di ${settings.studioName}`
+        : "";
 
       addMessage({
-        id: 'welcome-message',
-        type: 'assistant',
-        avatar: 'smiling',
+        id: "welcome-message",
+        type: "assistant",
+        avatar: "smiling",
         text: `Ciao! Sono l'assistente virtuale${studioText}! 👋\n\nSono qui per aiutarti a creare il pacchetto perfetto per il tuo matrimonio da sogno.\n\nQuando pensi di sposarti?`,
         typing: true,
         options: [
           {
-            id: 'date-2025',
-            label: '📅 2025',
-            value: '2025',
-            action: () => handleDateSelection('2025')
+            id: "date-2025",
+            label: "📅 2025",
+            value: "2025",
+            action: () => handleDateSelection("2025"),
           },
           {
-            id: 'date-2026',
-            label: '📅 2026', 
-            value: '2026',
-            action: () => handleDateSelection('2026')
+            id: "date-2026",
+            label: "📅 2026",
+            value: "2026",
+            action: () => handleDateSelection("2026"),
           },
           {
-            id: 'date-later',
-            label: '📅 Più avanti',
-            value: 'later',
-            action: () => handleDateSelection('later')
-          }
-        ]
+            id: "date-later",
+            label: "📅 Più avanti",
+            value: "later",
+            action: () => handleDateSelection("later"),
+          },
+        ],
       });
     }, 500);
   };
@@ -2019,13 +2403,19 @@ export function DynamicChatGuide() {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
         <div className="text-center bg-white rounded-xl p-8 shadow-lg border border-gray-200 max-w-md mx-4">
           <div className="animate-spin h-12 w-12 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-6"></div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">Caricamento in corso...</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-3">
+            Caricamento in corso...
+          </h3>
           <div className="space-y-2 text-sm text-gray-600">
             {isLoadingSettings && <p>📋 Caricamento configurazione...</p>}
             {isLoadingDiscounts && <p>🏷️ Caricamento sconti...</p>}
             {cart.rulesLoading && <p>⚙️ Caricamento regole...</p>}
           </div>
-          {!itemsReady && <p className="text-xs text-gray-500 mt-4">Preparazione prodotti e servizi...</p>}
+          {!itemsReady && (
+            <p className="text-xs text-gray-500 mt-4">
+              Preparazione prodotti e servizi...
+            </p>
+          )}
         </div>
       </div>
     );
@@ -2037,10 +2427,12 @@ export function DynamicChatGuide() {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
         <div className="text-center bg-white rounded-xl p-8 shadow-lg border border-red-200 max-w-md mx-4">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">Errore di caricamento</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-3">
+            Errore di caricamento
+          </h3>
           <p className="text-gray-600 mb-4">{settingsError}</p>
-          <Button 
-            onClick={() => window.location.reload()} 
+          <Button
+            onClick={() => window.location.reload()}
             className="bg-red-500 hover:bg-red-600 text-white"
           >
             Ricarica pagina
@@ -2067,9 +2459,9 @@ export function DynamicChatGuide() {
             {/* Navigation Controls */}
             <div className="flex items-center gap-2">
               {canGoBack && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={handleGoBack}
                   className="h-8 px-2 text-xs"
                 >
@@ -2078,13 +2470,13 @@ export function DynamicChatGuide() {
                 </Button>
               )}
 
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   cart.clearCart();
                   setMessages([]);
-                  setCurrentPhase('welcome');
+                  setCurrentPhase("welcome");
                   setLeadData({});
                   startWelcomePhase();
                 }}
@@ -2103,35 +2495,50 @@ export function DynamicChatGuide() {
         <div className="max-w-4xl mx-auto px-4 pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-gray-900">Assistente Matrimonio</h3>
+              <h3 className="font-semibold text-gray-900">
+                Assistente Matrimonio
+              </h3>
               <p className="text-xs text-gray-500">
-                {currentPhase === 'welcome' && "Scegli la data del matrimonio"}
-                {currentPhase === 'services' && "Seleziona i servizi che desideri"}
-                {currentPhase === 'products' && "Aggiungi prodotti al tuo pacchetto"}
-                {currentPhase === 'summary' && "Controlla il preventivo finale"}
-                {currentPhase === 'lead' && "Completa i tuoi dati per il preventivo"}
-                {currentPhase === 'collect_name' && "Inserisci il tuo nome"}
-                {currentPhase === 'collect_surname' && "Inserisci il tuo cognome"}
-                {currentPhase === 'collect_email' && "Inserisci la tua email"}
-                {currentPhase === 'collect_phone' && "Inserisci il tuo numero di telefono"}
+                {currentPhase === "welcome" && "Scegli la data del matrimonio"}
+                {currentPhase === "services" &&
+                  "Seleziona i servizi che desideri"}
+                {currentPhase === "products" &&
+                  "Aggiungi prodotti al tuo pacchetto"}
+                {currentPhase === "summary" && "Controlla il preventivo finale"}
+                {currentPhase === "lead" &&
+                  "Completa i tuoi dati per il preventivo"}
+                {currentPhase === "collect_name" && "Inserisci il tuo nome"}
+                {currentPhase === "collect_surname" &&
+                  "Inserisci il tuo cognome"}
+                {currentPhase === "collect_email" && "Inserisci la tua email"}
+                {currentPhase === "collect_phone" &&
+                  "Inserisci il tuo numero di telefono"}
               </p>
             </div>
 
             {/* Real-time Cart Summary */}
             {cart.cart.items.length > 0 && (
               <div className="text-right text-xs text-gray-700 space-y-1">
-                <div>💰 Prezzo originale: €{cart.getPricingWithRules().originalSubtotal}</div>
+                <div>
+                  💰 Prezzo originale: €
+                  {cart.getPricingWithRules().originalSubtotal}
+                </div>
                 {(() => {
                   const pricing = cart.getPricingWithRules();
                   const detailed = pricing.detailed;
-                  
+
                   return (
                     <>
                       {detailed?.individualDiscountSavings > 0 && (
-                        <div>🏷️ Sconto individuale: -€{detailed.individualDiscountSavings}</div>
+                        <div>
+                          🏷️ Sconto individuale: -€
+                          {detailed.individualDiscountSavings}
+                        </div>
                       )}
                       {detailed?.globalDiscountSavings > 0 && (
-                        <div>💸 Sconto globale: -€{detailed.globalDiscountSavings}</div>
+                        <div>
+                          💸 Sconto globale: -€{detailed.globalDiscountSavings}
+                        </div>
                       )}
                       {pricing.giftSavings > 0 && (
                         <div>🎁 Risparmio regali: -€{pricing.giftSavings}</div>
@@ -2144,7 +2551,8 @@ export function DynamicChatGuide() {
                 </div>
                 {cart.getPricingWithRules().totalSavings > 0 && (
                   <div className="text-green-500">
-                    ✨ RISPARMI TOTALI: €{cart.getPricingWithRules().totalSavings}
+                    ✨ RISPARMI TOTALI: €
+                    {cart.getPricingWithRules().totalSavings}
                   </div>
                 )}
               </div>
@@ -2156,20 +2564,27 @@ export function DynamicChatGuide() {
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="max-w-4xl mx-auto p-4">
-          {messages.map(message => (
-            <div key={message.id}>
-              {renderMessage(message)}
-            </div>
+          {messages.map((message) => (
+            <div key={message.id}>{renderMessage(message)}</div>
           ))}
 
           {isTyping && (
             <div className="flex gap-3 mb-4">
-              <SpectacularAvatar type="thoughtful" className="flex-shrink-0 w-10 h-10" />
+              <SpectacularAvatar
+                type="thoughtful"
+                className="flex-shrink-0 w-10 h-10"
+              />
               <div className="bg-gray-100 rounded-lg p-4">
                 <div className="flex gap-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.1s" }}
+                  />
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  />
                 </div>
               </div>
             </div>
@@ -2180,22 +2595,31 @@ export function DynamicChatGuide() {
       </div>
 
       {/* Input Area - Only for specific phases */}
-      {['collect_name', 'collect_surname', 'collect_email', 'collect_phone'].includes(currentPhase) && (
+      {[
+        "collect_name",
+        "collect_surname",
+        "collect_email",
+        "collect_phone",
+      ].includes(currentPhase) && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
           <div className="max-w-4xl mx-auto p-4">
             <div className="flex gap-2">
-              <Input 
+              <Input
                 placeholder={
-                  currentPhase === 'collect_name' ? "Scrivi il tuo nome..." :
-                  currentPhase === 'collect_surname' ? "Scrivi il tuo cognome..." :
-                  currentPhase === 'collect_email' ? "Scrivi la tua email..." :
-                  currentPhase === 'collect_phone' ? "Scrivi il tuo telefono..." :
-                  "Scrivi un messaggio..."
+                  currentPhase === "collect_name"
+                    ? "Scrivi il tuo nome..."
+                    : currentPhase === "collect_surname"
+                      ? "Scrivi il tuo cognome..."
+                      : currentPhase === "collect_email"
+                        ? "Scrivi la tua email..."
+                        : currentPhase === "collect_phone"
+                          ? "Scrivi il tuo telefono..."
+                          : "Scrivi un messaggio..."
                 }
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && userInput.trim()) {
+                  if (e.key === "Enter" && userInput.trim()) {
                     handleUserInput(userInput);
                   }
                 }}
@@ -2221,12 +2645,12 @@ export function DynamicChatGuide() {
           setHasAutoOpenedCheckout(false);
         }}
         leadData={{
-          name: leadData.name || '',
-          surname: leadData.surname || '',
-          email: leadData.email || '',
-          phone: leadData.phone || '',
-          eventDate: leadData.eventDate || '',
-          notes: leadData.notes || ''
+          name: leadData.name || "",
+          surname: leadData.surname || "",
+          email: leadData.email || "",
+          phone: leadData.phone || "",
+          eventDate: leadData.eventDate || "",
+          notes: leadData.notes || "",
         }}
       />
 
