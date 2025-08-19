@@ -1,0 +1,77 @@
+Apri `src/components/CheckoutModal.tsx` e applica queste modifiche in modo MINIMALE:
+
+1) **Aggiungi un formatter sicuro** subito sotto gli import:
+```ts
+const formatEUR = (n?: number) =>
+  (Number.isFinite(n as number) ? (n as number) : 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+Non usare più Math.round(...) nei totali. Ovunque ci sia:
+
+tsx
+Copia
+Modifica
+{Math.round(SOME_NUMBER).toLocaleString('it-IT')}
+sostituisci con:
+
+tsx
+Copia
+Modifica
+{formatEUR(SOME_NUMBER)}
+Proteggi getPricingWithRules() con fallback nel componente (vicino a dove lo usi per i totali e per WhatsApp):
+
+ts
+Copia
+Modifica
+const pricing = cartWithRules.getPricingWithRules?.() ?? {
+  originalSubtotal: 0,
+  discount: 0,
+  giftSavings: 0,
+  total: 0,
+};
+Poi usa sempre pricing.originalSubtotal, pricing.discount, pricing.giftSavings, pricing.total e formatta con formatEUR(...).
+
+Lista articoli e WhatsApp: non usare cartWithRules.cart.items. Usa gli items con info regole e prezzo finale + gestione omaggi.
+Sostituisci la costruzione della lista con:
+
+ts
+Copia
+Modifica
+const items = cartWithRules.getItemsWithRuleInfo ? cartWithRules.getItemsWithRuleInfo() : cartWithRules.cart.items ?? [];
+const itemsList = items.map(it => {
+  const priceNum = (it as any).finalPrice ?? (it as any).price ?? 0;
+  const priceText = (it as any).isGift ? 'GRATIS' : `€${formatEUR(priceNum)}`;
+  const title = (it as any).title ?? 'Voce';
+  return `• ${title} - ${priceText}`;
+}).join('\n');
+Riepilogo per WhatsApp (mostra sempre subtotale, sconti, gratuità, totale):
+Trova dove componi il messaggio e sostituisci il blocco del riepilogo con:
+
+ts
+Copia
+Modifica
+const lines: string[] = [
+  `Subtotale: €${formatEUR(pricing.originalSubtotal)}`
+];
+if (pricing.discount > 0) {
+  lines.push(`Sconti: -€${formatEUR(pricing.discount)}`);
+}
+if (pricing.giftSavings > 0) {
+  lines.push(`Servizi gratuiti: -€${formatEUR(pricing.giftSavings)}`);
+}
+lines.push(`Totale: €${formatEUR(pricing.total)}`);
+const totalText = lines.join('\n');
+e usa itemsList + totalText nel corpo del messaggio WhatsApp.
+
+In render UI (totali mostrati in modale), sostituisci ogni numero con:
+
+tsx
+Copia
+Modifica
+€{formatEUR(pricing.originalSubtotal)}
+€{formatEUR(pricing.discount)}
+€{formatEUR(pricing.giftSavings)}
+€{formatEUR(pricing.total)}
+Note:
+
+Non rimuovere altra logica. Modifiche solo dove indicato.
+
+Obiettivo: evitare qualsiasi .toLocaleString() su undefined e allineare visual e WhatsApp al pricing unificato.
