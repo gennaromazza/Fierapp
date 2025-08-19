@@ -2011,7 +2011,11 @@ export function DynamicChatGuide() {
 
               {/* Button to reopen checkout modal */}
               <button
-                onClick={() => setIsCheckoutOpen(true)}
+                onClick={() => {
+                  // Force modal to close then open to ensure it triggers
+                  setIsCheckoutOpen(false);
+                  setTimeout(() => setIsCheckoutOpen(true), 0);
+                }}
                 className="mt-3 w-full bg-brand-accent text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors"
               >
                 Inserisci i tuoi dati
@@ -2260,7 +2264,9 @@ export function DynamicChatGuide() {
                   leadData.phone &&
                   leadData.eventDate;
                 if (isLeadDataComplete) {
-                  setIsCheckoutOpen(true);
+                  // Force modal to close then open to ensure it triggers
+                  setIsCheckoutOpen(false);
+                  setTimeout(() => setIsCheckoutOpen(true), 0);
                 }
               }}
               className="px-8 py-3 text-lg font-semibold bg-green-600 hover:bg-green-700"
