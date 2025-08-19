@@ -43,6 +43,25 @@ interface ChatMessage {
 export function DynamicChatGuide() {
   console.log('🚀 DynamicChatGuide component loaded');
   
+  // Refs for setTimeout cleanup to prevent memory leaks
+  const timeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
+  
+  // Helper to create managed timeouts that auto-cleanup on unmount
+  const createManagedTimeout = (callback: () => void, delay: number): NodeJS.Timeout => {
+    const timeoutId = setTimeout(() => {
+      timeoutsRef.current.delete(timeoutId);
+      callback();
+    }, delay);
+    timeoutsRef.current.add(timeoutId);
+    return timeoutId;
+  };
+  
+  // Clear all active timeouts
+  const clearAllTimeouts = () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current.clear();
+  };
+  
   const cart = useCartWithRules();
   const toast = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -86,6 +105,14 @@ export function DynamicChatGuide() {
     startTime: new Date()
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  // Cleanup timeouts on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Cleaning up timeouts on component unmount');
+      clearAllTimeouts();
+    };
+  }, []);
 
   // Utility function to remove invalid values recursively with robust error handling
   function removeUndefinedDeep(obj: any, removeNull: boolean = false): any {
@@ -455,7 +482,7 @@ export function DynamicChatGuide() {
         text: welcomeText,
       });
 
-      setTimeout(() => {
+      createManagedTimeout(() => {
         addMessage({
           type: 'assistant',
           avatar: 'explaining',
@@ -530,7 +557,7 @@ export function DynamicChatGuide() {
     saveChatHistory('date_selected', { eventDate: validDate, dateText, originalSelection: date });
 
     // Start data collection phase
-    setTimeout(() => {
+    createManagedTimeout(() => {
       addMessage({
         type: 'assistant',
         avatar: 'smiling',
@@ -746,7 +773,7 @@ export function DynamicChatGuide() {
       return newData;
     });
 
-    setTimeout(() => {
+    createManagedTimeout(() => {
       const studioPersonalizedText = settings?.studioName ? 
         `Fantastico, ${leadData.name}! ${settings.studioName} ha tutto quello che serve per il tuo matrimonio da sogno! 🎉` :
         `Fantastico, ${leadData.name}! Abbiamo tutto quello che serve per il tuo matrimonio da sogno! 🎉`;
@@ -788,7 +815,7 @@ export function DynamicChatGuide() {
     });
 
     // Attendi 2 secondi poi controlla se gli items sono pronti
-    setTimeout(() => {
+    createManagedTimeout(() => {
       if (!itemsReady) {
         console.log('⏳ Items not ready yet, showing loading message...');
         addMessage({
@@ -1004,7 +1031,7 @@ export function DynamicChatGuide() {
       typing: true
     });
 
-    setTimeout(() => {
+    createManagedTimeout(() => {
       addMessage({
         type: 'system',
         text: availableProducts.length > 0 ? "Scegli i prodotti che desideri:" : "Seleziona prima un servizio per vedere i prodotti:",
@@ -1959,7 +1986,7 @@ export function DynamicChatGuide() {
   const startWelcomePhase = () => {
     setCurrentPhase('welcome');
     // Re-trigger welcome message
-    setTimeout(() => {
+    createManagedTimeout(() => {
       const studioText = settings?.studioName ? ` di ${settings.studioName}` : '';
 
       addMessage({
