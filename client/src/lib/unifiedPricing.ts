@@ -162,24 +162,25 @@ export function generateMarketingMessages(pricing: UnifiedPricingResult): Market
 export function formatPricingSummary(pricing: UnifiedPricingResult): string {
   const lines: string[] = [];
   
-  lines.push(`Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}`);
+  // USA SUBTOTAL (solo servizi a pagamento) invece di originalSubtotal
+  lines.push(`Subtotale servizi/prodotti: €${pricing.subtotal.toLocaleString('it-IT')}`);
   
   if (pricing.globalDiscountSavings > 0) {
-    lines.push(`Sconto globale: -€${pricing.globalDiscountSavings.toLocaleString('it-IT')}`);
+    lines.push(`Sconto globale (-10%): -€${pricing.globalDiscountSavings.toLocaleString('it-IT')}`);
   }
   
   if (pricing.individualDiscountSavings > 0) {
-    lines.push(`Sconti individuali: -€${pricing.individualDiscountSavings.toLocaleString('it-IT')}`);
+    lines.push(`Sconti per prodotto/servizio: -€${pricing.individualDiscountSavings.toLocaleString('it-IT')}`);
   }
   
   if (pricing.giftSavings > 0) {
-    lines.push(`Servizi gratuiti: -€${pricing.giftSavings.toLocaleString('it-IT')}`);
+    lines.push(`Servizi in omaggio: -€${pricing.giftSavings.toLocaleString('it-IT')}`);
   }
   
   lines.push(`TOTALE: €${pricing.finalTotal.toLocaleString('it-IT')}`);
   
   if (pricing.totalSavings > 0) {
-    lines.push(`\nTotale risparmiato: €${pricing.totalSavings.toLocaleString('it-IT')}!`);
+    lines.push(`  Totale risparmiato: €${pricing.totalSavings.toLocaleString('it-IT')}!`);
   }
   
   return lines.join('\n');
