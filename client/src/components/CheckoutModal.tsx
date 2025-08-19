@@ -41,13 +41,13 @@ function removeUndefinedDeep(obj: any): any {
   if (obj === null || obj === undefined) {
     return null;
   }
-  
+
   if (Array.isArray(obj)) {
     return obj
       .filter(item => item !== undefined)
       .map(item => removeUndefinedDeep(item));
   }
-  
+
   if (typeof obj === 'object') {
     return Object.entries(obj)
       .filter(([_, value]) => value !== undefined)
@@ -56,7 +56,7 @@ function removeUndefinedDeep(obj: any): any {
         return acc;
       }, {} as any);
   }
-  
+
   return obj;
 }
 
@@ -80,20 +80,20 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
     async function loadSettings() {
       try {
         console.log('🔄 CheckoutModal - Received leadData:', leadData);
-        
+
         const settingsDoc = await getDoc(doc(db, "settings", "app"));
         if (settingsDoc.exists()) {
           const settingsData = settingsDoc.data() as Settings;
           setSettings(settingsData);
-          
+
           // Create dynamic form schema and defaults
           const schemaFields: Record<string, any> = {};
           const defaults: Record<string, any> = {};
-          
+
           settingsData.formFields.forEach(field => {
             const fieldName = field.label.toLowerCase().replace(/\s+/g, '_');
             let fieldSchema: any;
-            
+
             switch (field.type) {
               case "email":
                 fieldSchema = z.string().email("Email non valida");
@@ -107,11 +107,11 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
               default:
                 fieldSchema = z.string();
             }
-            
+
             if (field.required) {
               fieldSchema = fieldSchema.min(1, `${field.label} richiesto`);
             }
-            
+
             // Precompile with leadData if available
             let defaultValue = "";
             if (leadData) {
@@ -130,21 +130,21 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
                 defaultValue = leadData.notes || "";
               }
             }
-            
+
             defaults[fieldName] = defaultValue;
             schemaFields[fieldName] = fieldSchema;
           });
-          
+
           // Add GDPR consent
           schemaFields.gdpr_consent = z.boolean().refine(val => val === true, {
             message: "Devi accettare il trattamento dei dati personali"
           });
           defaults.gdpr_consent = false;
-          
+
           const schema = z.object(schemaFields);
           setFormSchema(schema);
           setFormDefaults(defaults);
-          
+
           // Reset form with new schema and defaults
           form.reset(defaults);
         }
@@ -152,7 +152,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
         console.error("Error loading settings:", error);
       }
     }
-    
+
     if (isOpen) {
       loadSettings();
     }
@@ -201,11 +201,11 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
       // Clean data to remove undefined values
       const cleanedLeadData = removeUndefinedDeep(rawLeadData);
-      
+
       // Log cleaned data for debugging
       const jsonString = JSON.stringify(cleanedLeadData, null, 2);
       console.log('📤 JSON lead data da salvare:', jsonString);
-      
+
       if (jsonString.includes('undefined')) {
         console.error('⚠️ ATTENZIONE: Trovati valori "undefined" nel lead data!');
       } else {
@@ -215,14 +215,15 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
       // Save to Firestore
       const docRef = await addDoc(collection(db, "leads"), cleanedLeadData);
       console.log("Lead saved successfully with ID:", docRef.id);
-      
+
+      // Use unified pricing for analytics
+      const unifiedPricing = cartWithRules.getUnifiedPricing();
       // Analytics
-      const pricing = cartWithRules.getPricingWithRules();
       if (analytics) {
         logEvent(analytics, 'form_submit', {
           form_id: 'checkout_form',
           lead_id: docRef.id,
-          total_value: pricing.total
+          total_value: unifiedPricing.finalTotal
         });
       }
 
@@ -231,7 +232,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
         const cartSummary = cartWithRules.cart.items.map(item => 
           `• ${item.title} - €${item.price.toLocaleString('it-IT')}`
         ).join('\n');
-        
+
         // Format form data for WhatsApp
         const formDataText = Object.entries(data)
           .filter(([key, value]) => key !== 'gdpr_consent' && value)
@@ -242,22 +243,22 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
             return `${label}: ${value}`;
           })
           .join('\n');
-        
-        const pricing = cartWithRules.getPricingWithRules();
-        const totalText = pricing.totalSavings > 0 
-          ? `Subtotale: €${pricing.originalSubtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.totalSavings.toLocaleString('it-IT')}\nTotale: €${pricing.total.toLocaleString('it-IT')}`
-          : `Totale: €${pricing.total.toLocaleString('it-IT')}`;
-        
+
+        const pricing = cartWithRules.getUnifiedPricing();
+        const totalText = pricing.discount > 0 
+          ? `Subtotale: €${pricing.subtotal.toLocaleString('it-IT')}\nSconto: -€${pricing.discount.toLocaleString('it-IT')}\nTotale: €${pricing.finalTotal.toLocaleString('it-IT')}`
+          : `Totale: €${pricing.finalTotal.toLocaleString('it-IT')}`;
+
         const message = `🎬 RICHIESTA INFORMAZIONI\n\n📋 DATI CLIENTE:\n${formDataText}\n\n🛍️ SERVIZI/PRODOTTI SELEZIONATI:\n${cartSummary}\n\n💰 RIEPILOGO:\n${totalText}\n\n📝 Lead ID: ${docRef.id}`;
-        
+
         const whatsappUrl = generateWhatsAppLink(settings.whatsappNumber, message);
         window.open(whatsappUrl, '_blank');
-        
+
         // Analytics for WhatsApp  
         if (analytics) {
           logEvent(analytics, 'whatsapp_contact', {
             items: cartWithRules.cart.items.length,
-            total_value: pricing.total,
+            total_value: pricing.finalTotal,
             lead_id: docRef.id
           });
         }
@@ -285,11 +286,11 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
 
   const handleDownloadPDF = async () => {
     if (!settings) return;
-    
+
     setIsGeneratingPDF(true);
     try {
       const formData = form.getValues();
-      
+
       // Prepare data structure similar to lead data
       const pdfData = {
         customer: formData,
@@ -299,14 +300,14 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
           price: item.price,
           originalPrice: item.originalPrice
         })),
-        pricing: cartWithRules.getPricingWithRules()
+        pricing: cartWithRules.getUnifiedPricing()
       };
 
       const customerName = formData.nome || formData.Nome || 'cliente';
       const filename = `preventivo-${customerName}-${new Date().toISOString().slice(0, 10)}.pdf`;
-      
+
       await generateClientQuotePDF(pdfData, filename);
-      
+
       toast({
         title: "PDF generato",
         description: "Il preventivo è stato scaricato con successo",
@@ -337,7 +338,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
             Compila il form per ricevere un preventivo personalizzato per i servizi selezionati.
           </DialogDescription>
         </DialogHeader>
-          
+
         {/* Selected Items Summary */}
         <div className="bg-brand-primary rounded-lg p-4 mb-6">
           <h4 className="font-semibold text-brand-accent mb-3">RIEPILOGO SELEZIONE</h4>
@@ -362,81 +363,49 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
                 </span>
               </div>
             ))}
-            
+
             {(() => {
-              const pricing = cartWithRules.getPricingWithRules();
-              
-              // Calcola sconti specifici per item (differenza tra prezzo originale e attuale)
-              let itemSpecificDiscounts = 0;
-              cartWithRules.cart.items.forEach(item => {
-                if (item.originalPrice && item.originalPrice > item.price) {
-                  itemSpecificDiscounts += (item.originalPrice - item.price);
-                }
-              });
-              
-              // Calcola sconto globale (differenza tra discount totale e sconti specifici)
-              const globalDiscount = pricing.discount - itemSpecificDiscounts;
-              
+              const unifiedPricing = cartWithRules.getUnifiedPricing();
+
               return (
                 <>
                   <hr className="border-brand-secondary" />
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotale servizi/prodotti:</span>
-                    <span>€{pricing.subtotal.toLocaleString('it-IT')}</span>
+                    <span>€{unifiedPricing.subtotal.toLocaleString('it-IT')}</span>
                   </div>
-                  
-                  {pricing.totalSavings > 0 && (
-                    <>
-                      {/* Sconti specifici per item */}
-                      {itemSpecificDiscounts > 0 && (
-                        <div className="flex justify-between text-orange-600 font-semibold">
-                          <span>Sconti prodotto/servizio:</span>
-                          <span>-€{Math.round(itemSpecificDiscounts).toLocaleString('it-IT')}</span>
-                        </div>
-                      )}
-                      
-                      {/* Sconto globale fiera */}
-                      {globalDiscount > 0 && (
-                        <div className="flex justify-between text-blue-600 font-semibold">
-                          <span>Sconto speciale fiera:</span>
-                          <span>-€{Math.round(globalDiscount).toLocaleString('it-IT')}</span>
-                        </div>
-                      )}
-                      
-                      {/* Omaggi */}
-                      {pricing.giftSavings > 0 && (
-                        <div className="flex justify-between text-green-600 font-semibold">
-                          <span>Servizi in omaggio:</span>
-                          <span>-€{Math.round(pricing.giftSavings).toLocaleString('it-IT')}</span>
-                        </div>
-                      )}
-                      
-                      {/* Risparmio totale */}
-                      <div className="flex justify-between text-green-600 font-bold text-base border-t border-gray-200 pt-2 mt-2">
-                        <span>RISPARMIO TOTALE:</span>
-                        <span>-€{Math.round(pricing.totalSavings).toLocaleString('it-IT')}</span>
-                      </div>
-                    </>
+
+                  {unifiedPricing.discount > 0 && (
+                    <div className="flex justify-between text-orange-600 font-semibold">
+                      <span>Sconto applicato:</span>
+                      <span>-€{Math.round(unifiedPricing.discount).toLocaleString('it-IT')}</span>
+                    </div>
                   )}
-                  
-                  <hr className="border-brand-secondary" />
+
+                  {unifiedPricing.giftSavings > 0 && (
+                    <div className="flex justify-between text-green-600 font-semibold">
+                      <span>Servizi in omaggio:</span>
+                      <span>-€{Math.round(unifiedPricing.giftSavings).toLocaleString('it-IT')}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between font-bold text-lg text-brand-accent">
                     <span>TOTALE</span>
-                    <span>€{Math.round(pricing.total).toLocaleString('it-IT')}</span>
+                    <span>€{Math.round(unifiedPricing.finalTotal).toLocaleString('it-IT')}</span>
                   </div>
                 </>
               );
             })()}
           </div>
         </div>
-        
+
         {/* Dynamic Form */}
         {settings && (
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {settings.formFields.map((field, index) => {
                 const fieldName = field.label.toLowerCase().replace(/\s+/g, '_');
-                
+
                 return (
                   <div key={index} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -474,7 +443,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
                 );
               })}
             </div>
-            
+
             {/* GDPR Consent */}
             <div className="bg-gray-50 rounded-lg p-4">
               <label className="flex items-start space-x-3">
@@ -493,14 +462,14 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
                 </p>
               )}
             </div>
-            
+
             {/* reCAPTCHA Notice */}
             {settings.reCAPTCHASiteKey && (
               <div className="text-xs text-gray-500 text-center">
                 Questo sito è protetto da reCAPTCHA e si applicano la Privacy Policy e i Termini di Servizio di Google.
               </div>
             )}
-            
+
             {/* Action Buttons */}
             <div className="pt-4 space-y-3">
               {/* Download PDF Button */}
@@ -521,7 +490,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
                   </>
                 )}
               </Button>
-              
+
               {/* Submit Button */}
               <Button
                 type="submit"
@@ -547,7 +516,7 @@ export default function CheckoutModal({ isOpen, onClose, leadData }: CheckoutMod
             </div>
           </form>
         )}
-        
+
 
       </DialogContent>
     </Dialog>
