@@ -741,9 +741,9 @@ export default function LeadsManagement() {
                       <TableCell>
                         <div>
                           <div className="font-medium">€{(lead.pricing?.total || 0).toLocaleString('it-IT')}</div>
-                          {(lead.pricing?.discount || 0) > 0 && (
+                          {(lead.pricing?.totalSavings || 0) > 0 && (
                             <div className="text-sm text-green-600">
-                              -€{(lead.pricing.discount || 0).toLocaleString('it-IT')}
+                              -€{(lead.pricing.totalSavings || 0).toLocaleString('it-IT')}
                             </div>
                           )}
                         </div>

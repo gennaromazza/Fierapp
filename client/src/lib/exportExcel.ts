@@ -5,19 +5,19 @@ export function exportLeadsToExcel(leads: Lead[], filename = 'leads-export.xlsx'
   // Prepare data for Excel
   const data = leads.map(lead => ({
     'ID': lead.id,
-    'Data Creazione': lead.createdAt.toLocaleDateString('it-IT'),
+    'Data Creazione': lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('it-IT') : 'N/A',
     'Nome': lead.customer.nome || '',
     'Cognome': lead.customer.cognome || '',
     'Email': lead.customer.email || '',
     'Telefono': lead.customer.telefono || '',
     'Data Evento': lead.customer.data_evento || '',
-    'Note': lead.customer.note_aggiuntive || '',
+    'Note': lead.customer.note || '',
     'Servizi/Prodotti': lead.selectedItems.map(item => item.title).join(', '),
     'Subtotale': `€${lead.pricing.subtotal.toFixed(2)}`,
-    'Sconto': `€${lead.pricing.discount.toFixed(2)}`,
+    'Totale Risparmiato': `€${(lead.pricing.totalSavings || 0).toFixed(2)}`,
     'Totale': `€${lead.pricing.total.toFixed(2)}`,
     'Stato': lead.status,
-    'GDPR Accettato': lead.gdprConsent.accepted ? 'Sì' : 'No',
+    'GDPR Accettato': lead.gdprConsent?.accepted ? 'Sì' : 'No',
   }));
 
   // Create workbook and worksheet
