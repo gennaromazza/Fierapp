@@ -1506,6 +1506,16 @@ export function DynamicChatGuide() {
               gdprAccepted: !!leadData.gdprAccepted
             }}
             onComplete={(data) => {
+              console.log('🧪 Dati precompilati (leadData):', leadData);
+              console.log('🧪 Dati per initialData:', {
+                name: leadData.name || '',
+                surname: leadData.surname || '',
+                email: leadData.email || '',
+                phone: leadData.phone || '',
+                eventDate: leadData.eventDate || '',
+                notes: leadData.notes || '',
+                gdprAccepted: !!leadData.gdprAccepted
+              });
               console.log('✅ Lead form completed with data:', data);
               console.log('📊 Previous leadData state:', leadData);
               setLeadData(data);
