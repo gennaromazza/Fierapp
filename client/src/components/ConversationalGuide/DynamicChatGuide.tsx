@@ -2516,47 +2516,7 @@ export function DynamicChatGuide() {
               </p>
             </div>
 
-            {/* Real-time Cart Summary */}
-            {cart.cart.items.length > 0 && (
-              <div className="text-right text-xs text-gray-700 space-y-1">
-                <div>
-                  💰 Prezzo originale: €
-                  {cart.getPricingWithRules().originalSubtotal}
-                </div>
-                {(() => {
-                  const pricing = cart.getPricingWithRules();
-                  const detailed = pricing.detailed;
-
-                  return (
-                    <>
-                      {detailed?.individualDiscountSavings > 0 && (
-                        <div>
-                          🏷️ Sconto individuale: -€
-                          {detailed.individualDiscountSavings}
-                        </div>
-                      )}
-                      {detailed?.globalDiscountSavings > 0 && (
-                        <div>
-                          💸 Sconto globale: -€{detailed.globalDiscountSavings}
-                        </div>
-                      )}
-                      {pricing.giftSavings > 0 && (
-                        <div>🎁 Risparmio regali: -€{pricing.giftSavings}</div>
-                      )}
-                    </>
-                  );
-                })()}
-                <div className="font-bold text-green-600">
-                  💰 Totale finale: €{cart.getPricingWithRules().total}
-                </div>
-                {cart.getPricingWithRules().totalSavings > 0 && (
-                  <div className="text-green-500">
-                    ✨ RISPARMI TOTALI: €
-                    {cart.getPricingWithRules().totalSavings}
-                  </div>
-                )}
-              </div>
-            )}
+            
           </div>
         </div>
       </div>
