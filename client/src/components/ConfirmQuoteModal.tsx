@@ -23,6 +23,7 @@ interface ConfirmQuoteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onBackToCheckout?: () => void; // New prop for navigation back to checkout
+  onStartOver?: () => void; // New prop to restart the entire chat flow
   leadId: string;
   leadData: {
     customer: any;
@@ -48,6 +49,7 @@ export default function ConfirmQuoteModal({
   isOpen,
   onClose,
   onBackToCheckout,
+  onStartOver,
   leadId,
   leadData,
 }: ConfirmQuoteModalProps) {
@@ -437,30 +439,47 @@ export default function ConfirmQuoteModal({
             </Button>
           </div>
 
-          <div className="flex gap-2 pt-4">
+          <div className="flex flex-col gap-2 pt-4">
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  onClose(); // Close this modal first
+                  if (onBackToCheckout) {
+                    setTimeout(() => onBackToCheckout(), 100); // Small delay to ensure clean modal transition
+                  }
+                }}
+                variant="outline"
+                className="w-full text-brand-accent border-brand-accent hover:bg-brand-accent/10 py-3"
+                size="sm"
+              >
+                ← Indietro al Preventivo
+              </Button>
+              <Button
+                onClick={() => {
+                  // Ensure clean modal closure
+                  onClose();
+                }}
+                variant="ghost"
+                className="w-full text-gray-600 hover:text-gray-800 py-3"
+                size="sm"
+              >
+                Chiudi
+              </Button>
+            </div>
+            
+            {/* New button to start over */}
             <Button
               onClick={() => {
                 onClose(); // Close this modal first
-                if (onBackToCheckout) {
-                  setTimeout(() => onBackToCheckout(), 100); // Small delay to ensure clean modal transition
+                if (onStartOver) {
+                  setTimeout(() => onStartOver(), 100); // Small delay to ensure clean modal transition
                 }
               }}
               variant="outline"
-              className="w-full text-brand-accent border-brand-accent hover:bg-brand-accent/10 py-3"
+              className="w-full text-blue-600 border-blue-500 hover:bg-blue-50 py-3 border-2"
               size="sm"
             >
-              ← Indietro al Preventivo
-            </Button>
-            <Button
-              onClick={() => {
-                // Ensure clean modal closure
-                onClose();
-              }}
-              variant="ghost"
-              className="w-full text-gray-600 hover:text-gray-800 py-3"
-              size="sm"
-            >
-              Chiudi
+              🔄 Nuovo Preventivo
             </Button>
           </div>
         </div>

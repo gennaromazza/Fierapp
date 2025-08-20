@@ -2403,6 +2403,24 @@ export function DynamicChatGuide() {
     }, 500);
   };
 
+  // Function to completely restart the chat flow from modals
+  const handleStartOver = () => {
+    console.log("🔄 Starting over from modal - resetting chat completely");
+    
+    // Close any open modals first
+    setIsCheckoutOpen(false);
+    setHasAutoOpenedCheckout(false);
+    
+    // Clear all data
+    cart.clearCart();
+    setMessages([]);
+    setCurrentPhase("welcome");
+    setLeadData({});
+    
+    // Restart welcome phase
+    startWelcomePhase();
+  };
+
   // Show initial loading screen if critical data is still loading
   if (isLoadingSettings || isLoadingDiscounts || cart.rulesLoading) {
     return (
@@ -2610,6 +2628,7 @@ export function DynamicChatGuide() {
           // Reset auto-open flag so the button can work again
           setHasAutoOpenedCheckout(false);
         }}
+        onStartOver={handleStartOver}
         leadData={{
           name: leadData.name || "",
           surname: leadData.surname || "",

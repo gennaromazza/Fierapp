@@ -42,6 +42,15 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **User Confirmation**: System now correctly saves leads with €1,305 total instead of incorrect €1,485 for typical Fotografico + Videomaker selection
 - **Legacy Data Note**: Previous leads (UGK364jLorlwW0yXJcvL, b0ii10OxMFuW9KhEqEoh) retain incorrect data but all new leads save with accurate pricing
 
+### Complete Modal Flow with "Start Over" Functionality (August 20, 2025 - 9:35 AM) - COMPLETED
+- **CheckoutModal Loop Fix**: Eliminated double state management causing infinite loops when clicking X button
+- **Simplified State Management**: Removed internal `isCheckoutOpen` state, now uses only `isOpen` prop from parent
+- **Complete User Journey**: Implemented full circular flow: Chat → CheckoutModal → ConfirmQuoteModal → Back to Chat
+- **"Nuovo Preventivo" Button**: Added prominent blue button in ConfirmQuoteModal to restart entire chat flow
+- **Enhanced UX**: Users can now easily reconfigure quotes and start over without page refresh
+- **Clean Modal Transitions**: Proper modal closing sequences with delays to prevent conflicts
+- **Complete Reset Function**: `handleStartOver` clears cart, messages, lead data, and restarts welcome phase
+
 ### Critical Pricing Bug Resolution - Final Total Calculation (August 20, 2025 - 9:25 AM) - COMPLETED
 - **ROOT CAUSE IDENTIFIED**: `unifiedPricing.ts` was setting `finalTotal: subtotal` instead of `subtotal - totalDiscountSavings`
 - **CRITICAL BUG**: ConfirmQuoteModal showing €1,485 as final total instead of correct €1,320 (€1,485 - €165 discount)

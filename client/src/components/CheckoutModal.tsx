@@ -37,6 +37,7 @@ declare global {
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onStartOver?: () => void; // New prop to restart the entire flow
   leadData?: {
     name?: string;
     surname?: string;
@@ -61,6 +62,7 @@ const formatEUR = (n: unknown) =>
 export default function CheckoutModal({
   isOpen,
   onClose,
+  onStartOver,
   leadData,
 }: CheckoutModalProps) {
   const cartWithRules = useCartWithRules();
@@ -581,6 +583,7 @@ export default function CheckoutModal({
           onClose(); // This will trigger parent to potentially reopen this modal
         }, 100);
       }}
+      onStartOver={onStartOver}
       leadId={savedLeadId}
       leadData={savedLeadData || { customer: {}, selectedItems: [], pricing: {} }}
     />
