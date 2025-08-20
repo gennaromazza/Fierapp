@@ -70,7 +70,6 @@ export default function CheckoutModal({
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [savedLeadId, setSavedLeadId] = useState("");
   const [savedLeadData, setSavedLeadData] = useState<any>(null);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   // Reset allowEmptyCart when modal opens with items
   useEffect(() => {
@@ -78,11 +77,6 @@ export default function CheckoutModal({
       setAllowEmptyCart(false);
     }
   }, [isOpen, cartWithRules.cart.itemCount]);
-
-  // Sync internal state with external prop
-  useEffect(() => {
-    setIsCheckoutOpen(isOpen);
-  }, [isOpen]);
 
   // Use React Query for cached settings loading
   const {
@@ -286,9 +280,10 @@ export default function CheckoutModal({
 
   return (
     <>
-    <Dialog open={isCheckoutOpen} onOpenChange={(open) => {
-      setIsCheckoutOpen(open);
-      if (!open) onClose();
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        onClose();
+      }
     }}>
       <DialogContent
         className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary"
@@ -582,8 +577,9 @@ export default function CheckoutModal({
       onBackToCheckout={() => {
         setConfirmModalOpen(false); // Close confirm modal
         setTimeout(() => {
-          setIsCheckoutOpen(true); // Reopen checkout modal
-        }, 100); // Small delay to ensure proper transition
+          // Reopen checkout modal after confirm modal closes
+          onClose(); // This will trigger parent to potentially reopen this modal
+        }, 100);
       }}
       leadId={savedLeadId}
       leadData={savedLeadData || { customer: {}, selectedItems: [], pricing: {} }}
