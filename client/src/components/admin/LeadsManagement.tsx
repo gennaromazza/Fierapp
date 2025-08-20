@@ -691,18 +691,35 @@ export default function LeadsManagement() {
                       leadDate = lead.createdAt;
                       isValidDate = !isNaN(leadDate.getTime());
                     } else if ((lead.createdAt as any)?.seconds) {
+                      // Handle Firestore Timestamp object
                       leadDate = new Date((lead.createdAt as any).seconds * 1000);
                       isValidDate = !isNaN(leadDate.getTime());
-                    } else if (lead.createdAt) {
+                    } else if ((lead.createdAt as any)?.toDate) {
+                      // Handle Firestore Timestamp with toDate method
+                      leadDate = (lead.createdAt as any).toDate();
+                      isValidDate = !isNaN(leadDate.getTime());
+                    } else if (lead.createdAt && typeof lead.createdAt === 'string') {
                       leadDate = new Date(lead.createdAt);
                       isValidDate = !isNaN(leadDate.getTime());
+                    } else if (lead.createdAt && typeof lead.createdAt === 'object') {
+                      // Try to parse as timestamp object
+                      const timestamp = lead.createdAt as any;
+                      if (timestamp._seconds || timestamp.seconds) {
+                        const seconds = timestamp._seconds || timestamp.seconds;
+                        leadDate = new Date(seconds * 1000);
+                        isValidDate = !isNaN(leadDate.getTime());
+                      } else {
+                        leadDate = new Date();
+                        isValidDate = false;
+                      }
                     } else {
                       leadDate = new Date();
-                      isValidDate = true;
+                      isValidDate = false;
                     }
                   } catch (e) {
+                    console.warn('Error parsing createdAt for lead:', lead.id, lead.createdAt, e);
                     leadDate = new Date();
-                    isValidDate = true;
+                    isValidDate = false;
                   }
 
                   return (
