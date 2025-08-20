@@ -226,38 +226,23 @@ export default function CheckoutModal({
       // Prepare complete lead data for confirm modal with proper pricing structure
       const pricingData = cartWithRules.getPricingWithRules();
       
-      // Calculate detailed breakdown for better display
-      const allItems = cartWithRules.getAllItemsWithAvailability();
-      let totalIndividualDiscounts = 0;
+      // Use the correct pricing from cartWithRules that already applies sequential discounts
+      const correctPricing = cartWithRules.getPricingWithRules();
       
-      // Calculate individual item discounts
-      selectedItems.forEach(selectedItem => {
-        const fullItem = allItems.find(item => item.id === selectedItem.id);
-        if (fullItem && !selectedItem.isGift) {
-          const originalPrice = toNum(fullItem.originalPrice || fullItem.price);
-          const currentPrice = toNum(selectedItem.price);
-          if (originalPrice > currentPrice) {
-            totalIndividualDiscounts += (originalPrice - currentPrice);
-          }
-        }
+      // Ensure selectedItems have correct pricing aligned with the system
+      const correctedSelectedItems = selectedItems.map(item => {
+        const cartItem = cartWithRules.getItemsWithRuleInfo().find(ci => ci.id === item.id);
+        return {
+          ...item,
+          price: cartItem ? toNum(cartItem.isGift ? 0 : cartItem.price) : item.price,
+          originalPrice: item.originalPrice
+        };
       });
-      
-      // Calculate global discount (10% on subtotal after individual discounts)
-      const subtotalAfterIndividualDiscounts = toNum(pricingData.subtotal);
-      const globalDiscountAmount = subtotalAfterIndividualDiscounts * 0.1;
       
       const leadDataForConfirm = {
         customer: data,
-        selectedItems: selectedItems,
-        pricing: {
-          ...pricingData,
-          // Enhanced detailed breakdown for ConfirmQuoteModal
-          detailed: {
-            individualDiscountSavings: totalIndividualDiscounts,
-            globalDiscountSavings: globalDiscountAmount,
-            ...pricingData.detailed
-          }
-        },
+        selectedItems: correctedSelectedItems,
+        pricing: correctPricing, // Use the correct pricing directly from cartWithRules
         settings: settings, // Pass settings to avoid reload
       };
 

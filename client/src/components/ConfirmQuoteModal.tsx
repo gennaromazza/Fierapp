@@ -154,8 +154,6 @@ export default function ConfirmQuoteModal({
         title: "WhatsApp aperto!",
         description: "Si è aperta la conversazione WhatsApp con i dettagli del preventivo.",
       });
-
-      onClose();
     } catch (error) {
       console.error("Error generating WhatsApp message:", error);
       toast({
@@ -205,8 +203,6 @@ export default function ConfirmQuoteModal({
         title: "PDF generato!",
         description: "Il preventivo PDF è stato scaricato con successo.",
       });
-
-      onClose();
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
@@ -378,14 +374,24 @@ export default function ConfirmQuoteModal({
             </Button>
           </div>
 
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            className="w-full text-gray-600 hover:text-gray-800 py-3"
-            size="sm"
-          >
-            Chiudi
-          </Button>
+          <div className="flex gap-2 pt-4">
+            <Button
+              onClick={onClose}
+              variant="outline"
+              className="w-full text-brand-accent border-brand-accent hover:bg-brand-accent/10 py-3"
+              size="sm"
+            >
+              ← Indietro al Preventivo
+            </Button>
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              className="w-full text-gray-600 hover:text-gray-800 py-3"
+              size="sm"
+            >
+              Chiudi
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
