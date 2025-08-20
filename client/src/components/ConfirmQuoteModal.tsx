@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { useQuery } from "@tanstack/react-query";
@@ -6,7 +7,7 @@ import { logEvent } from "firebase/analytics";
 import { Settings } from "@shared/schema";
 import { generateWhatsAppLink } from "../lib/whatsapp";
 import { generateClientQuotePDF } from "../lib/pdf";
-import { MessageCircle, Download, CheckCircle } from "lucide-react";
+import { MessageCircle, Download, CheckCircle, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -56,7 +57,7 @@ export default function ConfirmQuoteModal({
   const { data: fetchedSettings } = useQuery({
     queryKey: ["/api/settings"],
     queryFn: async () => {
-      const settingsDoc = await getDoc(doc(db, "settings", "app")); // Fixed: use "app" not "main"
+      const settingsDoc = await getDoc(doc(db, "settings", "app"));
       return settingsDoc.exists() ? (settingsDoc.data() as Settings) : null;
     },
     enabled: !leadData.settings, // Only fetch if not provided by parent
@@ -220,60 +221,167 @@ export default function ConfirmQuoteModal({
 
   if (!settings) return null;
 
+  // Calculate pricing summary for display
+  const { pricing } = leadData;
+  const individualSavings = toNum(pricing.detailed?.individualDiscountSavings || 0);
+  const globalSavings = toNum(pricing.detailed?.globalDiscountSavings || 0);
+  const giftSavings = toNum(pricing.giftSavings || 0);
+  const totalSavings = toNum(pricing.totalSavings || 0);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle className="h-6 w-6 text-green-600" />
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary border-2 border-brand-accent shadow-2xl">
+        <DialogHeader className="text-center pb-6">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg">
+            <CheckCircle className="h-10 w-10 text-white" />
           </div>
-          <DialogTitle>Preventivo Salvato!</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-3xl font-bold text-brand-accent mb-2">
+            🎉 Preventivo Salvato!
+          </DialogTitle>
+          <DialogDescription className="text-lg text-gray-600">
             Il tuo preventivo è stato salvato correttamente nel nostro sistema.
           </DialogDescription>
         </DialogHeader>
 
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="pt-4">
+        {/* Lead ID Card */}
+        <Card className="border-2 border-brand-accent bg-gradient-to-br from-brand-accent/10 to-brand-accent/5 shadow-lg mb-6">
+          <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">ID Preventivo:</p>
-              <p className="font-mono text-lg font-semibold text-green-800">{leadId}</p>
+              <p className="text-sm text-gray-600 mb-2 font-medium">ID Preventivo:</p>
+              <p className="font-mono text-2xl font-bold text-brand-accent bg-white px-4 py-2 rounded-lg inline-block shadow-inner">
+                {leadId}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <div className="space-y-3">
-          <p className="text-center text-sm text-gray-600">
+        {/* Pricing Summary */}
+        <Card className="border border-gray-200 bg-white shadow-lg mb-6">
+          <CardContent className="pt-6">
+            <h4 className="font-bold text-xl text-brand-accent mb-4 flex items-center">
+              <Sparkles className="w-5 h-5 mr-2" />
+              RIEPILOGO ECONOMICO
+            </h4>
+            
+            <div className="space-y-3">
+              {/* Selected Items */}
+              <div className="space-y-2">
+                {leadData.selectedItems.map((item, index) => {
+                  const originalPrice = toNum(item.originalPrice);
+                  const currentPrice = toNum(item.price);
+                  const isGift = currentPrice === 0;
+                  const hasDiscount = originalPrice > currentPrice && !isGift;
+
+                  return (
+                    <div key={index} className="flex justify-between items-center text-sm py-2 border-b border-gray-100 last:border-b-0">
+                      <span className="font-medium">
+                        {item.title}
+                        {isGift && <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">OMAGGIO</span>}
+                      </span>
+                      <span className="font-semibold">
+                        {isGift ? (
+                          <>
+                            {originalPrice > 0 && (
+                              <span className="line-through text-gray-400 mr-2">€{formatEUR(originalPrice)}</span>
+                            )}
+                            <span className="text-green-600 font-bold">GRATIS</span>
+                          </>
+                        ) : hasDiscount ? (
+                          <>
+                            <span className="line-through text-gray-400 mr-2">€{formatEUR(originalPrice)}</span>
+                            <span className="text-brand-accent">€{formatEUR(currentPrice)}</span>
+                          </>
+                        ) : (
+                          <span className="text-brand-accent">€{formatEUR(currentPrice)}</span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <hr className="border-brand-secondary my-4" />
+
+              {/* Pricing breakdown */}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Subtotale servizi/prodotti:</span>
+                  <span className="font-semibold">€{formatEUR(pricing.subtotal)}</span>
+                </div>
+
+                {individualSavings > 0 && (
+                  <div className="flex justify-between text-blue-600">
+                    <span>Sconti per prodotto/servizio:</span>
+                    <span className="font-semibold">-€{formatEUR(individualSavings)}</span>
+                  </div>
+                )}
+
+                {globalSavings > 0 && (
+                  <div className="flex justify-between text-orange-600">
+                    <span>Sconto globale (-10%):</span>
+                    <span className="font-semibold">-€{formatEUR(globalSavings)}</span>
+                  </div>
+                )}
+
+                {giftSavings > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Servizi in omaggio:</span>
+                    <span className="font-semibold">-€{formatEUR(giftSavings)}</span>
+                  </div>
+                )}
+
+                {totalSavings > 0 && (
+                  <div className="flex justify-between text-green-600 font-bold bg-green-50 px-3 py-2 rounded-lg mt-3">
+                    <span>💰 Totale risparmiato:</span>
+                    <span>€{formatEUR(totalSavings)}</span>
+                  </div>
+                )}
+              </div>
+
+              <hr className="border-brand-secondary my-4" />
+
+              {/* Final Total */}
+              <div className="flex justify-between items-center bg-gradient-to-r from-brand-accent/10 to-brand-accent/5 px-4 py-3 rounded-lg">
+                <span className="text-xl font-bold text-brand-accent">TOTALE FINALE:</span>
+                <span className="text-2xl font-bold text-brand-accent">€{formatEUR(pricing.total)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="space-y-4">
+          <p className="text-center text-gray-600 font-medium">
             Scegli come vuoi procedere:
           </p>
 
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             <Button
               onClick={handleDownloadPDF}
               disabled={isGeneratingPDF}
-              className="w-full"
+              className="w-full bg-brand-accent hover:bg-brand-accent/90 text-white py-4 text-lg font-semibold shadow-lg"
               size="lg"
             >
-              <Download className="mr-2 h-4 w-4" />
-              {isGeneratingPDF ? "Generando PDF..." : "Scarica Preventivo PDF"}
+              <Download className="mr-3 h-5 w-5" />
+              {isGeneratingPDF ? "Generando PDF..." : "📄 Scarica Preventivo PDF"}
             </Button>
 
             <Button
               onClick={handleWhatsAppShare}
               disabled={isSendingWhatsApp}
               variant="outline"
-              className="w-full"
+              className="w-full border-2 border-green-500 text-green-600 hover:bg-green-50 py-4 text-lg font-semibold shadow-lg"
               size="lg"
             >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              {isSendingWhatsApp ? "Aprendo WhatsApp..." : "Invia su WhatsApp"}
+              <MessageCircle className="mr-3 h-5 w-5" />
+              {isSendingWhatsApp ? "Aprendo WhatsApp..." : "💬 Invia su WhatsApp"}
             </Button>
           </div>
 
           <Button
             onClick={onClose}
             variant="ghost"
-            className="w-full"
+            className="w-full text-gray-600 hover:text-gray-800 py-3"
             size="sm"
           >
             Chiudi

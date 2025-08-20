@@ -225,15 +225,37 @@ export default function CheckoutModal({
 
       // Prepare complete lead data for confirm modal with proper pricing structure
       const pricingData = cartWithRules.getPricingWithRules();
+      
+      // Calculate detailed breakdown for better display
+      const allItems = cartWithRules.getAllItemsWithAvailability();
+      let totalIndividualDiscounts = 0;
+      
+      // Calculate individual item discounts
+      selectedItems.forEach(selectedItem => {
+        const fullItem = allItems.find(item => item.id === selectedItem.id);
+        if (fullItem && !selectedItem.isGift) {
+          const originalPrice = toNum(fullItem.originalPrice || fullItem.price);
+          const currentPrice = toNum(selectedItem.price);
+          if (originalPrice > currentPrice) {
+            totalIndividualDiscounts += (originalPrice - currentPrice);
+          }
+        }
+      });
+      
+      // Calculate global discount (10% on subtotal after individual discounts)
+      const subtotalAfterIndividualDiscounts = toNum(pricingData.subtotal);
+      const globalDiscountAmount = subtotalAfterIndividualDiscounts * 0.1;
+      
       const leadDataForConfirm = {
         customer: data,
         selectedItems: selectedItems,
         pricing: {
           ...pricingData,
-          // Ensure compatibility with ConfirmQuoteModal expectations
-          detailed: pricingData.detailed || {
-            individualDiscountSavings: 0,
-            globalDiscountSavings: pricingData.totalSavings - (pricingData.giftSavings || 0)
+          // Enhanced detailed breakdown for ConfirmQuoteModal
+          detailed: {
+            individualDiscountSavings: totalIndividualDiscounts,
+            globalDiscountSavings: globalDiscountAmount,
+            ...pricingData.detailed
           }
         },
         settings: settings, // Pass settings to avoid reload
