@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 interface ConfirmQuoteModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onBackToCheckout?: () => void; // New prop for navigation back to checkout
   leadId: string;
   leadData: {
     customer: any;
@@ -46,6 +47,7 @@ const formatEUR = (n: unknown) =>
 export default function ConfirmQuoteModal({
   isOpen,
   onClose,
+  onBackToCheckout,
   leadId,
   leadData,
 }: ConfirmQuoteModalProps) {
@@ -376,7 +378,12 @@ export default function ConfirmQuoteModal({
 
           <div className="flex gap-2 pt-4">
             <Button
-              onClick={onClose}
+              onClick={() => {
+                onClose(); // Close this modal first
+                if (onBackToCheckout) {
+                  onBackToCheckout(); // Then open checkout modal
+                }
+              }}
               variant="outline"
               className="w-full text-brand-accent border-brand-accent hover:bg-brand-accent/10 py-3"
               size="sm"
