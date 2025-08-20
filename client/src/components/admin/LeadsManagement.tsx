@@ -90,9 +90,25 @@ export default function LeadsManagement() {
     if (dateFilter) {
       filtered = filtered.filter(lead => {
         try {
-          const leadDate = lead.createdAt instanceof Date ? lead.createdAt : 
-                          (lead.createdAt as any)?.seconds ? new Date((lead.createdAt as any).seconds * 1000) :
-                          typeof lead.createdAt === 'string' ? new Date(lead.createdAt) : new Date();
+          let leadDate: Date;
+          
+          if (lead.createdAt instanceof Date) {
+            leadDate = lead.createdAt;
+          } else if ((lead.createdAt as any)?._methodName === 'serverTimestamp') {
+            // For serverTimestamp, use current date as fallback
+            leadDate = new Date();
+          } else if ((lead.createdAt as any)?.seconds) {
+            const seconds = (lead.createdAt as any).seconds;
+            const nanoseconds = (lead.createdAt as any).nanoseconds || 0;
+            leadDate = new Date(seconds * 1000 + nanoseconds / 1000000);
+          } else if ((lead.createdAt as any)?.toDate) {
+            leadDate = (lead.createdAt as any).toDate();
+          } else if (typeof lead.createdAt === 'string') {
+            leadDate = new Date(lead.createdAt);
+          } else {
+            leadDate = new Date();
+          }
+          
           return format(leadDate, "yyyy-MM-dd") === format(dateFilter, "yyyy-MM-dd");
         } catch (e) {
           return false;
@@ -704,9 +720,18 @@ export default function LeadsManagement() {
                     } else if (lead.createdAt && typeof lead.createdAt === 'object') {
                       // Try to parse as timestamp object
                       const timestamp = lead.createdAt as any;
-                      if (timestamp._seconds || timestamp.seconds) {
+                      
+                      // Handle Firebase serverTimestamp objects with _methodName
+                      if (timestamp._methodName === 'serverTimestamp') {
+                        // ServerTimestamp objects need to be resolved by Firebase
+                        // For display purposes, use current time as fallback
+                        leadDate = new Date();
+                        isValidDate = true;
+                        console.log('⚠️ ServerTimestamp detected for lead:', lead.id);
+                      } else if (timestamp._seconds || timestamp.seconds) {
                         const seconds = timestamp._seconds || timestamp.seconds;
-                        leadDate = new Date(seconds * 1000);
+                        const nanoseconds = timestamp._nanoseconds || timestamp.nanoseconds || 0;
+                        leadDate = new Date(seconds * 1000 + nanoseconds / 1000000);
                         isValidDate = !isNaN(leadDate.getTime());
                       } else {
                         leadDate = new Date();
