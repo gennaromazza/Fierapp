@@ -288,7 +288,7 @@ export default function CheckoutModal({
       }
     }}>
       <DialogContent
-        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary"
+        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-brand-primary [&>button]:hidden"
         aria-describedby="checkout-description"
       >
         <DialogHeader>
