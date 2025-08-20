@@ -1141,6 +1141,7 @@ export function DynamicChatGuide() {
       addMessage({
         type: "assistant",
         avatar: "enthusiastic",
+        isImportant: true, // Mark gift messages as important too
         text: `🎉 FANTASTICO! Hai sbloccato dei REGALI!\n\n🎁 Ora ${giftNames} ${availableGifts.length === 1 ? "è" : "sono"} GRATUITO!\n\nPuoi aggiungerlo al tuo carrello senza costi aggiuntivi! ✨`,
         typing: true,
       });
@@ -1209,6 +1210,7 @@ export function DynamicChatGuide() {
     addMessage({
       type: "assistant",
       avatar: "enthusiastic",
+      isImportant: true, // Mark as important message
       text: unlockMessage,
       typing: true,
     });
