@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { useQuery } from "@tanstack/react-query";
@@ -90,7 +89,7 @@ export default function ConfirmQuoteModal({
           const priceNum = toNum(item.price);
           const originalNum = toNum(item.originalPrice);
           const priceText = item.price === 0 ? "GRATIS" : `€${formatEUR(priceNum)}`;
-          
+
           // Show crossed out original price if discounted and not gift
           if (item.price !== 0 && originalNum > priceNum) {
             return `• ${title} - ~€${formatEUR(originalNum)}~  €${formatEUR(priceNum)}`;
@@ -121,7 +120,7 @@ export default function ConfirmQuoteModal({
       const globalSavings = toNum(pricing.detailed?.globalDiscountSavings || 0);
       const giftSavings = toNum(pricing.giftSavings || 0);
       const totalSavings = toNum(pricing.totalSavings || 0);
-      
+
       const lines = [
         `Subtotale servizi/prodotti: €${formatEUR(pricing.subtotal)}`,
         ...(individualSavings > 0
@@ -180,7 +179,7 @@ export default function ConfirmQuoteModal({
       // Generate PDF with proper data structure
       const individualSavings = toNum(pricing.detailed?.individualDiscountSavings || 0);
       const globalSavings = toNum(pricing.detailed?.globalDiscountSavings || 0);
-      
+
       const pdfData = {
         customer,
         selectedItems,
@@ -222,13 +221,13 @@ export default function ConfirmQuoteModal({
 
   // Calculate pricing summary for display
   const { pricing } = leadData;
-  
+
   // Calculate pricing summary for display
   const individualSavings = toNum(pricing.detailed?.individualDiscountSavings || 0);
   const globalSavings = toNum(pricing.detailed?.globalDiscountSavings || 0);
   const giftSavings = toNum(pricing.giftSavings || 0);
   const totalSavings = toNum(pricing.totalSavings || 0);
-  
+
   // Use the corrected total from unifiedPricing.ts
   const displayTotal = toNum(pricing.total);
 
@@ -256,7 +255,7 @@ export default function ConfirmQuoteModal({
                 <p className="font-mono text-2xl font-bold text-brand-accent bg-white px-4 py-2 rounded-lg inline-block shadow-inner">
                   {leadId}
                 </p>
-                
+
                 {/* Quote Link */}
                 <div className="flex items-center justify-center gap-2 text-sm">
                   <span className="text-gray-600">Link preventivo:</span>
@@ -293,7 +292,7 @@ export default function ConfirmQuoteModal({
                     <ExternalLink className="h-4 w-4" />
                   </Button>
                 </div>
-                
+
                 {/* Copy ID Button */}
                 <Button
                   onClick={() => {
@@ -323,7 +322,7 @@ export default function ConfirmQuoteModal({
               <Sparkles className="w-5 h-5 mr-2" />
               RIEPILOGO ECONOMICO
             </h4>
-            
+
             <div className="space-y-3">
               {/* Selected Items */}
               <div className="space-y-2">
@@ -440,33 +439,20 @@ export default function ConfirmQuoteModal({
           </div>
 
           <div className="flex flex-col gap-2 pt-4">
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  onClose(); // Close this modal first
-                  if (onBackToCheckout) {
-                    setTimeout(() => onBackToCheckout(), 100); // Small delay to ensure clean modal transition
-                  }
-                }}
-                variant="outline"
-                className="w-full text-brand-accent border-brand-accent hover:bg-brand-accent/10 py-3"
-                size="sm"
-              >
-                ← Indietro al Preventivo
-              </Button>
-              <Button
-                onClick={() => {
-                  // Ensure clean modal closure
-                  onClose();
-                }}
-                variant="ghost"
-                className="w-full text-gray-600 hover:text-gray-800 py-3"
-                size="sm"
-              >
-                Chiudi
-              </Button>
-            </div>
-            
+            <Button
+              onClick={() => {
+                onClose(); // Close this modal first
+                if (onBackToCheckout) {
+                  setTimeout(() => onBackToCheckout(), 100); // Small delay to ensure clean modal transition
+                }
+              }}
+              variant="outline"
+              className="w-full text-brand-accent border-brand-accent hover:bg-brand-accent/10 py-3"
+              size="sm"
+            >
+              ← Indietro al Preventivo
+            </Button>
+
             {/* New button to start over */}
             <Button
               onClick={() => {
