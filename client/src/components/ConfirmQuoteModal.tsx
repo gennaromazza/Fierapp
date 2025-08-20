@@ -439,20 +439,6 @@ export default function ConfirmQuoteModal({
           </div>
 
           <div className="flex flex-col gap-2 pt-4">
-            <Button
-              onClick={() => {
-                onClose(); // Close this modal first
-                if (onBackToCheckout) {
-                  setTimeout(() => onBackToCheckout(), 100); // Small delay to ensure clean modal transition
-                }
-              }}
-              variant="outline"
-              className="w-full text-brand-accent border-brand-accent hover:bg-brand-accent/10 py-3"
-              size="sm"
-            >
-              ← Indietro al Preventivo
-            </Button>
-
             {/* New button to start over */}
             <Button
               onClick={() => {
