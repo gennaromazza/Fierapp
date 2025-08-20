@@ -42,6 +42,15 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 - **User Confirmation**: System now correctly saves leads with €1,305 total instead of incorrect €1,485 for typical Fotografico + Videomaker selection
 - **Legacy Data Note**: Previous leads (UGK364jLorlwW0yXJcvL, b0ii10OxMFuW9KhEqEoh) retain incorrect data but all new leads save with accurate pricing
 
+### Critical Pricing Bug Resolution - Final Total Calculation (August 20, 2025 - 9:25 AM) - COMPLETED
+- **ROOT CAUSE IDENTIFIED**: `unifiedPricing.ts` was setting `finalTotal: subtotal` instead of `subtotal - totalDiscountSavings`
+- **CRITICAL BUG**: ConfirmQuoteModal showing €1,485 as final total instead of correct €1,320 (€1,485 - €165 discount)
+- **SYSTEM-WIDE FIX**: Updated `calculateUnifiedPricing()` to correctly calculate `finalTotal = subtotal - totalDiscountSavings`
+- **Enhanced Quote Links**: Updated quote link generation to include basepath for proper routing
+- **Perfect Pricing Consistency**: All components now show identical final totals - CheckoutModal, ConfirmQuoteModal, PDF, WhatsApp, Admin emails
+- **User Confirmation**: Visual interface now displays correct total (€1,320 instead of €1,485) matching all calculations
+- **Cleaned Debug Code**: Removed temporary debug logging and implemented clean, production-ready pricing display
+
 ### Complete Pricing Alignment Verification System (August 19, 2025 - 1:45 PM) - COMPLETED
 - **Comprehensive Code Analysis**: Created automated script that analyzes all pricing components in codebase to identify inconsistencies
 - **Critical Bug Fix**: Corrected LeadForm.tsx to save `pricing.subtotal` instead of `pricing.originalSubtotal` - eliminating €3,150 vs €2,750 discrepancy

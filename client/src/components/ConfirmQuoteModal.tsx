@@ -221,25 +221,14 @@ export default function ConfirmQuoteModal({
   // Calculate pricing summary for display
   const { pricing } = leadData;
   
-  // Debug pricing object to verify the fix
-  console.log("🔍 ConfirmQuoteModal received pricing:", pricing);
-  
+  // Calculate pricing summary for display
   const individualSavings = toNum(pricing.detailed?.individualDiscountSavings || 0);
   const globalSavings = toNum(pricing.detailed?.globalDiscountSavings || 0);
   const giftSavings = toNum(pricing.giftSavings || 0);
   const totalSavings = toNum(pricing.totalSavings || 0);
   
-  // Now pricing.total should be correct from unifiedPricing.ts fix
+  // Use the corrected total from unifiedPricing.ts
   const displayTotal = toNum(pricing.total);
-  
-  console.log("🔍 Updated pricing analysis:", {
-    subtotal: pricing.subtotal,
-    individualSavings,
-    globalSavings,
-    finalTotal: pricing.total,
-    displayTotal,
-    isFixed: pricing.total === (pricing.subtotal - individualSavings - globalSavings)
-  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -270,11 +259,12 @@ export default function ConfirmQuoteModal({
                 <div className="flex items-center justify-center gap-2 text-sm">
                   <span className="text-gray-600">Link preventivo:</span>
                   <code className="bg-gray-100 px-2 py-1 rounded text-brand-accent font-mono">
-                    /quote/{leadId}
+                    {window.location.pathname.replace(/\/[^\/]*$/, '')}/quote/{leadId}
                   </code>
                   <Button
                     onClick={() => {
-                      const quoteUrl = `${window.location.origin}/quote/${leadId}`;
+                      const basePath = window.location.pathname.replace(/\/[^\/]*$/, '');
+                      const quoteUrl = `${window.location.origin}${basePath}/quote/${leadId}`;
                       navigator.clipboard.writeText(quoteUrl).then(() => {
                         toast({
                           title: "Link copiato!",
@@ -290,7 +280,8 @@ export default function ConfirmQuoteModal({
                   </Button>
                   <Button
                     onClick={() => {
-                      const quoteUrl = `${window.location.origin}/quote/${leadId}`;
+                      const basePath = window.location.pathname.replace(/\/[^\/]*$/, '');
+                      const quoteUrl = `${window.location.origin}${basePath}/quote/${leadId}`;
                       window.open(quoteUrl, '_blank');
                     }}
                     variant="ghost"
