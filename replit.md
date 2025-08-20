@@ -7,106 +7,6 @@ This is a full-stack promotional application ("Promo Fiera") designed for trade 
 Preferred communication style: Simple, everyday language.
 User preference: Dislikes flashing/pulsing animation effects - prefers clean, static design without distracting animations.
 
-## Recent Changes
-
-### Unified Discount System & Enhanced Marketing Messages (August 13, 2025 - 6:10 PM) - COMPLETED
-- **Unified Pricing System**: Created comprehensive `unifiedPricing.ts` with consistent discount calculations across all components
-- **Marketing Message Engine**: Intelligent marketing messages that adapt based on savings percentage with persuasive copy
-- **PDF Calculation Fix**: Updated PDF generation to use unified pricing system ensuring accurate totals and breakdowns
-- **Enhanced Visual Feedback**: Rich savings displays with gradient backgrounds, multiple discount types, and urgency messaging
-- **Firebase Error Resolution**: Fixed timestamp handling and data structure issues in lead form submission
-- **Admin Panel Enhancement**: Added "Clear All Leads" functionality with double confirmation for data cleanup
-
-### Full System Pricing Alignment Complete (August 19, 2025 - 1:25 PM) - COMPLETED
-- **PDF System Update**: Updated PDF generation to use database-driven pricing structure matching CheckoutModal exactly
-- **Gift Items in PDF**: PDF shows crossed-out original prices with green "GRATIS" text for gift items, identical to CheckoutModal display
-- **WhatsApp Message Integration**: Updated WhatsApp message generation to use new pricing structure with detailed savings breakdown
-- **LeadsManagement Email System**: Updated admin email generation to use new detailed pricing structure with gift item handling
-- **Admin Dashboard Statistics**: Updated stats calculations to use totalSavings instead of legacy discount field
-- **Unified Pricing Display**: All outputs (CheckoutModal, PDF, WhatsApp, Admin Emails, Dashboard) now show identical pricing information:
-  - Subtotale servizi/prodotti (only paid items)
-  - Sconti per prodotto/servizio (individual database discounts)
-  - Sconto globale (-10%) (applied to subtotal after individual discounts)
-  - Servizi in omaggio (gift item values)
-  - TOTALE (final amount to pay)
-  - Total savings summary
-- **Complete System Consistency**: Perfect alignment across all system outputs - user interface, PDF downloads, WhatsApp messages, admin emails, and dashboard statistics
-- **Database-Driven Logic**: All pricing calculations based on real originalPrice and price fields from Firebase database
-
-### CheckoutModal Pricing Fix - Final Resolution (August 19, 2025 - 3:20 PM) - COMPLETED
-- **CRITICAL BUG RESOLUTION**: Fixed CheckoutModal lines 191-218 that were causing incorrect lead data saves when users clicked WhatsApp or PDF buttons
-- **Root Cause Identified**: CheckoutModal was saving `cartWithRules.cart.items` (raw cart data) while using `cartWithRules.getPricingWithRules()` (processed pricing) causing data inconsistency
-- **Unified Item Processing**: Updated CheckoutModal to use `getItemsWithRuleInfo()` + `getAllItemsWithAvailability()` for consistent item data aligned with pricing system
-- **Database-Driven Lead Saves**: All lead saves now use processed items with correct finalPrice + originalPrice from database, ensuring perfect alignment with display logic
-- **WhatsApp & PDF Consistency**: Both WhatsApp message generation and PDF creation now receive correctly processed lead data matching the checkout interface
-- **User Confirmation**: System now correctly saves leads with €1,305 total instead of incorrect €1,485 for typical Fotografico + Videomaker selection
-- **Legacy Data Note**: Previous leads (UGK364jLorlwW0yXJcvL, b0ii10OxMFuW9KhEqEoh) retain incorrect data but all new leads save with accurate pricing
-
-### Complete Modal Flow with "Start Over" Functionality (August 20, 2025 - 9:35 AM) - COMPLETED
-- **CheckoutModal Loop Fix**: Eliminated double state management causing infinite loops when clicking X button
-- **Simplified State Management**: Removed internal `isCheckoutOpen` state, now uses only `isOpen` prop from parent
-- **Complete User Journey**: Implemented full circular flow: Chat → CheckoutModal → ConfirmQuoteModal → Back to Chat
-- **"Nuovo Preventivo" Button**: Added prominent blue button in ConfirmQuoteModal to restart entire chat flow
-- **Enhanced UX**: Users can now easily reconfigure quotes and start over without page refresh
-- **Clean Modal Transitions**: Proper modal closing sequences with delays to prevent conflicts
-- **Complete Reset Function**: `handleStartOver` clears cart, messages, lead data, and restarts welcome phase
-
-### Critical Pricing Bug Resolution - Final Total Calculation (August 20, 2025 - 9:25 AM) - COMPLETED
-- **ROOT CAUSE IDENTIFIED**: `unifiedPricing.ts` was setting `finalTotal: subtotal` instead of `subtotal - totalDiscountSavings`
-- **CRITICAL BUG**: ConfirmQuoteModal showing €1,485 as final total instead of correct €1,320 (€1,485 - €165 discount)
-- **SYSTEM-WIDE FIX**: Updated `calculateUnifiedPricing()` to correctly calculate `finalTotal = subtotal - totalDiscountSavings`
-- **Enhanced Quote Links**: Updated quote link generation to include basepath for proper routing
-- **Perfect Pricing Consistency**: All components now show identical final totals - CheckoutModal, ConfirmQuoteModal, PDF, WhatsApp, Admin emails
-- **User Confirmation**: Visual interface now displays correct total (€1,320 instead of €1,485) matching all calculations
-- **Cleaned Debug Code**: Removed temporary debug logging and implemented clean, production-ready pricing display
-
-### Complete Pricing Alignment Verification System (August 19, 2025 - 1:45 PM) - COMPLETED
-- **Comprehensive Code Analysis**: Created automated script that analyzes all pricing components in codebase to identify inconsistencies
-- **Critical Bug Fix**: Corrected LeadForm.tsx to save `pricing.subtotal` instead of `pricing.originalSubtotal` - eliminating €3,150 vs €2,750 discrepancy
-- **Enhanced Lead Data Structure**: Added complete `pricing.detailed` object to lead saves including individualDiscountSavings and globalDiscountSavings
-- **Four-Layer Verification System**: Built complete testing suite with verify-pricing-alignment.js, debug-pricing-components.js, test-pricing-consistency.js, and final-pricing-test.js
-- **Cross-Component Consistency**: All outputs (Chat, Admin Panel, WhatsApp, PDF) now show identical values: €2,745 total, -€305 global discount, -€450 gift savings
-- **Real-Time Code Monitoring**: Scripts analyze source code patterns to detect pricing inconsistencies before they reach production
-- **Step-by-Step Test Procedures**: Complete manual testing checklist ensuring perfect alignment across all user touchpoints
-
-### Sequential Discount Logic Implementation (August 19, 2025 - 11:22 AM) - COMPLETED
-- **CRITICAL FIX**: Implemented sequential discount application - individual discounts now applied before global discounts
-- **Pricing Logic Correction**: Fixed CheckoutModal pricing to show €540 instead of €630 by applying discounts sequentially (700€ → 600€ → 540€)
-- **Enhanced getItemDiscountInfo**: Updated function to calculate individualSavings and globalSavings separately for accurate sequential processing
-- **Unified Pricing System Update**: Modified calculateUnifiedPricing to use sequential discount calculations from enhanced discount info
-- **Comprehensive Testing**: Created verification scripts confirming correct sequential logic: individual discount first, then global discount on reduced price
-- **User Requirement Met**: Sequential discount logic now matches chat system pricing exactly in CheckoutModal
-
-### Individual Product Discounts & Backend Chat Integration (August 13, 2025 - 2:13 PM) - COMPLETED
-- **Individual Item Discount Support**: Enhanced discount system to handle both global and per-item discounts with priority logic
-- **Comprehensive Savings Summary**: Added detailed savings breakdown showing global discounts, individual item discounts, and gift savings separately
-- **Enhanced Discount Calculations**: `calculateCartSavings` and `getItemDiscountInfo` functions provide detailed discount analysis
-- **Backend Data Integration**: Chat now personalizes messages using studio name, contact info, and discount details from Firebase settings
-- **Smart Discount Display**: Products show individual vs global discounts with "(Special)" badge for item-specific offers
-- **Studio-Personalized Experience**: Welcome messages, summaries, and interactions now use studio name and contact information
-
-### Enhanced Rules Engine Integration (August 13, 2025 - 10:12 AM) - COMPLETED  
-- **Intelligent Database Information Retrieval**: Integrated comprehensive rules engine with conversational flow for better user feedback
-- **Smart Product Availability Messaging**: Chat now dynamically shows available products count, unlock conditions, and requirements based on selection rules
-- **Gift Detection & Notification**: Automatic detection and celebration of unlocked gifts with dedicated messaging system
-- **Enhanced Price Display**: Shows gift badges, original prices crossed out, and custom gift text from rule settings
-- **Improved Error Handling**: Clear feedback when products are unavailable with specific requirement messages
-- **Real-time Rules Evaluation**: Uses `useCartWithRules` hook for live evaluation of availability and gift transformation rules
-
-### In-Chat Product Selection Integration (August 13, 2025 - 9:54 AM) - COMPLETED
-- **Products/Services Inside Chat**: Fixed issue where selection was appearing below chat - now integrated directly inside chat messages
-- **ChatProductSelector Component**: Renders product/service cards as part of the conversation flow
-- **Seamless Experience**: Users can select items without leaving the chat conversation context
-- **Clean Architecture**: Removed duplicate selector rendering that was outside the message bubble
-
-### Firebase Database Standardization Complete (August 18, 2025 - 1:00 PM) - COMPLETED
-- **React Key Warnings Resolved**: Removed all hardcoded message IDs causing duplicate key warnings
-- **LSP Errors Fixed**: Resolved all 14 TypeScript errors in LeadsManagement with proper Firebase Timestamp handling
-- **Firebase Field Standardization**: Eliminated all legacy uppercase field references (Nome, Cognome, Email, Telefono)
-- **Unified Italian Lowercase Schema**: Standardized all customer fields to match Firebase database structure exactly
-- **Customer Schema Typed**: Created proper Zod validation schema for customer fields with strong typing
-- **Code Quality Achieved**: Zero LSP errors, zero console warnings, completely type-safe Firebase integration
-
 ## System Architecture
 
 ### Frontend Architecture
@@ -133,15 +33,15 @@ User preference: Dislikes flashing/pulsing animation effects - prefers clean, st
 
 ### Key Features Architecture
 - **Dynamic Form Builder**: Admin-configurable form fields with validation.
-- **Real-time Cart System**: Persistent shopping cart with discount calculations.
-- **Discount Engine**: Flexible percentage/fixed discounts with date ranges.
-- **Lead Management**: CRM-like interface for customer tracking.
+- **Real-time Cart System**: Persistent shopping cart with discount calculations, including sequential application of individual and global discounts.
+- **Discount Engine**: Flexible percentage/fixed discounts with date ranges, capable of handling individual item discounts, global discounts, and gift items.
+- **Lead Management**: CRM-like interface for customer tracking with detailed pricing and lead data.
 - **Export System**: Excel/CSV export for leads and items.
-- **WhatsApp Integration**: Direct messaging for customer communication.
-- **PDF Generation**: Quote/invoice generation.
+- **WhatsApp Integration**: Direct messaging for customer communication with detailed pricing breakdowns.
+- **PDF Generation**: Quote/invoice generation with accurate pricing matching UI.
 - **Dynamic Brand Theming**: Real-time CSS variable-based theming from Firebase settings.
 - **Modular Selection Rules Engine**: Configurable product/service availability and gift transformation rules with real-time evaluation.
-- **Conversational Guide**: Full-screen conversational guide with mobile optimization, multi-avatar system, and integration of product selection within chat messages.
+- **Conversational Guide**: Full-screen conversational guide with mobile optimization, multi-avatar system, and integration of product selection within chat messages. Chat personalizes messages using studio name, contact info, and discount details from Firebase settings.
 - **Session Isolation**: Guarantees a clean, empty cart on every page load for kiosk use.
 
 ### Design Principles
