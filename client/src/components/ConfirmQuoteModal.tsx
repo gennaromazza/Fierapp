@@ -131,7 +131,7 @@ export default function ConfirmQuoteModal({
         ...(giftSavings > 0
           ? [`Servizi in omaggio: -€${formatEUR(giftSavings)}`]
           : []),
-        `TOTALE: €${formatEUR(pricing.total)}`,
+        `TOTALE: €${formatEUR(displayTotal)}`,
         ...(totalSavings > 0
           ? [`💰 Totale risparmiato: €${formatEUR(totalSavings)}!`]
           : []),
@@ -147,7 +147,7 @@ export default function ConfirmQuoteModal({
       if (analytics) {
         logEvent(analytics, "whatsapp_contact", {
           items: selectedItems.length,
-          total_value: toNum(pricing.total),
+          total_value: toNum(displayTotal),
           lead_id: leadId,
         });
       }
@@ -184,8 +184,8 @@ export default function ConfirmQuoteModal({
         selectedItems,
         pricing: {
           ...pricing,
-          // Critical fix: ensure PDF uses correct pricing without recalculation
-          // Don't modify the pricing - it's already correctly calculated from sequential discounts
+          // Critical fix: ensure PDF uses correct total
+          total: displayTotal
         }
       };
 
@@ -195,7 +195,7 @@ export default function ConfirmQuoteModal({
       if (analytics) {
         logEvent(analytics, "pdf_download", {
           items: selectedItems.length,
-          total_value: toNum(pricing.total),
+          total_value: toNum(displayTotal),
           lead_id: leadId,
         });
       }
@@ -220,10 +220,26 @@ export default function ConfirmQuoteModal({
 
   // Calculate pricing summary for display
   const { pricing } = leadData;
+  
+  // Debug pricing object to verify the fix
+  console.log("🔍 ConfirmQuoteModal received pricing:", pricing);
+  
   const individualSavings = toNum(pricing.detailed?.individualDiscountSavings || 0);
   const globalSavings = toNum(pricing.detailed?.globalDiscountSavings || 0);
   const giftSavings = toNum(pricing.giftSavings || 0);
   const totalSavings = toNum(pricing.totalSavings || 0);
+  
+  // Now pricing.total should be correct from unifiedPricing.ts fix
+  const displayTotal = toNum(pricing.total);
+  
+  console.log("🔍 Updated pricing analysis:", {
+    subtotal: pricing.subtotal,
+    individualSavings,
+    globalSavings,
+    finalTotal: pricing.total,
+    displayTotal,
+    isFixed: pricing.total === (pricing.subtotal - individualSavings - globalSavings)
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -395,7 +411,7 @@ export default function ConfirmQuoteModal({
               {/* Final Total */}
               <div className="flex justify-between items-center bg-gradient-to-r from-brand-accent/10 to-brand-accent/5 px-4 py-3 rounded-lg">
                 <span className="text-xl font-bold text-brand-accent">TOTALE FINALE:</span>
-                <span className="text-2xl font-bold text-brand-accent">€{formatEUR(pricing.total)}</span>
+                <span className="text-2xl font-bold text-brand-accent">€{formatEUR(displayTotal)}</span>
               </div>
             </div>
           </CardContent>

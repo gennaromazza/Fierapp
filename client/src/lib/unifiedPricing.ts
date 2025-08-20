@@ -99,6 +99,9 @@ export function calculateUnifiedPricing(
   const totalDiscountSavings = globalDiscountSavings + individualDiscountSavings;
   const totalSavings = totalDiscountSavings + giftSavings;
   
+  // CRITICAL FIX: finalTotal deve essere subtotal MENO gli sconti (non giftSavings perché già inclusi in subtotal=0)
+  const finalTotal = subtotal - totalDiscountSavings;
+  
   return {
     subtotal,
     originalSubtotal,
@@ -106,7 +109,7 @@ export function calculateUnifiedPricing(
     individualDiscountSavings,
     totalDiscountSavings,
     giftSavings,
-    finalTotal: subtotal,
+    finalTotal,
     totalSavings,
     itemDetails
   };
