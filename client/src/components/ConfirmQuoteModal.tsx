@@ -7,7 +7,7 @@ import { logEvent } from "firebase/analytics";
 import { Settings } from "@shared/schema";
 import { generateWhatsAppLink } from "../lib/whatsapp";
 import { generateClientQuotePDF } from "../lib/pdf";
-import { MessageCircle, Download, CheckCircle, Sparkles } from "lucide-react";
+import { MessageCircle, Download, CheckCircle, Sparkles, Copy, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -106,7 +106,7 @@ export default function ConfirmQuoteModal({
         .filter(([key, value]) => key !== "gdpr_consent" && value)
         .map(([key, value]) => {
           const field = (settings.formFields ?? []).find(
-            (f) => f.label.toLowerCase().replace(/\s+/g, "_") === key,
+            (f: any) => f.label.toLowerCase().replace(/\s+/g, "_") === key,
           );
           const label = field?.label || key;
           return `${label}: ${value}`;
@@ -184,9 +184,8 @@ export default function ConfirmQuoteModal({
         selectedItems,
         pricing: {
           ...pricing,
-          // Ensure compatibility with PDF generation
-          discount: individualSavings + globalSavings,
-          originalSubtotal: toNum(pricing.subtotal) + individualSavings
+          // Critical fix: ensure PDF uses correct pricing without recalculation
+          // Don't modify the pricing - it's already correctly calculated from sequential discounts
         }
       };
 
@@ -241,14 +240,69 @@ export default function ConfirmQuoteModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Lead ID Card */}
+        {/* Lead ID Card with Copy Functionality */}
         <Card className="border-2 border-brand-accent bg-gradient-to-br from-brand-accent/10 to-brand-accent/5 shadow-lg mb-6">
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm text-gray-600 mb-2 font-medium">ID Preventivo:</p>
-              <p className="font-mono text-2xl font-bold text-brand-accent bg-white px-4 py-2 rounded-lg inline-block shadow-inner">
-                {leadId}
-              </p>
+              <div className="space-y-3">
+                <p className="font-mono text-2xl font-bold text-brand-accent bg-white px-4 py-2 rounded-lg inline-block shadow-inner">
+                  {leadId}
+                </p>
+                
+                {/* Quote Link */}
+                <div className="flex items-center justify-center gap-2 text-sm">
+                  <span className="text-gray-600">Link preventivo:</span>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-brand-accent font-mono">
+                    /quote/{leadId}
+                  </code>
+                  <Button
+                    onClick={() => {
+                      const quoteUrl = `${window.location.origin}/quote/${leadId}`;
+                      navigator.clipboard.writeText(quoteUrl).then(() => {
+                        toast({
+                          title: "Link copiato!",
+                          description: "Il link del preventivo è stato copiato negli appunti.",
+                        });
+                      });
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-brand-accent hover:bg-brand-accent/10"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const quoteUrl = `${window.location.origin}/quote/${leadId}`;
+                      window.open(quoteUrl, '_blank');
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-brand-accent hover:bg-brand-accent/10"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Copy ID Button */}
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(leadId).then(() => {
+                      toast({
+                        title: "ID copiato!",
+                        description: "L'ID del preventivo è stato copiato negli appunti.",
+                      });
+                    });
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs border-brand-accent text-brand-accent hover:bg-brand-accent/10"
+                >
+                  <Copy className="h-3 w-3 mr-1" />
+                  Copia ID
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -381,7 +435,7 @@ export default function ConfirmQuoteModal({
               onClick={() => {
                 onClose(); // Close this modal first
                 if (onBackToCheckout) {
-                  onBackToCheckout(); // Then open checkout modal
+                  setTimeout(() => onBackToCheckout(), 100); // Small delay to ensure clean modal transition
                 }
               }}
               variant="outline"
@@ -391,7 +445,10 @@ export default function ConfirmQuoteModal({
               ← Indietro al Preventivo
             </Button>
             <Button
-              onClick={onClose}
+              onClick={() => {
+                // Ensure clean modal closure
+                onClose();
+              }}
               variant="ghost"
               className="w-full text-gray-600 hover:text-gray-800 py-3"
               size="sm"
