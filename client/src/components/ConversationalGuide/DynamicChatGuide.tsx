@@ -41,6 +41,7 @@ import { calculateUnifiedPricing } from "../../lib/unifiedPricing";
 import { useToast } from "@/hooks/useToast";
 import { ToastContainer } from "@/components/ui/toast-notification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ImportantMessageChat from "../ImportantMessageChat";
 
 type PhaseType =
   | "welcome"
@@ -59,6 +60,7 @@ interface ChatMessage {
   type: "assistant" | "user" | "system";
   text?: string;
   avatar?: "smiling" | "explaining" | "enthusiastic" | "excited" | "thoughtful";
+  isImportant?: boolean; // New field for important messages
   options?: Array<{
     id: string;
     label: string;
@@ -1109,6 +1111,7 @@ export function DynamicChatGuide() {
           addMessage({
             type: "assistant",
             avatar: "excited",
+            isImportant: true, // Mark this message as important
             text: "Ottima scelta! Vuoi procedere con i prodotti aggiuntivi?",
             options: [
               {
@@ -1622,6 +1625,24 @@ export function DynamicChatGuide() {
 
   const renderMessage = (message: ChatMessage) => {
     if (message.type === "assistant") {
+      // Check if this is an important message
+      if (message.isImportant) {
+        return (
+          <ImportantMessageChat
+            key={message.id}
+            message={message.text || ""}
+            avatar={
+              <SpectacularAvatar
+                type={message.avatar || "smiling"}
+                className="w-10 h-10"
+              />
+            }
+            options={message.options}
+          />
+        );
+      }
+
+      // Regular assistant message
       return (
         <div className="flex gap-3 mb-4">
           <SpectacularAvatar
