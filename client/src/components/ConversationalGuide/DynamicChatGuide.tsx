@@ -1817,7 +1817,11 @@ export function DynamicChatGuide() {
             )}
             <div className="space-y-3">
               {message.items.length > 0 ? (
-                message.items.map((item) => renderItemCard(item))
+                message.items.map((item, itemIndex) => 
+                  <div key={`${message.id}-item-${item.id}-${itemIndex}`}>
+                    {renderItemCard(item)}
+                  </div>
+                )
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
                   Nessun elemento disponibile

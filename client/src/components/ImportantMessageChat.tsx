@@ -173,8 +173,8 @@ export default function ImportantMessageChat({
         </div>
       </div>
 
-      {/* CSS per animazione shine */}
-      <style jsx>{`
+      {/* Inline CSS per animazione shine */}
+      <style>{`
         @keyframes shine {
           0% { transform: translateX(-100%) skewX(-15deg); }
           50% { transform: translateX(100%) skewX(-15deg); }
