@@ -10,6 +10,7 @@ import { useABFlag } from "./hooks/useABFlag";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
+import QuoteView from "./pages/QuoteView";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -23,11 +24,13 @@ function Router() {
       <Route path="/" component={HomeWithFlags} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={Admin} />
+      <Route path="/quote/:id" component={QuoteView} />
       
       {/* Fiera prefixed routes */}
       <Route path="/fiera/" component={HomeWithFlags} />
       <Route path="/fiera/admin/login" component={AdminLogin} />
       <Route path="/fiera/admin" component={Admin} />
+      <Route path="/fiera/quote/:id" component={QuoteView} />
       
       <Route component={NotFound} />
     </Switch>
